@@ -18,7 +18,7 @@ def build_model(args):
         num_classes = 91
     elif args.dataset == 'coco_panoptic':
         num_classes = 250
-    elif args.dataset in ['coco_person', 'mot', 'mot_crowdhuman', 'crowdhuman', 'mot_coco_person']:
+    elif args.dataset in ['mot_wildtrack_baseline', 'coco_person', 'mot', 'mot_crowdhuman', 'crowdhuman', 'mot_coco_person']:
         # num_classes = 91
         num_classes = 20
         # num_classes = 1

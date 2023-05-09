@@ -301,7 +301,7 @@ def make_coco_transforms(image_set, img_transform=None, overflow_boxes=False):
                 ])
             ),
         ]
-    elif image_set == 'val':
+    elif image_set == 'val' or image_set == 'test':
         transforms = [
             T.RandomResize([val_width], max_size=max_size),
         ]
