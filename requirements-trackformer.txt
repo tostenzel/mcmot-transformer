@@ -60,7 +60,7 @@ nest-asyncio==1.5.1
 networkx==2.4
 ninja==1.10.0.post2
 notebook==6.2.0
-numpy==1.18.5
+numpy== 1.21.5
 opencv-python==4.2.0.34
 packaging==20.4
 pandas==1.0.5
