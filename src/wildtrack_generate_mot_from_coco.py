@@ -31,8 +31,8 @@ SPLITS_SEQ_LENGTH = {"test": glob.TEST_SEQ_LENGTH, "val": glob.VAL_SEQ_LENGTH}
 INI_DICT = {
     "name": "",
     "imDir":"img1",
-    "frameRate":"5",
-    "seqLength":"200",
+    "frameRate": "60",
+    "seqLength": "",
     "imWidth":"1920",
     "imHeight":"1080",
     "imExt":".jpg"
@@ -55,7 +55,7 @@ def main() -> None:
         create_img_symlinks(split, dataset_sequence)
         create_ground_truth(split, dataset_sequence)
 
-    create_seqinfo_ini_files(split)
+        create_seqinfo_ini_files(split)
 
 
 def create_mot_dirs(split):
@@ -166,7 +166,7 @@ def create_seqinfo_ini_files(split) -> None:
         #https://docs.python.org/3/library/configparser.html
         configparser['Sequence'] = copy.deepcopy(INI_DICT)
         configparser['Sequence']["name"] = f"{seq}-{split}"
-
+        configparser['Sequence']['seqLength'] = f"{SPLITS_SEQ_LENGTH[split]}"
         # save to a file
         with open(f"{dir2}/seqinfo.ini", 'w') as configfile:
             configparser.write(configfile)
