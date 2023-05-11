@@ -63,9 +63,9 @@ def create_mot_dirs(split):
     """Create directory structure.
     
     |--mot-eval
-        |--/c0-train
+        |--/c0-test
         |   |--/gt
-        |   |   |--c0-train_gt.txt
+        |   |   |--c0-test_gt.txt
         |   |--/img1 (containing symlinks to image files in COCO directory)
         |   |   |-- *.jpg
             |--seqinfo.ini
@@ -127,7 +127,7 @@ def create_ground_truth(split, dataset_sequence) -> None:
             raise IndexError
         # <frame_number, track_id (sort key), x, y, w, h, class (person), class certainty,
         # visibility>
-        # Attemtion: Add 1 b/c sequence class starts bbox dict indices at 1
+        # Attention: Add 1 b/c sequence class starts bbox dict indices at 1
         frame_id = image["frame_id"]
         track_id = ann["track_id"]
         x, y, w, h = ann["bbox"][0], ann["bbox"][1], ann["bbox"][2], ann["bbox"][3]
