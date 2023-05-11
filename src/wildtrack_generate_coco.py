@@ -1,5 +1,6 @@
 """
 Generate `data/WILDTRACK´ (.jpg) from orig. `data/Wildtrack_dataset` (.png).
+
 This dataset is a single-camera dataset with seven constructed in contrast to
 the original seven-identical-camera WILDTRACK dataset.
 Important related files are the original WILDTRACK dataset and
@@ -26,10 +27,7 @@ import tqdm
 from PIL import Image
 
 import wildtrack_globals as glob
-# debug dependencies
-from pycocotools.coco import COCO
-import skimage.io as io
-from matplotlib import pyplot as plt
+from wildtrack_shared import check_coco_from_wildtrack
 
 
 # WILDTRACK format (7 cameras, one frame size, one sequence length)
@@ -323,60 +321,36 @@ def create_coco_files(
         im.save(pic_path)
 
 
-def check_coco_from_wildtrack(
-        img_dir_path: str = f"{glob.ROOT}/train",
-        coco_annotations_path: str = f"{DEST_COCO_ANNOTATIONS}/train.json",
-        split: str = "train"
-    ) -> None:
+def validate_jpgs():
     """
-    Visualizes and stores generated COCO data. Only used for debugging.
-    We save 3 files for each camera in data/WILDTRACK/debug_images.
-    `validation_data` flag has to be true if we pass the validation data
-    directories.
-    """
-    if os.path.isdir("data/WILDTRACK/debug_images") is False:
-        os.makedirs("data/WILDTRACK/debug_images")
+    Validate converted .jpgs.
     
-    # used for constructing a mapping between image and object annotations.
-    coco = COCO(coco_annotations_path)
-    cat_ids = coco.getCatIds(catNms=['person'])
-    # check the correctness of all image ids at once
-    # img_ids = coco.getImgIds(catIds=cat_ids)
-    #val_img_ids_offset = int((1 - TRAIN_SPLIT) * SEQ_LENGTH)
-    if split == "train":
-        img_id_offset = glob.TRAIN_SEQ_LENGTH
-    elif split == "test":
-        img_id_offset = glob.TEST_SEQ_LENGTH
-    elif split == "val":
-        img_id_offset = glob.VAL_SEQ_LENGTH
-       
-
-    for c in range(0, glob.N_CAMS):
-
-        for img_id in range(0, 20):
-
-            img_id = img_id + c * img_id_offset
-            img_annotation = coco.loadImgs(img_id)[0]
-            i = io.imread(img_dir_path + "/" + img_annotation['file_name'])
-
-            plt.imshow(i)
-            plt.axis('off')
-            ann_ids = coco.getAnnIds(
-                imgIds=img_annotation['id'],
-                catIds=cat_ids,
-                iscrowd=None
-                )
-            anns = coco.loadAnns(ann_ids)
-            coco.showAnns(anns, draw_bbox=True)
-            plt.savefig(f'data/WILDTRACK/debug_images/debug_{img_annotation["file_name"]}')
-            # clear figures/bboxes for next picture
-            plt.clf()
-            debug_point = ""
+    Sometimes some files were not valid and caused errors during trainig.
+    Code according to
+    https://stackoverflow.com/questions/46854496/python-script-to-detect-broken-images
+    """
+    for split in ["train", "test", "val"]:
+        path = f'{glob.ROOT}/{split}'
+        for filename in os.listdir(path):
+            if filename.endswith('.jpg'):
+                try:
+                    im = Image.open(f"{path}/{filename}")
+                    im.verify() #I perform also verify, don't know if he sees other types o defects
+                    im.close() #reload is necessary in my case
+                    im = Image.open(f"{path}/{filename}")
+                    im.transpose(Image.FLIP_LEFT_RIGHT)
+                    im.close()
+                except (IOError, SyntaxError) as e:
+                    print(filename)
 
 
 if __name__ == '__main__':
     main()
-    check_coco_from_wildtrack()
+    check_coco_from_wildtrack(
+        img_dir_path = f"{glob.ROOT}/train",
+        coco_annotations_path = f"{DEST_COCO_ANNOTATIONS}/train.json",
+        split="train"
+    )
     check_coco_from_wildtrack(
         img_dir_path = f"{glob.ROOT}/test",
         coco_annotations_path = f"{DEST_COCO_ANNOTATIONS}/test.json",
@@ -387,5 +361,7 @@ if __name__ == '__main__':
         coco_annotations_path = f"{DEST_COCO_ANNOTATIONS}/val.json",
         split="val"
     )
+
+    validate_jpgs()
 
     debug_point = ""
