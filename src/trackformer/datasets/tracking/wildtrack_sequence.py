@@ -93,7 +93,7 @@ class WILDTRACKSequence(Dataset):
 
     def _sequence(self) -> List[dict]:
         # public detections
-        # not 1 to seq len + 1 as for MIT
+        # not 1 to seq len + 1 as for MOT
         dets = {i: [] for i in range(0, self.seq_length)}
         det_file = self.get_det_file_path()
 
