@@ -23,6 +23,7 @@ import copy
 
 import numpy as np
 import configparser
+import skimage.io as io
 
 import wildtrack_globals as glob
 
@@ -101,6 +102,10 @@ def create_img_symlinks(split, dataset_sequence) -> None:
         #    #print(f"{dst} already exists. Do not write file.")
         #else:    
         os.symlink(src, dst)
+        try:
+            io.imread(os.readlink(dst))
+        except:
+            raise LookupError
 
 
 def create_ground_truth(split, dataset_sequence) -> None:
@@ -111,15 +116,11 @@ def create_ground_truth(split, dataset_sequence) -> None:
     annotations = dataset_sequence["annotations"]
 
     gt_file_dict = {}
-    seq_row_counter = {}
     for seq in glob.SEQUENCE_IDS:
-        gt_file_dict[f"{seq}-{split}"] = np.zeros(
-            [SPLITS_SEQ_LENGTH[split], 9],
-            dtype=int
-        ) #* np.nan -> causes long floats
-        seq_row_counter[f"{seq}-{split}"] = 0
+        gt_file_dict[f"{seq}-{split}"] = []
 
     for ann in annotations:
+        row = np.zeros([1, 9],dtype=int)
         image = dataset_sequence["images"][ann["image_id"]]
         if image["id"] != ann["image_id"]:
             # Then implement correct image selection with inefficient for loop.
@@ -133,12 +134,14 @@ def create_ground_truth(split, dataset_sequence) -> None:
         obj_class = 1
         obj_certainty = 1
         visibility = ann["visibility"]
-
-        gt_file_dict[ann["seq"]][seq_row_counter[ann["seq"]]:] = [
+        row = [
             frame_id, track_id, x, y, w, h, obj_class, obj_certainty, visibility
         ]
-        seq_row_counter[ann["seq"]] += 1
-    
+        gt_file_dict[ann["seq"]].append(row)
+
+    for k in gt_file_dict.keys():
+        gt_file_dict[k] = np.vstack(gt_file_dict[k]).astype(int)
+
     for seq in glob.SEQUENCE_IDS:
         # arr sorted by track id, then frame_id
         # see https://stackoverflow.com/questions/29352511/numpy-sort-ndarray-on-multiple-columns
