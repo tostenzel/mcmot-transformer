@@ -1,0 +1,20 @@
+"""Register this file in train.py as `wildtrack_baseline`."
+
+# starting point: `train_mot17_crowdhuman.yaml`
+# dataset-type
+dataset: mot # "mot" has to be in there for trackig ... see train.py
+
+# don't neet b/c dataset not of type mot_crowdhuman
+#crowdhuman_train_split: train_val
+train_split: train
+val_split: test
+
+mot_path_train: data/WILDTRACK
+#only one sequence at a time to make comparable to distribtion metrics?
+mot_path_val: data/WILDTRACK
+
+# pre-trained detector
+resume: models/test_fix/checkpoint_epoch_100.pth
+
+epochs: 5000
+lr_drop: 10
