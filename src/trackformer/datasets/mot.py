@@ -180,6 +180,78 @@ def build_mot_crowdhuman(image_set, args):
 
     return dataset
 
+def build_wildtrack_mot_crowdhuman(image_set, args):
+    if image_set == 'train':
+        ########################################################################
+        # Crowdhuman
+        ########################################################################
+        args_crowdhuman = copy.deepcopy(args)
+        args_crowdhuman.train_split = args.crowdhuman_train_split
+        crowdhuman_dataset = build_crowdhuman('train', args_crowdhuman)
+
+        # from `build_mot()`
+        ########################################################################
+        # MOT17
+        ########################################################################
+        mot17_root = Path('data/MOT17')
+        prev_frame_rnd_augs = args.track_prev_frame_rnd_augs
+        prev_frame_range=args.track_prev_frame_range
+
+        assert mot17_root.exists(), f'provided MOT17Det path {mot17_root} does not exist'
+
+        # from validation split in MOT17_crowdhuman config
+        mot_17_split = "mot17_train_cross_val_frame_0_5_to_1_0_coco"
+        mot_17_img_folder = mot17_root / mot_17_split
+        mot_17_ann_file = mot17_root / f"annotations/{mot_17_split}.json"
+
+        transforms, norm_transforms = make_coco_transforms(
+            image_set, args.img_transform, args.overflow_boxes)
+
+        mot17_dataset = MOT(
+            mot_17_img_folder, mot_17_ann_file, transforms, norm_transforms,
+            prev_frame_range=prev_frame_range,
+            return_masks=args.masks,
+            overflow_boxes=args.overflow_boxes,
+            remove_no_obj_imgs=False,
+            prev_frame=args.tracking,
+            prev_frame_rnd_augs=prev_frame_rnd_augs,
+            prev_prev_frame=args.track_prev_prev_frame,
+            )
+        
+        ########################################################################
+        # MOT20
+        ########################################################################
+        mot20_root = Path('data/MOT20')
+
+        assert mot20_root.exists(), f'provided MOT2ßDet path {mot20_root} does not exist'
+
+        # from validation split in MOT20_crowdhuman config
+        mot20_split = "mot20_train_cross_val_frame_0_5_to_1_0_coco"
+        img_folder = mot20_root / mot20_split
+        ann_file = mot20_root / f"annotations/{mot20_split}.json"
+
+        mot20_dataset = MOT(
+            img_folder, ann_file, transforms, norm_transforms,
+            prev_frame_range=prev_frame_range,
+            return_masks=args.masks,
+            overflow_boxes=args.overflow_boxes,
+            remove_no_obj_imgs=False,
+            prev_frame=args.tracking,
+            prev_frame_rnd_augs=prev_frame_rnd_augs,
+            prev_prev_frame=args.track_prev_prev_frame,
+            )
+        
+        if getattr(args, f"{image_set}_split") is None:
+            raise ValueError(f'unknown {image_set}')
+
+    dataset = build_mot(image_set, args)
+
+    if image_set == 'train':
+        dataset = torch.utils.data.ConcatDataset(
+            [dataset, mot20_dataset, mot17_dataset, crowdhuman_dataset])
+
+    return dataset
+
 
 def build_mot_coco_person(image_set, args):
     if image_set == 'train':
