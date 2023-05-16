@@ -72,7 +72,7 @@ the evaluation code requires validation/test data in MOT format. This fact is no
 
 **Caution:** I am unsure about the following advices:
 
-Check which GPU, if any, is free with `$ nvidia-smi`. If you only want to train on one GPU, set device: cuda:x with x in {0,...,7}. For more GPUs, use `CUDA_VISIBLE_DEVICES=x_1,x_2 python myscript.py`.
+Check which GPU, if any, is free with `$ nvidia-smi`. If you only want to train on one GPU, set device: cuda:x with x in {0,...,7}. For more GPUs, use `export CUDA_VISIBLE_DEVICES=6,7` and afterwards `python myscript.py`.
 
     import gc  
     import torch  
@@ -98,12 +98,12 @@ Use the local address `127.0.0.1:8090` to access the page with the dashboard and
 
 Follow up by opening another new terminal with activated environment and start the training process e.g. via
 
-    python src/train.py with \
-        mot17 \
+    CUDA_VISIBLE_DEVICES=6 python src/train.py with \
+        wildtrack_only \
         deformable \
         multi_frame \
         tracking \
-        output_dir=models/test
+        output_dir=models/test_wildtrack_only
 
 Switch to the browser window and change environment to the name of the output directory from the previous command e.g. `models/mot17_deformable_multi_frame`
 
@@ -111,26 +111,26 @@ Switch to the browser window and change environment to the name of the output di
 
 E.g. on MOT17 data from scratch
 
-    python -m torch.distributed.launch --nproc_per_node=2 --use_env src/train.py with \
-        mot17 \
+    NCCL_DEBUG=INFO CUDA_VISIBLE_DEVICES=2,3 python -m torch.distributed.launch --nproc_per_node=2 --use_env src/train.py with \
+        wildtrack_only \
         deformable \
         multi_frame \
         tracking \
-        output_dir=models/test
+        output_dir=models/test_wildtrack_only
 
 ## Training with custom data
 
 Fine-tune the MOT17 model on WILDTRACK data with
 
-    python src/train.py with \
-        mot17 \
+    NCCL_DEBUG=INFO CUDA_VISIBLE_DEVICES=1,2 python src/train.py with \
+        wildtrack_only \
         deformable \
         multi_frame \
         tracking \
-        resume=models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth \
-        output_dir=models/WILDTRACK_deformable \
-        mot_path_train=data/WILDTRACK \
-        mot_path_val=data/WILDTRACK \
-        train_split=train \
-        val_split=val \
-        epochs=100 \
+        output_dir=models/test_wildtrack_only
+
+## Process management
+
+- Use `kill -9 PID` to kill own detached processes 
+- Stard tmux with `tmux`
+
