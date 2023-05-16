@@ -159,7 +159,11 @@ def plot_sequence(tracks, data_loader, output_dir, write_images, generate_attent
 
     for frame_id, frame_data  in enumerate(tqdm.tqdm(data_loader)):
         img_path = frame_data['img_path'][0]
-        img = cv2.imread(img_path)[:, :, (2, 1, 0)]
+        # MOT Data as .pngs
+        #img = cv2.imread(img_path)[:, :, (2, 1, 0)]
+        # Swapping 1st and second column
+        # WILDTRACK as .jpgs
+        img = cv2.imread(os.readlink(img_path))[:, :, (2, 1, 0)]
         height, width, _ = img.shape
 
         fig = plt.figure()
