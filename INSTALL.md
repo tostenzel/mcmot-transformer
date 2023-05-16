@@ -53,6 +53,10 @@ We continue with the Deformable-DETR requirements:
 
 - `pip3 install -r requirements-deformable_detr.txt`
 
+We follow up with our requirements (only tmux):
+
+- `pip3 install -r requirements-mcmot-transformer.txt`
+
 Next, we install MultiScaleDeformableAttention from the local files in this repository with
 
 - `python src/trackformer/models/ops/setup.py build --build-base=src/trackformer/models/ops/ install`
