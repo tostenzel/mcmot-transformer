@@ -1,0 +1,17 @@
+
+dataset: wildtrack_mot_crowdhuman
+
+crowdhuman_train_split: train_val
+#mot17_train_split: mot17_train_cross_val_frame_0_5_to_1_0_coco
+#mot20_train_split: mot20_train_cross_val_frame_0_5_to_1_0_coco
+
+train_split: train
+val_split: test
+
+mot_path_train: data/WILDTRACK
+mot_path_val: data/WILDTRACK
+
+resume: models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth
+
+epochs: 100
+lr_drop: 10

@@ -1,4 +1,6 @@
-"""Register this file in train.py as `wildtrack_baseline`."
+##############################################################################
+# Register this file in train.py as `wildtrack_only`.
+##############################################################################
 
 # starting point: `train_mot17_crowdhuman.yaml`
 # dataset-type
@@ -13,8 +15,8 @@ mot_path_train: data/WILDTRACK
 #only one sequence at a time to make comparable to distribtion metrics?
 mot_path_val: data/WILDTRACK
 
-# pre-trained detector
-resume: models/test_fix/checkpoint_epoch_100.pth
+# pre-trained detector/tracker
+resume: models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth
 
-epochs: 5000
+epochs: 200
 lr_drop: 10
