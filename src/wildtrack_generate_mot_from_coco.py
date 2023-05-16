@@ -32,7 +32,7 @@ SPLITS_SEQ_LENGTH = {"test": glob.TEST_SEQ_LENGTH, "val": glob.VAL_SEQ_LENGTH}
 INI_DICT = {
     "name": "",
     "imDir":"img1",
-    "frameRate": "60",
+    "frameRate": "5",
     "seqLength": "",
     "imWidth":"1920",
     "imHeight":"1080",
