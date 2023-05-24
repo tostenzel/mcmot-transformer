@@ -6,13 +6,14 @@ This document assumes that the instructions in `INSTALL.md` have been successful
 
 ### MOT Data
 
-Download and unpack MOT datasets in the `data` directory:
+Download and unpack MOT datasets and CrowdHuman datasets that are important for finetuning in the `data` directory:
 
 First, set `cd data`
 
 1. [MOT17](https://motchallenge.net/data/MOT17/):
 
     ```
+    # probably alrady done during installation validation
     wget https://motchallenge.net/data/MOT17.zip
     unzip MOT17.zip
     cd ..
@@ -62,17 +63,17 @@ Create WILDTRACK dataset in COCO single-camera tracking format with
     cd ..  
     python src/wildtrack_generate_coco.py
 
-Thereafter, **also** generate the same data in MOT format. This ugly doubling is necessary because
-the evaluation code requires validation/test data in MOT format. This fact is not written in the section of trackformer's `TRAINING.md` about training on a custom dataset. Yet, it is revealed in [this issue](https://github.com/timmeinhardt/trackformer/issues/73). Note that we only require the validation data but the following script convert also the training data. To call the python file, type
+Thereafter, **also** generate the same data in MOT format. This ugly double structure is necessary because
+the evaluation code requires validation and test splits in MOT format. This fact is not written in the section of trackformer's `TRAINING.md` about training on a custom dataset. Yet, it is revealed in [this issue](https://github.com/timmeinhardt/trackformer/issues/73). Note that we only require the validation data but the following script convert also the training data.
 
-`python src/wildtrack_generate_mot_from_coco.py`
+    python src/wildtrack_generate_mot_from_coco.py
+    # test whether COCO and MOT data are equal
+    python wildtrack_test.py
 
 
 ## Finding a free GPU
 
-**Caution:** I am unsure about the following advices:
-
-Check which GPU, if any, is free with `$ nvidia-smi`. If you only want to train on one GPU, set device: cuda:x with x in {0,...,7}. For more GPUs, use `export CUDA_VISIBLE_DEVICES=6,7` and afterwards `python myscript.py`.
+Check which GPU, if any, is free with `$ nvidia-smi`. Select specific GPUS by prepending `CUDA_VISIBLE_DEVICES=0,1` before `python myscript.py`. Additionally, we sometimes have to empty the GPU cache 
 
     import gc  
     import torch  
@@ -84,22 +85,26 @@ To find students that potentially overuse their GPU limit, check the [MONICA GPU
 
 ## Monitoring
 
-First, install visdom into the activated environment with `pip install visdom`.
+We use visdom to monitor the training process in terms of, for instance, training loss and evaluation metrics on the test split.
 
-In `cfgs/train.yaml`, set `no_vis=false`, `vis_server: http://localhost`, and ` local port to, e.g. 8090`
+In `cfgs/train.yaml`, set `no_vis=false`, `vis_server: http://localhost`, and ` local port to, e.g. 8090` to activate the monitoring.
 
-Adapt these settings in `cfgs/train.yaml`.
-
-Type the following in one terminal with activated environment to fire up the local server and to open the monitoring window with the dynamic plot of the training metrics per iteration IN in the browser:
+Before starting the training scripts, type the following in one terminal with activated environment to fire up the local server in the browser:
 
 - `python -m visdom.server -p 8090`
 
 Use the local address `127.0.0.1:8090` to access the page with the dashboard and click on the environment that we will define below.
 
-Follow up by opening another new terminal with activated environment and start the training process e.g. via
+## Training
 
-    CUDA_VISIBLE_DEVICES=6 python src/train.py with \
-        wildtrack_only \
+The multiple GPU part contains the command for generating the baseline results. The single GPU part is for testing, developing and debugging.
+
+### Training on single GPU
+
+Follow up by opening another new terminal with activated environment and start the training process on a single GPU e.g. via
+
+    CUDA_VISIBLE_DEVICES=0 python src/train.py with \
+        wildtrack_mot_crowdhuman \
         deformable \
         multi_frame \
         tracking \
@@ -107,30 +112,21 @@ Follow up by opening another new terminal with activated environment and start t
 
 Switch to the browser window and change environment to the name of the output directory from the previous command e.g. `models/mot17_deformable_multi_frame`
 
-## Training on multiple GPUs
+### Training on multiple GPUs
 
-E.g. on MOT17 data from scratch
+Again, open another new terminal with activated environment. Type
 
-    NCCL_DEBUG=INFO CUDA_VISIBLE_DEVICES=2,3 python -m torch.distributed.launch --nproc_per_node=2 --use_env src/train.py with \
-        wildtrack_only \
+    CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 --use_env src/train.py with \
+        wildtrack_mot_crowdhuman \
         deformable \
         multi_frame \
         tracking \
-        output_dir=models/test_wildtrack_only
+        output_dir=models/baseline_wildtrack_mot_crowdhuman
 
-## Training with custom data
-
-Fine-tune the MOT17 model on WILDTRACK data with
-
-    NCCL_DEBUG=INFO CUDA_VISIBLE_DEVICES=1,2 python src/train.py with \
-        wildtrack_only \
-        deformable \
-        multi_frame \
-        tracking \
-        output_dir=models/test_wildtrack_only
 
 ## Process management
 
-- Use `kill -9 PID` to kill own detached processes 
-- Stard tmux with `tmux`
+- Stard tmux with `tmux` and open visdom or start training to prevent process from detaching during system suspension or connection timeout (especially during VPN session).
+
+- Use `kill -9 <PID>` to kill own detached processes 
 

@@ -53,7 +53,7 @@ We continue with the Deformable-DETR requirements:
 
 - `pip3 install -r requirements-deformable_detr.txt`
 
-We follow up with our requirements (only tmux):
+We follow up with our requirements (only visdom and tmux):
 
 - `pip3 install -r requirements-mcmot-transformer.txt`
 
@@ -80,7 +80,7 @@ We test whether the Trackformer installation was successful in two ways:
 
 #### 1. Evaluation
 
-Either download the MOT17(https://motchallenge.net/data/MOT17/) dataset to the data folder via 
+First, download the MOT17(https://motchallenge.net/data/MOT17/) dataset and convert it to the data folder via 
 
 -     cd data
       wget https://motchallenge.net/data/MOT17.zip
@@ -89,7 +89,8 @@ Either download the MOT17(https://motchallenge.net/data/MOT17/) dataset to the d
 
 Then, download and unpack the pretrained TrackFormer model files in the models directory:
 
--     cd models
+-     cd ..
+      cd models
       wget https://vision.in.tum.de/webshare/u/meinhard/trackformer_models_v1.zip
       jar xf trackformer_models_v1.zip   # unzip might yield possible zip bomb error
       cd ..
@@ -106,4 +107,4 @@ Try to train Trackformer on the MOT17 dataset for some batches via
           deformable \
           multi_frame \
           tracking \
-          output_dir=models/mot17_deformable_multi_frame \
+          output_dir=models/installation_validation \

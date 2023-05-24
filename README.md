@@ -11,3 +11,7 @@ The thesis is accessible only for invitees in this [Overleaf project](https://ww
 ## Installation
 
 The [INSTALL.md](/INSTALL.md) describes the installation process on the server with the address `dws-student-01.informatik.uni-mannheim.de`.
+
+## Training
+
+The [TRAIN_BASELINE.md](/TRAIN_BASELINE.md) describes how to prepare and execute the training of the baseline model on WILDTRACK.
