@@ -36,6 +36,7 @@ ex.add_named_config('multi_frame', 'cfgs/train_multi_frame.yaml')
 ex.add_named_config('wildtrack_only', 'cfgs/train_wildtrack_only.yaml')
 ex.add_named_config('wildtrack_crowdhuman', 'cfgs/train_wildtrack_crowdhuman.yaml')
 ex.add_named_config('wildtrack_mot_crowdhuman', 'cfgs/train_wildtrack_mot_crowdhuman.yaml')
+ex.add_named_config('multicam_wildtrack', 'cfgs/train_multicam_wildtrack.yaml')
 
 
 def train(args: Namespace) -> None:
@@ -122,6 +123,8 @@ def train(args: Namespace) -> None:
 
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [args.lr_drop])
 
+    #from wildtrack_globals import SEQUENCE_IDS
+    args.wildtrack_camera_ids = ["c0"]
     dataset_train = build_dataset(split='train', args=args)
     dataset_val = build_dataset(split='val', args=args)
 

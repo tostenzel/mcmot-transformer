@@ -9,8 +9,18 @@ from torch.utils.data import ConcatDataset
 from .demo_sequence import DemoSequence
 from .mot_wrapper import MOT17Wrapper, MOT20Wrapper, MOTS20Wrapper
 from .wildtrack_wrapper import WILDTRACKWrapper
+from .multicam_wildtrack_data import MultiCamWILDRACKWrapper
+
 
 DATASETS = {}
+
+# MultiCam WILDTRACK
+name_mapping = {"train": "TRAIN", "test": "TEST", "val": "TEST"}
+for cam in ["c0"]:
+    for split in ['train', 'test', 'val']:
+        name = f"{cam}-{split}"
+        DATASETS["multicam_wildtrack"] = (
+        lambda kwargs, split=split, cam=cam: MultiCamWILDRACKWrapper(split, cam, **kwargs))
 
 # WILDTRACK
 name_mapping = {"train": "TRAIN", "test": "TEST", "val": "TEST"}
