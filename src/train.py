@@ -123,8 +123,8 @@ def train(args: Namespace) -> None:
 
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [args.lr_drop])
 
-    #from wildtrack_globals import SEQUENCE_IDS
-    args.wildtrack_camera_ids = ["c0"]
+    from wildtrack_globals import SEQUENCE_IDS as WILDTRACK_SEQ_IDS
+    args.wildtrack_cam_ids = WILDTRACK_SEQ_IDS
     dataset_train = build_dataset(split='train', args=args)
     dataset_val = build_dataset(split='val', args=args)
 

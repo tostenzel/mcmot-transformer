@@ -26,9 +26,8 @@ class MOT(CocoDetection):
 
     @property
     def sequences(self):
-        # Tobias: hack eval sequences to c0 instead of all in `data/WILDTRACK/mot-eval...test`
-        return [self.coco.dataset['sequences'][0]]
-        # return self.coco.dataset['sequences']
+        return self.coco.dataset['sequences']
+    # ['c0-train', 'c1-train']
 
     @property
     def frame_range(self):
@@ -36,9 +35,11 @@ class MOT(CocoDetection):
             return self.coco.dataset['frame_range']
         else:
             return {'start': 0, 'end': 1.0}
+    # {'start': 0.0, 'end': 1.0}
 
     def seq_length(self, idx):
         return self.coco.imgs[idx]['seq_length']
+    # returns 40 for idx in 0 to 39
 
     def sample_weight(self, idx):
         return 1.0 / self.seq_length(idx)
@@ -74,6 +75,8 @@ class MOT(CocoDetection):
                 target[f'prev_prev_target'] = prev_prev_target
 
         return img, target
+        # for idx in 0, 40returns image tensor and target
+        # {'boxes': tensor([[ 0.0253,  0... 0.1360]]), 'labels': tensor([0, 0, 0, 0, ...    0, 0]), 'image_id': tensor([0]), 'track_ids': tensor([122,  14,  2... 10,  37]), 'area': tensor([  2408.1033,...284.3262]), 'iscrowd': tensor([0, 0, 0, 0, ...    0, 0]), 'orig_size': tensor([1080, 1920]), 'size': tensor([512, 560]), 'labels_ignore': tensor([], dtype=torch.int64), 'area_ignore': tensor([]), 'iscrowd_ignore': tensor([], dtype=torch.int64), 'boxes_ignore': tensor([], size=(0, 4)), 'track_ids_ignore': tensor([], dtype=torch.int64), 'prev_image': tensor([[[-0.9705, -...0.2173]]]), ...}
 
     def write_result_files(self, results, output_dir):
         """Write the detections in the format for the MOT17Det sumbission
@@ -255,7 +258,7 @@ def build_wildtrack_mot_crowdhuman(image_set, args):
     return dataset
 
 
-def build_singlecam_wildtrack(image_set, args):
+def build_multicam_wildtrack(image_set, cam, args):
     if image_set == 'train':
         root = Path(args.mot_path_train)
         prev_frame_rnd_augs = args.track_prev_frame_rnd_augs
@@ -272,8 +275,8 @@ def build_singlecam_wildtrack(image_set, args):
     split = getattr(args, f"{image_set}_split")
 
     # Tobias 
-    img_folder = root / args.wildtrack_camera_ids[0] / split
-    ann_file = root / args.wildtrack_camera_ids[0] /  f"annotations/{split}.json"
+    img_folder = root / cam / split
+    ann_file = root / cam /  f"annotations/{split}.json"
 
     transforms, norm_transforms = make_coco_transforms(
         image_set, args.img_transform, args.overflow_boxes)
