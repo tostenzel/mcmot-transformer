@@ -19,6 +19,7 @@ from trackformer.models import build_model
 from trackformer.util.misc import nested_dict_to_namespace
 from trackformer.util.plot_utils import get_vis_win_names
 from trackformer.vis import build_visualizers
+from wildtrack_globals import SEQUENCE_IDS as WILDTRACK_SEQ_IDS
 
 ex = sacred.Experiment('train')
 ex.add_config('cfgs/train.yaml')
@@ -123,7 +124,6 @@ def train(args: Namespace) -> None:
 
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [args.lr_drop])
 
-    from wildtrack_globals import SEQUENCE_IDS as WILDTRACK_SEQ_IDS
     args.wildtrack_cam_ids = WILDTRACK_SEQ_IDS
     dataset_train = build_dataset(split='train', args=args)
     dataset_val = build_dataset(split='val', args=args)

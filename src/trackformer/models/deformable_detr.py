@@ -44,12 +44,14 @@ class DeformableDETR(DETR):
             two_stage: two-stage Deformable DETR
         """
         super().__init__(backbone, transformer, num_classes, num_queries, aux_loss)
-
+        ########################################################################
+        # Tobias: Trackformer specific
         self.merge_frame_features = merge_frame_features
         self.multi_frame_attention = multi_frame_attention
         self.multi_frame_encoding = multi_frame_encoding
         self.overflow_boxes = overflow_boxes
         self.num_feature_levels = num_feature_levels
+        ########################################################################
         if not two_stage:
             self.query_embed = nn.Embedding(num_queries, self.hidden_dim * 2)
         num_channels = backbone.num_channels[-3:]
@@ -122,7 +124,7 @@ class DeformableDETR(DETR):
     #     return [self.hidden_dim, ] * num_backbone_outs
 
     def forward(self, samples: NestedTensor, targets: list = None, prev_features=None):
-        """ The forward expects a NestedTensor, which consists of:
+        """The forward expects a NestedTensor, which consists of:
                - samples.tensors: batched images, of shape [batch_size x 3 x H x W]
                - samples.mask: a binary mask of shape [batch_size x H x W], containing 1 on padded pixels
 
@@ -136,13 +138,38 @@ class DeformableDETR(DETR):
                - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
                                 dictionnaries containing the two above keys for each decoder layer.
         """
+        # Tobias: list of two times (3, 640, 1137)
         if not isinstance(samples, NestedTensor):
             samples = nested_tensor_from_tensor_list(samples)
+            # Tobias: one tensor (2, 3, 750, 1333)
+        # Tobias: This line returns feature maps and positional encoding for every image per cam/batch element
+        # feats: list of four masked tensors
+        # (2, 258, 188, 334), (2, 512, 94, 167), (2, 1024, 47, 84), (2, 2048, 24, 42)
+        # pos: list of four tensors: (2, 2, 288, 188, 334), (2, 2, 288, 94, 167)
+        # (2, 2, 288, 47, 84), (2, 2, 288, 24, 42)
+        # TODO: Same temporal encoding for all features over cam
+
+        # QUESTION: feats: (batches, channels, height, width), pos (batch, ?, st. like channels, height, width)
         features, pos = self.backbone(samples)
+
+
+        # reshape features and pos here: stack first dimension (num cameras)
+        # on last dimension (width feature map; could also take height...)
+        # because first dimension represents batches in the original code
+        # which we have set to 1 and used for feature map of same period but
+        # different camera 
+        for feat_map_idx in range(0, 4):
+            ts = features[feat_map_idx].tensors.shape
+            features[feat_map_idx].tensors = features[feat_map_idx].tensors.reshape(1, ts[1], ts[2], ts[3] * ts[0])
+            ms = features[feat_map_idx].mask.shape
+            features[feat_map_idx].mask = features[feat_map_idx].mask.reshape(1, ms[1], ms[2] * ms[0])
+            ps = pos[feat_map_idx].shape
+            pos[feat_map_idx] = pos[feat_map_idx].reshape(1, ps[1], ps[2], ps[3], ps[4] * ps[0])
 
         features_all = features
         # pos_all = pos
         # return_layers = {"layer2": "0", "layer3": "1", "layer4": "2"}
+        # Tobias: Continue with only the last 3 of 4 feature maps
         features = features[-3:]
         # pos = pos[-3:]
 
@@ -223,6 +250,10 @@ class DeformableDETR(DETR):
         query_embeds = None
         if not self.two_stage:
             query_embeds = self.query_embed.weight
+        # deformable_transformer.py, forward fn interface,
+        # argnames: self, srcs, masks, pos_embeds, query_embed=None, targets=None
+
+        # Tobias: src represents feature maps
         hs, memory, init_reference, inter_references, enc_outputs_class, enc_outputs_coord_unact = \
             self.transformer(src_list, mask_list, pos_list, query_embeds, targets)
 
