@@ -2,6 +2,7 @@
 
 ROOT = "data/WILDTRACK"
 MULTICAM_ROOT = "data/multicam_WILDTRACK"
+CALIBRATION_ROOT = "data/Wildtrack_dataset/calibrations"
 
 # format
 SEQ_LENGTH = 400
@@ -17,3 +18,23 @@ N_CAMS = len(SEQUENCE_IDS)
 TRAIN_SEQ_LENGTH = round(SEQ_LENGTH * TRAIN_SPLIT)
 TEST_SEQ_LENGTH = round(SEQ_LENGTH * TEST_SPLIT)
 VAL_SEQ_LENGTH = round(SEQ_LENGTH * (1 - TRAIN_SPLIT - TEST_SPLIT))
+
+EXTRINSIC_CALIBRATION_FILES = [
+    "extr_CVLab1.xml",
+    "extr_CVLab2.xml",
+    "extr_CVLab3.xml",
+    "extr_CVLab4.xml",
+    "extr_IDIAP1.xml",
+    "extr_IDIAP2.xml",
+    "extr_IDIAP3.xml"
+]
+
+INTRINSIC_CALIBRATION_FILES = [
+    "intr_CVLab1.xml",
+    "intr_CVLab2.xml",
+    "intr_CVLab3.xml",
+    "intr_CVLab4.xml",
+    "intr_IDIAP1.xml",
+    "intr_IDIAP2.xml",
+    "intr_IDIAP3.xml"
+]
