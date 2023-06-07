@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ElementTree
 from wildtrack_globals import INTRINSIC_CALIBRATION_FILES, EXTRINSIC_CALIBRATION_FILES, CALIBRATION_ROOT
 
 
-def load_opencv_xml(filename, element_name, dtype='float32'):
+def load_opencv_xml(filename: str, element_name: str, dtype: str='float32') -> np.array:
     """
     Loads particular element from a given OpenCV XML file.
 
@@ -16,10 +16,13 @@ def load_opencv_xml(filename, element_name, dtype='float32'):
         FileNotFoundError: the given file cannot be read/found
         UnicodeDecodeError: if error occurs while decoding the file
 
-    :param filename: [str] name of the OpenCV XML file
-    :param element_name: [str] element in the file
-    :param dtype: [str] type of element, default: 'float32'
-    :return: [numpy.ndarray] the value of the element_name
+    Args:
+        filename: name of the OpenCV XML file
+        element_name: element in the file
+        dtype: type of element, default: 'float32'
+
+    Returns:
+        the value of the element_name
     """
     if not isfile(filename):
         raise FileNotFoundError("File %s not found." % filename)
@@ -34,14 +37,15 @@ def load_opencv_xml(filename, element_name, dtype='float32'):
         raise UnicodeDecodeError('Error while decoding file %s.' % filename)
 
 
-def load_all_extrinsics():
+def load_all_extrinsics() -> tuple:
     """
     Loads all the extrinsic files.
 
-    :return: tuple of ([2D array], [2D array]) where the first and the second integers
-             are indexing the camera/file and the element of the corresponding vector,
-             respectively. E.g. rvec[i][j], refers to the rvec for the i-th camera,
-             and the j-th element of it (out of total 3)
+    Returns:
+        tuple of ([2D array], [2D array]) where the first and the second integers
+            are indexing the camera/file and the element of the corresponding vector,
+            respectively. E.g. rvec[i][j], refers to the rvec for the i-th camera,
+            and the j-th element of it (out of total 3)
     """
     rvec, tvec = [], []
     for _file in EXTRINSIC_CALIBRATION_FILES:
@@ -50,6 +54,11 @@ def load_all_extrinsics():
                      for number in xmldoc.getElementsByTagName('rvec')[0].childNodes[0].nodeValue.strip().split()])
         tvec.append([float(number)
                      for number in xmldoc.getElementsByTagName('tvec')[0].childNodes[0].nodeValue.strip().split()])
+        
+    for i in range(0, len(rvec)):
+        rvec[i] = np.array(rvec[i], dtype=np.float32).reshape((3, 1))
+        tvec[i] = np.array(tvec[i], dtype=np.float32).reshape((3, 1))
+
     return rvec, tvec
 
 
@@ -57,6 +66,7 @@ def load_all_intrinsics():
     """
     Loads all the intrinsic files.
 
+    :param _lst_files: [str] path of a file listing all the intrinsic calibration files
     :return: tuple (cameraMatrices[list], distortionCoef[list])
     """
     _cameraMatrices, _distCoeffs = [], []
