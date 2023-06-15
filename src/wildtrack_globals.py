@@ -1,8 +1,20 @@
 """Global variables for WILDTRACK modules to be imported from here."""
+import os
 
 ROOT = "data/WILDTRACK"
 MULTICAM_ROOT = "data/multicam_WILDTRACK"
 CALIBRATION_ROOT = "data/Wildtrack_dataset/calibrations"
+# Source paths
+SRC_ANNS = "data/Wildtrack_dataset/annotations_positions"
+SRC_IMG = os.path.join(os.path.dirname(SRC_ANNS), "Image_subsets")
+
+# get number of annotation files (contains data on all cams) to later construct
+# an offset for distributing these annotations equally for one single cam each
+ANNOTATION_FILES = [
+    file for file in os.listdir(SRC_ANNS) if file.endswith(".json")
+    ]
+ANNOTATION_FILES.sort()
+N_ANNOTATIONS = len(ANNOTATION_FILES)
 
 # format
 SEQ_LENGTH = 400
