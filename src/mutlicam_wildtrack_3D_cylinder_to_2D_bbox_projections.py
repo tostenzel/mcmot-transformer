@@ -7,11 +7,13 @@ https://arxiv.org/pdf/2111.11892.pdf.
 # pylint: disable=[E1136]
 
 import math
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 from cv2 import Rodrigues
 from cv2 import projectPoints as project_3D_to_2D
+
+from wildtrack_globals import W, H
 
 
 def transform_3D_cylinder_to_2D_bbox_params(
@@ -20,7 +22,7 @@ def transform_3D_cylinder_to_2D_bbox_params(
     tvec,
     camera_matrix,
     dist_coeffs
-) -> Dict:
+) -> Optional[Dict]:
     """Transforms 3D cylinder to 2D bbox given camera calibration.
 
     Args:
@@ -73,12 +75,19 @@ def transform_3D_cylinder_to_2D_bbox_params(
         dist_coeffs
     )
 
-    return {
+    bbox =  {
         "xmax": np.round(x0_lowerright_corner.flatten()[0]),
         "xmin": np.round(x0_upperright_corner.flatten()[0]),
         "ymax": np.round(x0_lowerright_corner.flatten()[1]),
         "ymin": np.round(x0_upperright_corner.flatten()[1])
     }
+
+    # Check that whether can see the whole bbox in this camera
+    if (W < bbox["xmax"] < 0) or (W < bbox["xmin"] < 0) \
+    or (H < bbox["ymax"] < 0) or (H < bbox["ymin"] < 0):
+        return None
+    else:
+        return bbox
 
 
 def _shift_2D_point_perpendicular(

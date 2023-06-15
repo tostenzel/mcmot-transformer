@@ -64,6 +64,7 @@ ymin1 = data[0]["views"][1]["ymin"] # 10
 
 ################################################################################
 # Test `transform_2D_bbox_to_3D_cylindern_params` ##############################
+
 cylinder0 = transform_2D_bbox_to_3D_cylinder_params(data[0]["views"][0], rvec[0], tvec[0], camera_matrices[0])
 cylinder1 = transform_2D_bbox_to_3D_cylinder_params(data[0]["views"][1], rvec[1], tvec[1], camera_matrices[1])
 cylinder2 = transform_2D_bbox_to_3D_cylinder_params(data[0]["views"][2], rvec[2], tvec[2], camera_matrices[2])
@@ -128,7 +129,7 @@ print("Cam 1 coordinates (pos->2d, 2d->3d->2d, true data):", x1_onetime_projecti
 
 
 ################################################################################
-# Test `get_cylinder_height_from_bbox`
+# Test `get_cylinder_height_from_bbox` #########################################
 
 # Get the optimized value of z4
 H0 = _get_cylinderheight_from_bbox(x0_foot, ymin0, ymax0, rvec[0], tvec[0], camera_matrices[0])
@@ -159,7 +160,7 @@ print("Cam 0: bbox upper center (2d->3d->2d, true)", x1_head_test, np.array([x1_
 
 
 ################################################################################
-# Test computing the cylinder radius
+# Test computing the cylinder radius ###########################################
 
 X0_lowerleft_corner, _  = _project_2D_to_3D(xmax0, ymax0, rvec[0], tvec[0], camera_matrices[0])
 X0_lowerright_corner, _  = _project_2D_to_3D(xmin0, ymax0, rvec[0], tvec[0], camera_matrices[0])
@@ -175,7 +176,7 @@ print("radius (cam0, cam1)", radius0, radius1)
 
 
 ################################################################################
-# Test `_shift_2D_point_perpendicular`
+# Test `_shift_2D_point_perpendicular` #########################################
 
 dist = radius0
 
@@ -216,7 +217,7 @@ print("lower left bbox from cylinder params (projected, real)", x0_lowerleft_cor
 
 
 ################################################################################
-# test `transform_3D_cylinder_to_2D_bbox_params`
+# test `transform_3D_cylinder_to_2D_bbox_params` ###############################
 
 # TODO: try with best possible cylinder to get impression about errors
 bbox0 = transform_3D_cylinder_to_2D_bbox_params(cylinder0, rvec[0], tvec[0], camera_matrices[0], dist_coeffs[0])
@@ -228,6 +229,6 @@ print(bbox1, "\n", data[0]["views"][1], "\n", "\n")
 print(bbox2, "\n", data[0]["views"][2], "\n", "\n")
 
 
-########################################################################################
+################################################################################
 
 debug = ""
