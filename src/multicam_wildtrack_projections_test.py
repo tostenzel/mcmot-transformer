@@ -21,8 +21,8 @@ from multicam_wildtrack_2D_bbox_to_3D_cylinder_projections import _project_2D_to
 from multicam_wildtrack_2D_bbox_to_3D_cylinder_projections import _decode_3D_cylinder_center
 from multicam_wildtrack_2D_bbox_to_3D_cylinder_projections import _get_cylinderheight_from_bbox
 
-from mutlicam_wildtrack_3D_cylinder_to_2D_bbox_projections import transform_3D_cylinder_to_2D_bbox_params
-from mutlicam_wildtrack_3D_cylinder_to_2D_bbox_projections import _shift_2D_point_perpendicular
+from multicam_wildtrack_3D_cylinder_to_2D_bbox_projections import transform_3D_cylinder_to_2D_bbox_params
+from multicam_wildtrack_3D_cylinder_to_2D_bbox_projections import _shift_2D_point_perpendicular
 
 # Source paths
 SRC_ANNS = "data/Wildtrack_dataset/annotations_positions"
@@ -154,9 +154,10 @@ x1_head_test, _ = project_3D_to_2D(
 [1],  # camera matrix
         dist_coeffs[1])  # distortion coefficients
 
+print(H0, H1)
 print("bbox height (the objective here) almost not distored, but width a bit more.")
 print("Cam 0: bbox upper center (2d->3d->2d, true)", x0_head_test, np.array([x0_foot, ymin0]))
-print("Cam 0: bbox upper center (2d->3d->2d, true)", x1_head_test, np.array([x1_foot, ymin1]))
+print("Cam 1: bbox upper center (2d->3d->2d, true)", x1_head_test, np.array([x1_foot, ymin1]))
 
 
 ################################################################################

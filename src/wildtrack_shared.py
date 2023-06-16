@@ -6,7 +6,9 @@ data from a back conversion to COCO format in `wildtrack_check_mot.py`
 """
 import os
 from typing import List, Optional
+from copy import deepcopy
 
+import numpy as np
 from PIL import Image
 from pycocotools.coco import COCO
 import skimage.io as io
@@ -14,8 +16,24 @@ from matplotlib import pyplot as plt
 
 import wildtrack_globals as glob
 
+from multicam_wildtrack_load_calibration import load_all_intrinsics
+from multicam_wildtrack_load_calibration import load_all_extrinsics
+
+
+# load list of rvec and tvecs and camera matrices
+rvecs, tvecs = load_all_extrinsics()
+camera_matrices, dist_coeffs = load_all_intrinsics()
+
 
 DEST_COCO_ANNOTATIONS = f"{glob.ROOT}/annotations"
+
+
+def convert_wildtrack_to_coco_bbox(xmax, xmin, ymax, ymin):
+    x = xmin
+    y = ymin
+    w_box = xmax - xmin
+    h_box = ymax - ymin
+    return x, y, w_box, h_box
 
 
 def check_coco_from_wildtrack(
@@ -25,6 +43,7 @@ def check_coco_from_wildtrack(
         write_path = "data/WILDTRACK/debug_coco_images",
         read_symlinked_symlinked_jpgs: bool = False,
         multicam=False,
+        three_dim=False,
         num_img = 5
     ) -> None:
     """
@@ -68,17 +87,27 @@ def check_coco_from_wildtrack(
         n_cams = 1
         img_id_offset = 0
 
-    for c in range(0, n_cams):
+    # FIXME: TOBIAS changed from range(n_cams)
+    for c in range(n_cams):
 
+        seq_name = img_dir_path.rsplit("/")[-2]
+        view_number = int(seq_name[-1])
         for img_id in range(0, num_img):
 
             img_id = img_id + c * img_id_offset
             img_annotation = coco.loadImgs(img_id)[0]
+
+            if multicam is True:
+                # we use the first annotation file with paths from c0 independent of real camera view...
+                file_name = f"{seq_name}-{img_annotation['file_name'].rsplit('-')[1]}"
+            else:
+                file_name = img_annotation['file_name']
+
             if read_symlinked_symlinked_jpgs is False:
-                i = io.imread(img_dir_path + "/" + img_annotation['file_name'])
+                    i = io.imread(img_dir_path + "/" + file_name)
             else:
                 i = io.imread(os.readlink(os.readlink(
-                img_dir_path + "/" + img_annotation['file_name'])
+                img_dir_path + "/" + file_name)
             ))
             plt.imshow(i)
             plt.axis('off')
@@ -87,11 +116,43 @@ def check_coco_from_wildtrack(
                 catIds=cat_ids,
                 iscrowd=None
                 )
-            anns = coco.loadAnns(ann_ids)
+            cylinder_anns = coco.loadAnns(ann_ids)
+            if three_dim is True:
+                from multicam_wildtrack_3D_cylinder_to_2D_bbox_projections import transform_3D_cylinder_to_2D_bbox_params as get_bbox
+                anns = []
+                for cyl_ann in cylinder_anns:
+                    bbox_annotation = deepcopy(cyl_ann)
+
+                    cyl = {
+                        "x_center": cyl_ann["bbox"][0],
+                        "y_center": cyl_ann["bbox"][1],
+                        "height": cyl_ann["bbox"][2],
+                        "radius": cyl_ann["bbox"][3]
+                    }
+                    bbox = get_bbox(
+                        cyl,
+                        rvecs[view_number],
+                        tvecs[view_number],
+                        camera_matrices[view_number],
+                        dist_coeffs[view_number]
+                    )
+                    if bbox is not None:
+                        from wildtrack_shared import convert_wildtrack_to_coco_bbox
+                        x, y, w_box, h_box = convert_wildtrack_to_coco_bbox(
+                            bbox["xmax"],
+                            bbox["xmin"],
+                            bbox["ymax"],
+                            bbox["ymin"]
+                        )
+                        bbox_arr = np.float32([x, y, w_box, h_box])
+                        bbox_annotation["bbox"] = bbox_arr
+                        anns.append(bbox_annotation)
+
             coco.showAnns(anns, draw_bbox=True)
-            plt.savefig(f'{write_path}/debug_{img_annotation["file_name"]}')
+            plt.savefig(f'{write_path}/debug_{file_name}')
             # clear figures/bboxes for next picture
             plt.clf()
+
 
 
 def validate_jpgs(multicam: bool=False):
