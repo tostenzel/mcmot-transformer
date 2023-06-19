@@ -34,8 +34,18 @@ First, set `cd data`
     1. Create a `CrowdHuman` and `CrowdHuman/annotations` directory.
     2. Download and extract the `train` and `val` datasets including their corresponding `*.odgt` annotation file into the `CrowdHuman` directory.
        I recommend to use the [gdown package](https://stackoverflow.com/questions/25010369/wget-curl-large-file-from-google-drive) with the Google Drive ID.
-    3. Create a `CrowdHuman/train_val` directory and merge or symlink the `train` and `val` image folders.
-    4. Copy the contents of `annotation_traind.odgt` and `annotation-vald.odgt` into a file named `train_val.json`. A Json viewer helps you avoiding formatting issues when copying.
+
+       ```
+       gdown https://drive.google.com/u/0/uc?id=134QOvaatwKdy0iIeNqA_p-xkAhkV4F8Y&export=download
+       gdown https://drive.google.com/u/0/uc?id=17evzPh7gc1JBNvnW1ENXLy5Kr4Q_Nnla&export=download
+       gdown https://drive.google.com/u/0/uc?id=1tdp0UCgxrqy1B6p8LkR-Iy0aIJ8l4fJW&export=download
+       gdown https://drive.google.com/u/0/uc?id=18jFI789CoHTppQ7vmRSFEdnGaSQZ4YzO&export=download
+       gdown https://drive.google.com/u/0/uc?id=1UUTea5mYqvlUObsC1Z8CFldHJAtLtMX3&export=download
+       gdown https://drive.google.com/u/0/uc?id=10WIRwu8ju8GRLuCkZ_vT6hnNxs5ptwoL&export=download
+       ```
+       
+    4. Create a `CrowdHuman/train_val` directory and merge or symlink the `train` and `val` image folders.
+    5. Copy the contents of `annotation_traind.odgt` and `annotation-vald.odgt` into a file named `train_val.json`. A Json viewer helps you avoiding formatting issues when copying.
     4. Run `python src/generate_coco_from_crowdhuman.py`
     5. The final folder structure should resemble this:
         ~~~
