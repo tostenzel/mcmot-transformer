@@ -69,7 +69,7 @@ Create WILDTRACK dataset in COCO single-camera tracking format with
 
     cd data  
     wget http://documents.epfl.ch/groups/c/cv/cvlab-unit/www/data/Wildtrack/Wildtrack_dataset_full.zip  
-    jar xf Wiltrack_dataset_full.zip  // unpacking without zip-bomb error
+    jar xf Wildtrack_dataset_full.zip  // unpacking without zip-bomb error
     cd ..  
     python src/wildtrack_generate_coco.py
 
