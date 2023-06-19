@@ -78,7 +78,7 @@ the evaluation code requires validation and test splits in MOT format. This fact
 
     python src/wildtrack_generate_mot_from_coco.py
     # test whether COCO and MOT data are equal
-    python wildtrack_test.py
+    python src/wildtrack_test.py
 
 ## Pretrained Models
 
