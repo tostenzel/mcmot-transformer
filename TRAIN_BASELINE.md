@@ -132,7 +132,7 @@ Switch to the browser window and change environment to the name of the output di
 
 Again, open another new terminal with activated environment. Type
 
-    CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 --use_env src/train.py with \
+    CUDA_VISIBLE_DEVICES=0,1 MASTER_PORT=12340 python -m torch.distributed.launch --nproc_per_node=2 --use_env src/train.py with \
         wildtrack_mot_crowdhuman \
         deformable \
         multi_frame \
