@@ -45,7 +45,7 @@ First, set `cd data`
        ```
        
     4. Create a `CrowdHuman/train_val` directory and merge or symlink the `train` and `val` image folders.
-    5. Copy the contents of `annotation_traind.odgt` and `annotation-vald.odgt` into a file named `train_val.json`. A Json viewer helps you avoiding formatting issues when copying.
+    5. Copy the contents of `annotation_train.odgt` and `annotation-val.odgt` into a file named `train_val.json`. A Json viewer helps you avoiding formatting issues when copying.
     4. Run `python src/generate_coco_from_crowdhuman.py`
     5. The final folder structure should resemble this:
         ~~~
