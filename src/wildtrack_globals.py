@@ -1,7 +1,10 @@
 """Global variables for WILDTRACK modules to be imported from here."""
+
 import os
 
+# ------------------------------------------------------------------------------
 # WILDTRACK format
+
 SEQ_LENGTH = 400
 W, H = 1920, 1080
 ANNOTATED_FPS = 2
@@ -9,7 +12,9 @@ ANNOTATED_FPS = 2
 # one wildtrack 3D world grid unit corresponds to 2.5 cm
 CM_TO_3D_WORLD = 2.5
 
+#-------------------------------------------------------------------------------
 # PATH settings
+
 # original Wildtrack
 SRC_ANNS = "data/Wildtrack_dataset/annotations_positions"
 SRC_IMG = os.path.join(os.path.dirname(SRC_ANNS), "Image_subsets")
@@ -25,6 +30,7 @@ ANNOTATION_FILES = [
 ANNOTATION_FILES.sort()
 N_ANNOTATIONS = len(ANNOTATION_FILES)
 
+#-------------------------------------------------------------------------------
 # my settings
 TRAIN_SPLIT = 40 / 400
 TEST_SPLIT =  40 / 400
@@ -35,6 +41,9 @@ N_CAMS = len(SEQUENCE_IDS)
 TRAIN_SEQ_LENGTH = round(SEQ_LENGTH * TRAIN_SPLIT)
 TEST_SEQ_LENGTH = round(SEQ_LENGTH * TEST_SPLIT)
 VAL_SEQ_LENGTH = round(SEQ_LENGTH * (1 - TRAIN_SPLIT - TEST_SPLIT))
+
+#-------------------------------------------------------------------------------
+# calibration files
 
 EXTRINSIC_CALIBRATION_FILES = [
     "extr_CVLab1.xml",
@@ -55,3 +64,4 @@ INTRINSIC_CALIBRATION_FILES = [
     "intr_IDIAP2.xml",
     "intr_IDIAP3.xml"
 ]
+#-------------------------------------------------------------------------------

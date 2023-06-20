@@ -35,8 +35,8 @@ with open(SRC_ANNS + "/" + ANNOTATION_FILES[0], mode="r", encoding="utf-8") as f
 rvec, tvec = load_all_extrinsics()
 camera_matrices, dist_coeffs = load_all_intrinsics()
 
-################################################################################
-# grab test bbox data ##########################################################
+#-------------------------------------------------------------------------------
+# grab test bbox data
 
 # Note: bbox data has coordinate origin in UPPER left corner instead of
 # lower left corner
@@ -59,8 +59,8 @@ xmin1 = data[0]["views"][1]["xmin"] # 813
 ymin1 = data[0]["views"][1]["ymin"] # 10
 
 
-################################################################################
-# Test `transform_2D_bbox_to_3D_cylindern_params` ##############################
+#-------------------------------------------------------------------------------
+# Test `transform_2D_bbox_to_3D_cylindern_params`
 
 cylinder0 = transform_2D_bbox_to_3D_cylinder_params(data[0]["views"][0], rvec[0], tvec[0], camera_matrices[0])
 cylinder1 = transform_2D_bbox_to_3D_cylinder_params(data[0]["views"][1], rvec[1], tvec[1], camera_matrices[1])
@@ -69,8 +69,8 @@ cylinder2 = transform_2D_bbox_to_3D_cylinder_params(data[0]["views"][2], rvec[2]
 print(cylinder0, "\n", cylinder1,"\n" , cylinder2)
 
 
-################################################################################
-# Test `_project_2D_to_3D` #####################################################
+#-------------------------------------------------------------------------------
+# Test `_project_2D_to_3D`
 
 # get feet position from x center
 x0_foot = (xmax0 + xmin0) / 2
@@ -86,8 +86,8 @@ X1_foot, _  = _project_2D_to_3D(x1_foot, y1_foot, rvec[1], tvec[1], camera_matri
 print("World coordinates should all be equal...(pos, cam 0->3d, cam1->3d):", true_X_foot, X0_foot, X1_foot ,"\n")
 
 
-################################################################################
-# Test `_decode_3D_cylinder_center` ############################################
+#-------------------------------------------------------------------------------
+# test `_decode_3D_cylinder_center`
 
 x0_twotime_projection, _ = project_3D_to_2D(
         X0_foot.flatten(),  # 3D points
@@ -125,10 +125,10 @@ print("Cam 0 coordinates (pos->2d, 2d->3d->2d, true data):", x0_onetime_projecti
 print("Cam 1 coordinates (pos->2d, 2d->3d->2d, true data):", x1_onetime_projection, x1_twotime_projection, np.array([x1_foot, y1_foot]), "\n")
 
 
-################################################################################
-# Test `get_cylinder_height_from_bbox` #########################################
+#-------------------------------------------------------------------------------
+# test `_get_cylinder_height_from_bbox`
 
-# Get the optimized value of z4
+# get the optimized value of z4
 H0 = _get_cylinderheight_from_bbox(x0_foot, ymin0, ymax0, rvec[0], tvec[0], camera_matrices[0])
 X0_head = np.copy(X0_foot)
 X0_head[2] = H0
@@ -157,8 +157,8 @@ print("Cam 0: bbox upper center (2d->3d->2d, true)", x0_head_test, np.array([x0_
 print("Cam 1: bbox upper center (2d->3d->2d, true)", x1_head_test, np.array([x1_foot, ymin1]))
 
 
-################################################################################
-# Test computing the cylinder radius ###########################################
+#-------------------------------------------------------------------------------
+# test computing the cylinder radius
 
 X0_lowerleft_corner, _  = _project_2D_to_3D(xmax0, ymax0, rvec[0], tvec[0], camera_matrices[0])
 X0_lowerright_corner, _  = _project_2D_to_3D(xmin0, ymax0, rvec[0], tvec[0], camera_matrices[0])
@@ -173,8 +173,8 @@ radius1 = np.linalg.norm(X1_lowerright_corner[0:2] - X1_lowerleft_corner[0:2]) /
 print("radius (cam0, cam1)", radius0, radius1)
 
 
-################################################################################
-# Test `_shift_2D_point_perpendicular` #########################################
+#-------------------------------------------------------------------------------
+# test `_shift_2D_point_perpendicular`
 
 dist = radius0
 
@@ -214,8 +214,8 @@ x0_lowerleft_corner, _ = project_3D_to_2D(
 print("lower left bbox from cylinder params (projected, real)", x0_lowerleft_corner, np.array([xmin0, ymax0]))
 
 
-################################################################################
-# test `transform_3D_cylinder_to_2D_bbox_params` ###############################
+#-------------------------------------------------------------------------------
+# test `transform_3D_cylinder_to_2D_bbox_params`
 
 # TODO: try with best possible cylinder to get impression about errors
 bbox0 = transform_3D_cylinder_to_2D_bbox_params(cylinder0, rvec[0], tvec[0], camera_matrices[0], dist_coeffs[0])
@@ -225,5 +225,4 @@ bbox2 = transform_3D_cylinder_to_2D_bbox_params(cylinder2, rvec[2], tvec[2], cam
 print(bbox0, "\n", data[0]["views"][0], "\n", "\n")
 print(bbox1, "\n", data[0]["views"][1], "\n", "\n")
 print(bbox2, "\n", data[0]["views"][2], "\n", "\n")
-
-################################################################################
+#-------------------------------------------------------------------------------
