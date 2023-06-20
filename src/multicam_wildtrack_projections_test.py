@@ -1,36 +1,33 @@
 
 """Test projection functions from 2D (bbox) to 3D (cylinder) and from 3D to 2D.
 
-Lower case x denote points in 2D image plane and upper case X denote points in
-3D world grid (see Duy's thesis, Appendix B in
-https://arxiv.org/pdf/2111.11892.pdf.)
+Notation follows Duy's paper/thesis, Appendix B in
+https://arxiv.org/pdf/2111.11892.pdf.
+
+Large cap X's denote 3D world coordinates, small cap x's 2D camera points.
 
 """
 # pylint: disable=[C0301]
 import json
-import os
 
 import numpy as np
 from cv2 import projectPoints as project_3D_to_2D
+
+from wildtrack_globals import SRC_ANNS, ANNOTATION_FILES
 
 from multicam_wildtrack_load_calibration import load_all_intrinsics
 from multicam_wildtrack_load_calibration import load_all_extrinsics
 
 from multicam_wildtrack_2D_bbox_to_3D_cylinder_projections import transform_2D_bbox_to_3D_cylinder_params
 from multicam_wildtrack_2D_bbox_to_3D_cylinder_projections import _project_2D_to_3D
-from multicam_wildtrack_2D_bbox_to_3D_cylinder_projections import _decode_3D_cylinder_center
+from multicam_wildtrack_2D_bbox_to_3D_cylinder_projections import decode_3D_cylinder_center
 from multicam_wildtrack_2D_bbox_to_3D_cylinder_projections import _get_cylinderheight_from_bbox
 
 from multicam_wildtrack_3D_cylinder_to_2D_bbox_projections import transform_3D_cylinder_to_2D_bbox_params
 from multicam_wildtrack_3D_cylinder_to_2D_bbox_projections import _shift_2D_point_perpendicular
 
-# Source paths
-SRC_ANNS = "data/Wildtrack_dataset/annotations_positions"
-SRC_IMG = os.path.join(os.path.dirname(SRC_ANNS), "Image_subsets")
-ANNOTATION_FILES = [
-    file for file in os.listdir(SRC_ANNS) if file.endswith(".json")
-    ]
 
+# only test on images from first time period
 with open(SRC_ANNS + "/" + ANNOTATION_FILES[0], mode="r", encoding="utf-8") as f:
     data = json.load(f)
 
@@ -78,12 +75,12 @@ print(cylinder0, "\n", cylinder1,"\n" , cylinder2)
 # get feet position from x center
 x0_foot = (xmax0 + xmin0) / 2
 y0_foot = ymax0
-true_X_foot = _decode_3D_cylinder_center(positionID)
+true_X_foot = decode_3D_cylinder_center(positionID)
 X0_foot, Ctilde0  = _project_2D_to_3D(x0_foot, y0_foot, rvec[0], tvec[0], camera_matrices[0])
 
 x1_foot = (xmax1 + xmin1) / 2
 y1_foot = ymax1
-true_X_foot = _decode_3D_cylinder_center(positionID)
+true_X_foot = decode_3D_cylinder_center(positionID)
 X1_foot, _  = _project_2D_to_3D(x1_foot, y1_foot, rvec[1], tvec[1], camera_matrices[1])
 
 print("World coordinates should all be equal...(pos, cam 0->3d, cam1->3d):", true_X_foot, X0_foot, X1_foot ,"\n")
@@ -229,7 +226,4 @@ print(bbox0, "\n", data[0]["views"][0], "\n", "\n")
 print(bbox1, "\n", data[0]["views"][1], "\n", "\n")
 print(bbox2, "\n", data[0]["views"][2], "\n", "\n")
 
-
 ################################################################################
-
-debug = ""

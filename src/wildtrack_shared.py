@@ -1,7 +1,5 @@
-"""Visualize bounding boxes from COCO data.
-
-Used to check COCO data in `generate_coco_from_wildtrack.py` and to check MOT
-data from a back conversion to COCO format in `wildtrack_check_mot.py`
+"""Functions and data used in multiple `multicam_wildtrack_...` and
+`wildtrack_...` modules.
 
 """
 import os
@@ -18,6 +16,7 @@ import wildtrack_globals as glob
 
 from multicam_wildtrack_load_calibration import load_all_intrinsics
 from multicam_wildtrack_load_calibration import load_all_extrinsics
+from multicam_wildtrack_3D_cylinder_to_2D_bbox_projections import transform_3D_cylinder_to_2D_bbox_params as get_bbox
 
 
 # load list of rvec and tvecs and camera matrices
@@ -29,31 +28,39 @@ DEST_COCO_ANNOTATIONS = f"{glob.ROOT}/annotations"
 
 
 def convert_wildtrack_to_coco_bbox(xmax, xmin, ymax, ymin):
+    """Converts the bbox format used in WILDTRACK to COCO.
+    
+    Both assume that the origin of an image is the upper left pixel.
+    The x and y coordinates for coco represent the upper left bbox corner.
+    
+    """
     x = xmin
     y = ymin
-    w_box = xmax - xmin
-    h_box = ymax - ymin
-    return x, y, w_box, h_box
+    width = xmax - xmin
+    height_box = ymax - ymin
+    return x, y, width, height_box
 
 
 def check_coco_from_wildtrack(
+        three_dim_multicam=False,
         img_dir_path: str = f"{glob.ROOT}/train",
         coco_annotations_path: str = f"{DEST_COCO_ANNOTATIONS}/train.json",
         split: str = "train",
         write_path = "data/WILDTRACK/debug_coco_images",
         read_symlinked_symlinked_jpgs: bool = False,
-        multicam=False,
-        three_dim=False,
         num_img = 5
     ) -> None:
-    """
-    Visualizes and stores generated COCO data. Only used for debugging.
+    """Visualizes and stores generated COCO data.
 
-    We save `num_img` files for each camera in data/WILDTRACK/debug_images.
-    `validation_data` flag has to be true if we pass the validation data
-    directories.
+    Used to check COCO data in `wildtrack_generate_coco.py`,
+    multicam_wildtrack_generate_coco.py`, and to check MOT
+    data from a back conversion to COCO format in `wildtrack_check_mot.py`
 
     Args:
+        three_dim_multicam: Whether are 3D multicamera dataset should be checked.
+            There, we only have annotations for the first sequence `c0` that
+            are used to get bbox for images from all other views from different
+            folders.
         img_dir_path: path to images in .jpg format
         coco_annotations_path: path to COCO annotations with boxes that point to
             the images.
@@ -65,6 +72,10 @@ def check_coco_from_wildtrack(
             bounding boxes.
 
     """
+    # 'data/multicam_WILDTRACK/c1/train' gives 1
+    if three_dim_multicam is True:
+        view_number = int(img_dir_path.split('/')[-2][1])
+
     if os.path.isdir(write_path) is False:
         os.makedirs(write_path)
     
@@ -72,7 +83,10 @@ def check_coco_from_wildtrack(
     coco = COCO(coco_annotations_path)
     cat_ids = coco.getCatIds(catNms=['person'])
 
-    if multicam is False:
+    if three_dim_multicam is True:
+        n_cams = 1
+        img_id_offset = 0
+    else:
         n_cams = glob.N_CAMS
         # check the correctness of all image ids at once
         # img_ids = coco.getImgIds(catIds=cat_ids)
@@ -83,44 +97,44 @@ def check_coco_from_wildtrack(
             img_id_offset = glob.TEST_SEQ_LENGTH
         elif split == "val":
             img_id_offset = glob.VAL_SEQ_LENGTH
-    else:
-        n_cams = 1
-        img_id_offset = 0
 
-    # FIXME: TOBIAS changed from range(n_cams)
     for c in range(n_cams):
 
-        seq_name = img_dir_path.rsplit("/")[-2]
-        view_number = int(seq_name[-1])
+        seq_name = glob.SEQUENCE_IDS[c]
         for img_id in range(0, num_img):
 
             img_id = img_id + c * img_id_offset
             img_annotation = coco.loadImgs(img_id)[0]
 
-            if multicam is True:
-                # we use the first annotation file with paths from c0 independent of real camera view...
+            if three_dim_multicam is True:
+                # we use the first annotation file with paths from c0 for all camera views...
                 file_name = f"{seq_name}-{img_annotation['file_name'].rsplit('-')[1]}"
+                # handle that we write annotations only for first sequence
+                # so that the image name is wrong for other sequences:
+                # e.g. 'c0-00000000.jpg' is used for 'c1-00000000.jpg'.
+                file_name = file_name.replace(
+                    "c0",f"{glob.SEQUENCE_IDS[view_number]}"
+                )
             else:
-                file_name = img_annotation['file_name']
+                file_name = img_annotation["file_name"]
 
+            img_path = img_dir_path + "/" + file_name
             if read_symlinked_symlinked_jpgs is False:
-                    i = io.imread(img_dir_path + "/" + file_name)
+                i = io.imread(img_path)
             else:
-                i = io.imread(os.readlink(os.readlink(
-                img_dir_path + "/" + file_name)
+                i = io.imread(os.readlink(os.readlink(img_path)
             ))
             plt.imshow(i)
-            plt.axis('off')
+            plt.axis("off")
             ann_ids = coco.getAnnIds(
-                imgIds=img_annotation['id'],
+                imgIds=img_annotation["id"],
                 catIds=cat_ids,
                 iscrowd=None
                 )
-            cylinder_anns = coco.loadAnns(ann_ids)
-            if three_dim is True:
-                from multicam_wildtrack_3D_cylinder_to_2D_bbox_projections import transform_3D_cylinder_to_2D_bbox_params as get_bbox
-                anns = []
-                for cyl_ann in cylinder_anns:
+            anns = coco.loadAnns(ann_ids)
+            if three_dim_multicam is True:
+                cylinder_anns = []
+                for cyl_ann in anns:
                     bbox_annotation = deepcopy(cyl_ann)
 
                     cyl = {
@@ -137,7 +151,6 @@ def check_coco_from_wildtrack(
                         dist_coeffs[view_number]
                     )
                     if bbox is not None:
-                        from wildtrack_shared import convert_wildtrack_to_coco_bbox
                         x, y, w_box, h_box = convert_wildtrack_to_coco_bbox(
                             bbox["xmax"],
                             bbox["xmin"],
@@ -146,30 +159,35 @@ def check_coco_from_wildtrack(
                         )
                         bbox_arr = np.float32([x, y, w_box, h_box])
                         bbox_annotation["bbox"] = bbox_arr
-                        anns.append(bbox_annotation)
+                        # If the area field is not field by the user,
+                        # the bboxes are not shown correctly.
+                        bbox_annotation["area"] = w_box * h_box
+                        cylinder_anns.append(bbox_annotation)
+                anns = cylinder_anns
 
             coco.showAnns(anns, draw_bbox=True)
-            plt.savefig(f'{write_path}/debug_{file_name}')
+            plt.savefig(f"{write_path}/debug_{file_name}")
             # clear figures/bboxes for next picture
             plt.clf()
 
 
 
 def validate_jpgs(multicam: bool=False):
-    """
-    Validate converted .jpgs.
+    """Validate converted .jpgs.
 
     Sometimes some files were not valid and caused errors during trainig.
     Code according to
     https://stackoverflow.com/questions/46854496/python-script-to-detect-broken-images
+
     """
     if multicam is True:
         for id_ in glob.SEQUENCE_IDS:
-            _val(id_)
+            _validate_in_sequence_folder(id_)
     else:
-        _val()
+        _validate_in_sequence_folder()
 
-def _val(id_: Optional[str]=None):
+
+def _validate_in_sequence_folder(id_: Optional[str]=None):
     for split in ["train", "test", "val"]:
         if id_ is not None:
             path = f"{glob.MULTICAM_ROOT}/{id_}/{split}"
@@ -188,6 +206,13 @@ def _val(id_: Optional[str]=None):
                     im.close()
                 except (IOError, SyntaxError) as e:
                     print(e, filename)
+
+
+def flatten_listoflists(ll: List[list]) -> list:
+    l = []
+    for sublist in ll:
+        l.extend(sublist)
+    return l
 
 
 COCO_BASE_DICT = {
@@ -217,10 +242,3 @@ COCO_BASE_DICT = {
     "frame_range": {"start": 0.0, "end": 1.0},
     "sequences": None
 }
-
-
-def flatten_listoflists(ll: List[list]) -> list:
-    l = []
-    for sublist in ll:
-        l.extend(sublist)
-    return l

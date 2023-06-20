@@ -1,16 +1,29 @@
 """Transform 2D image plane bbox parameters to 3D world grid cylinder params.
 
-Notation follows Duy's thesis, Appendix B in
+Notation follows Duy's paper/thesis, Appendix B in
 https://arxiv.org/pdf/2111.11892.pdf.
+
+Large cap X's denote 3D world coordinates, small cap x's 2D camera points.
 
 """
 from typing import Dict, Tuple
 
-import numpy as np
 from cv2 import Rodrigues
+import numpy as np
 from numpy.linalg import inv#, pinv
-from scipy.optimize import minimize
-from scipy.optimize import minimize_scalar
+from scipy.stats import norm
+
+from wildtrack_globals import CM_TO_3D_WORLD
+
+
+# Parameters used for generating points used to fit the cylinder height
+# Note that in WILDTRACK, the bounding boxes appear to be similarly large
+# in 3D space -- even when persons are sitting
+NUM_3D_HEIGHT_GRID_POINTS = 10
+HUMAN_HEIGHT_STANDARD_DEVIATION = 7
+# Part of distribution outside mean +/- multiplicator * SD is not considered.
+SD_TO_BOUND_MULTIPLICATOR = 2
+AVG_HUMAN_HEIGHT = 173
 
 
 def transform_2D_bbox_to_3D_cylinder_params(
@@ -105,25 +118,6 @@ def _project_2D_to_3D(
     return Xtilde_pi.flatten(), Ctilde.flatten()
 
 
-def _decode_3D_cylinder_center(id_: int) -> np.array:
-    """Decode WILDTRACK positionID into 3d world grid foot point.
-
-    Taken from Wildtrack Readme but with intercept and coefficient times
-    scale := 100.
-    2.5cm is one grid point step, 480 is image height.
-
-    Args:
-        id_: WILDTRACK id that encodes x and y in (x,y,0) in 3D world grid.
-
-    Returns:
-        3D world coordinates of bbox object with respective id.
-
-    """
-    x_grid = -300 + 2.5 * (id_ % 480)
-    y_grid = -900 + 2.5 * (id_ / 480)
-    return np.float32([[x_grid, y_grid, 0]])
-
-
 def _get_cylinderheight_from_bbox(x_avg, ymin, ymax, rvec, tvec, K):
     """Compute heigth of 3D cylinder from bbox parameters.
 
@@ -147,24 +141,31 @@ def _get_cylinderheight_from_bbox(x_avg, ymin, ymax, rvec, tvec, K):
 
     # Minimize the objective function starting from an initial guess
     #z4_initial_guess = 180 / 2.5 # 1.80m in 3d grid units
-    z4_minimized = get_height_that_minimizes_distance(Ctilde, X_foot, X_head_floor)
+    z4_minimized = get_person_height_that_minimizes_distance(Ctilde, X_foot, X_head_floor)
     return z4_minimized
 
 
-def get_height_that_minimizes_distance(
+def get_person_height_that_minimizes_distance(
     P1: np.array,
     P2: np.array,
     P3: np.array,
-    #z4_initial_guess: float
 ) -> float:
-    """Compute distance between 3D point and line between two 3D points.
+    """Computes cylinder height.
 
+    This is done by choosing points of an assumend normal distributed grid
+    for human height above the projected lower bbox center on the ground plane
+    and selecting the point that has the minimal distance to the line between
+    the camera center and the head point of the bbox and camera center in world
+    coordinates.
+    
     More specifically, the 3D point P4=(x2, y2, z4) is above P2=(x2,y2,z2=0) on
     the ground plane and the line is between P1=(x1,y1,z1) and P3=(x3,y3,z3=0),
     also on the ground plane.
 
+    Returns: height
+
     """
-    def distance_to_line(z4):
+    def compute_distance_to_line(z4):
         # Calculate the direction vector of the line
         direction_vector = np.float32([P3[0] - P1[0], P3[1] - P1[1], P3[2] - P1[2]])
 
@@ -184,24 +185,46 @@ def get_height_that_minimizes_distance(
         distance = np.linalg.norm(np.cross(unit_direction_vector, vector_P1_P4))
 
         return distance
-    
-    fn_evals = []
-    from scipy.stats import norm
 
-    dist = norm(loc=173, scale=7)
-    bounds = dist.cdf([173 - 7*2.5, 173 + 7*2.5])
-    pp = np.linspace(*bounds, num=10)
-    args = dist.ppf(pp)
+    # Init points from realistic height distribution representing same
+    # probabilies
+    distance_evals = []
+    height_distribution = norm(loc=AVG_HUMAN_HEIGHT,
+                               scale=HUMAN_HEIGHT_STANDARD_DEVIATION)
+    bounds = height_distribution.cdf([
+        AVG_HUMAN_HEIGHT - SD_TO_BOUND_MULTIPLICATOR * HUMAN_HEIGHT_STANDARD_DEVIATION * 1 / CM_TO_3D_WORLD,
+        AVG_HUMAN_HEIGHT + SD_TO_BOUND_MULTIPLICATOR * HUMAN_HEIGHT_STANDARD_DEVIATION * 1 / CM_TO_3D_WORLD])
+    grid = np.linspace(*bounds, num=NUM_3D_HEIGHT_GRID_POINTS)
+    height_grid = height_distribution.ppf(grid)
     
-    for i in args:
+    for height in height_grid:
 
-    # Evaluate the scalar function at each argument
-        fn_evals.append(distance_to_line(i/2.5))
+        # Evaluate the scalar function at each argument
+        distance_evals.append(compute_distance_to_line(height / CM_TO_3D_WORLD))
 
         # Find the index of the minimum value in the function_values array
-        min_index = np.argmin(np.array([fn_evals]))
+        min_index = np.argmin(np.array([distance_evals]))
 
     # Get the argument corresponding to the minimum value
-    min_argument = args[min_index]
-    #return min_argument
+    min_argument = height_grid[min_index]
+
     return min_argument
+
+
+def decode_3D_cylinder_center(id_: int) -> np.array:
+    """Decode WILDTRACK positionID into 3d world grid foot point.
+
+    Taken from Wildtrack Readme but with intercept and coefficient times
+    scale := 100.
+    2.5cm is one grid point step, 480 is image height.
+
+    Args:
+        id_: WILDTRACK id that encodes x and y in (x,y,0) in 3D world grid.
+
+    Returns:
+        3D world coordinates of bbox object with respective id.
+
+    """
+    x_grid = -300 + CM_TO_3D_WORLD * (id_ % 480)
+    y_grid = -900 + CM_TO_3D_WORLD * (id_ / 480)
+    return np.float32([[x_grid, y_grid, 0]])

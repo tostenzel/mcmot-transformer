@@ -1,5 +1,4 @@
-"""
-Generate `data/WILDTRACK´ (.jpg) from orig. `data/Wildtrack_dataset` (.png).
+"""Generate `data/WILDTRACK´ (.jpg) from orig. `data/Wildtrack_dataset` (.png).
 
 This dataset is a single-camera dataset with seven constructed in contrast to
 the original seven-identical-camera WILDTRACK dataset.
@@ -17,14 +16,16 @@ left corner. This means (x,y) = (W-xmax, H-ymax).This
 [line](https://github.com/Chavdarova/WILDTRACK-toolkit/blob/master/annotations_viewer.py#L314) indicates the point.
 We do not need 1-indexing like Eval modules and MOT format.
 `generat_coco_from_mot.py` does also use 0-indexing.
+
 """
 from typing import List
 
 import copy
 import json
 import os
-import tqdm
 from PIL import Image
+
+import tqdm
 
 import wildtrack_globals as glob
 from wildtrack_shared import convert_wildtrack_to_coco_bbox
@@ -38,7 +39,6 @@ from wildtrack_shared import COCO_BASE_DICT
 # we have to insert the camera views as sequences one by one and pretend that
 # they are unrelated.
 
-
 # destination paths
 DEST_COCO_ANNOTATIONS = f"{glob.ROOT}/annotations"
 if os.path.isdir(DEST_COCO_ANNOTATIONS) is False:
@@ -46,10 +46,9 @@ if os.path.isdir(DEST_COCO_ANNOTATIONS) is False:
 
 
 def generate_coco_from_wildtrack() -> None:
+    """Create one single-camera tracking coco WILDTRACKdataset with 7 sequences.
+    
     """
-    Create one single-camera tracking coco WILDTRACKdataset with 7 sequences.
-    """
-
     # each annotation file contains info for all cameras
     train_dataset = copy.deepcopy(COCO_BASE_DICT)
     train_dataset["sequences"] = [id + "-train" for id in glob.SEQUENCE_IDS]
@@ -71,7 +70,7 @@ def generate_coco_from_wildtrack() -> None:
         (number_train_files + number_test_files):
     ]
 
-    mc_data = {
+    split_dict = {
         "train_images": [],
         "train_annotations": [],
         "test_images": [],
@@ -94,15 +93,15 @@ def generate_coco_from_wildtrack() -> None:
             val_annotation_files, c, "val", val_ann_id
             )
 
-        mc_data["train_images"].append(train_images)
-        mc_data["train_annotations"].append(train_annotations)
-        mc_data["test_images"].append(test_images)
-        mc_data["test_annotations"].append(test_annotations)
-        mc_data["val_images"].append(val_images)
-        mc_data["val_annotations"].append(val_annotations)
+        split_dict["train_images"].append(train_images)
+        split_dict["train_annotations"].append(train_annotations)
+        split_dict["test_images"].append(test_images)
+        split_dict["test_annotations"].append(test_annotations)
+        split_dict["val_images"].append(val_images)
+        split_dict["val_annotations"].append(val_annotations)
 
-    for key in mc_data:
-        mc_data[key] = flatten_listoflists(mc_data[key])
+    for key in split_dict:
+        split_dict[key] = flatten_listoflists(split_dict[key])
 
     output_train_annotation = "train.json"
     output_test_annotation = "test.json"
@@ -118,23 +117,23 @@ def generate_coco_from_wildtrack() -> None:
 
     _create_coco_files(
         train_dataset,
-        mc_data["train_images"],
-        mc_data["train_annotations"],
-        output_train_annotation,
+        split_dict["train_images"],
+        split_dict["train_annotations"],
+        DEST_COCO_ANNOTATIONS + "/" + output_train_annotation,
         DEST_COCO_TRAIN
         )
     _create_coco_files(
         test_dataset,
-        mc_data["test_images"],
-        mc_data["test_annotations"],
-        output_test_annotation,
+        split_dict["test_images"],
+        split_dict["test_annotations"],
+        DEST_COCO_ANNOTATIONS + "/" + output_test_annotation,
         DEST_COCO_TEST
         )
     _create_coco_files(
         val_dataset,
-        mc_data["val_images"],
-        mc_data["val_annotations"],
-        output_val_annotation,
+        split_dict["val_images"],
+        split_dict["val_annotations"],
+        DEST_COCO_ANNOTATIONS + "/" + output_val_annotation,
         DEST_COCO_VAL
         )
 
@@ -145,7 +144,8 @@ def _create_annotations(
         split: str="train",
         start_annotation_id: int = 0
         ) -> tuple([List[dict], List[dict]]):
-    """Creates annotations for every object on each image of a single-camera train, test or validation split.
+    """Creates annotations for every object on each image of a single-camera
+    train, test or validation split.
 
     This function is used in function `main` in a loop over the number of cameras.
     WILDTRACK uses the same image and annotations ids for each camera.
@@ -252,23 +252,27 @@ def _create_coco_files(
         dataset: dict,
         images: List[dict],
         annotations: List[dict],
-        dest_coco_dict: str,
+        dest_coco_dict_path: str,
         dest_img_files: str
     ) -> None:
     """
-    Stores annotations as .json, and converts and stores images for one train or val split.
+    Stores annotations as .json, and converts and stores images for one train
+    or val split.
+
     Also writes image and object annotations into whole dataset annotation.
+
     Args:
         dataset: COCO_BASE_DICT.
         images: image annotations
         annotations: object annotations
         dest_coco_dict: folder for complete annotation .json file
         dest_img_files: folder for image files
+
     """
     dataset["images"] = images
     dataset["annotations"] = annotations
 
-    json.dump(dataset, open(DEST_COCO_ANNOTATIONS + "/" + dest_coco_dict, "w"), indent=4)
+    json.dump(dataset, open(dest_coco_dict_path, "w"), indent=4)
 
     for img in tqdm.tqdm(dataset["images"]):
         src_file_name = img["file_name"].rsplit("-", 1)[1].rsplit(".", 1)[0] + ".png"
@@ -288,16 +292,19 @@ def _create_coco_files(
 if __name__ == "__main__":
     generate_coco_from_wildtrack()
     check_coco_from_wildtrack(
+        three_dim_multicam=False,
         img_dir_path = f"{glob.ROOT}/train",
         coco_annotations_path = f"{DEST_COCO_ANNOTATIONS}/train.json",
         split="train"
     )
     check_coco_from_wildtrack(
+        three_dim_multicam=False,
         img_dir_path = f"{glob.ROOT}/test",
         coco_annotations_path = f"{DEST_COCO_ANNOTATIONS}/test.json",
         split="test"
     )
     check_coco_from_wildtrack(
+        three_dim_multicam=False,
         img_dir_path = f"{glob.ROOT}/val",
         coco_annotations_path = f"{DEST_COCO_ANNOTATIONS}/val.json",
         split="val"

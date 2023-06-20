@@ -1,24 +1,29 @@
 """Global variables for WILDTRACK modules to be imported from here."""
 import os
 
-ROOT = "data/WILDTRACK"
-MULTICAM_ROOT = "data/multicam_WILDTRACK"
-CALIBRATION_ROOT = "data/Wildtrack_dataset/calibrations"
-# Source paths
+# WILDTRACK format
+SEQ_LENGTH = 400
+W, H = 1920, 1080
+ANNOTATED_FPS = 2
+
+# one wildtrack 3D world grid unit corresponds to 2.5 cm
+CM_TO_3D_WORLD = 2.5
+
+# PATH settings
+# original Wildtrack
 SRC_ANNS = "data/Wildtrack_dataset/annotations_positions"
 SRC_IMG = os.path.join(os.path.dirname(SRC_ANNS), "Image_subsets")
+SRC_CALIBRATION = "data/Wildtrack_dataset/calibrations"
+# where we store our preprocessed data
+ROOT = "data/WILDTRACK"
+MULTICAM_ROOT = "data/multicam_WILDTRACK"
 
-# get number of annotation files (contains data on all cams) to later construct
-# an offset for distributing these annotations equally for one single cam each
+# original WILDTRACK annotation variables
 ANNOTATION_FILES = [
     file for file in os.listdir(SRC_ANNS) if file.endswith(".json")
     ]
 ANNOTATION_FILES.sort()
 N_ANNOTATIONS = len(ANNOTATION_FILES)
-
-# format
-SEQ_LENGTH = 400
-W, H = 1920, 1080
 
 # my settings
 TRAIN_SPLIT = 40 / 400

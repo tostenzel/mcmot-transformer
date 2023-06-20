@@ -3,11 +3,13 @@
 Notation follows Duy's thesis, Appendix B in
 https://arxiv.org/pdf/2111.11892.pdf.
 
+Large cap X's denote 3D world coordinates, small cap x's 2D camera points.
+
 """
 # pylint: disable=[E1136]
+from typing import Dict, Optional
 
 import math
-from typing import Dict, Optional
 
 import numpy as np
 from cv2 import Rodrigues
@@ -82,7 +84,7 @@ def transform_3D_cylinder_to_2D_bbox_params(
         "ymin": np.round(x0_upperright_corner.flatten()[1])
     }
 
-    # Check that whether can see the whole bbox in this camera
+    # Check whether we can see the whole bbox in this camera
     if (W < bbox["xmax"] < 0) or (W < bbox["xmin"] < 0) \
     or (H < bbox["ymax"] < 0) or (H < bbox["ymin"] < 0):
         return None

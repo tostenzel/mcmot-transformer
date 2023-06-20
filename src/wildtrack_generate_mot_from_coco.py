@@ -1,4 +1,5 @@
 """Generates WILTRACK in MOT format from previously generated COCO files.
+
 Although not stated in the section about training cumstom datasets in
 trackformer's TRAIN.md,
 [this Issue](https://github.com/timmeinhardt/trackformer/issues/73#issuecomment-1488421264)
@@ -8,14 +9,17 @@ This script's output mimics `data/MOT17/test` for WILDTRACK without detections
 (`det.txt`)
 The module `wildtrack_sequence.py` contains the dataloader for one sequence
 that is used in the evaluation.
+
 Format
-=======
+======
 Definitions are backwards inferred from `generate_coco_from_mot.py`,
 `mot17_sequence.py`, and https://motchallenge.net/instructions/
 gt.txt (ground truth) -- has length 20202 for 13-FRCNN
 <frame_number, track_id (sort key), x, y, w, h, class (person), class certainty,
     visibility>
 ATTENTION: Starting indices may be either 0 or 1 and differ between formats.
+Yet, this appears to make no differences for the ML functions.
+
 """
 import json
 import os
@@ -32,10 +36,10 @@ SPLITS_SEQ_LENGTH = {"test": glob.TEST_SEQ_LENGTH, "val": glob.VAL_SEQ_LENGTH}
 INI_DICT = {
     "name": "",
     "imDir":"img1",
-    "frameRate": "5",
+    "frameRate": str(glob.ANNOTATED_FPS),
     "seqLength": "",
-    "imWidth":"1920",
-    "imHeight":"1080",
+    "imWidth": str(glob.W),
+    "imHeight": str(glob.H),
     "imExt":".jpg"
 }
 configparser = configparser.ConfigParser()
@@ -43,25 +47,26 @@ configparser = configparser.ConfigParser()
 configparser.optionxform = str
 
 
-def main() -> None:
+def generate_mot_from_coco() -> None:
     # We only need the validation data in MOT format for the evaluation code,
     # i.e. test and validation splits
     for split in ["test", "val"]:
 
-        create_mot_dirs(split)
+        _create_mot_dirs(split)
 
         file = open(f"{SRC_COCO_ANNOTATIONS}/{split}.json")
         dataset_sequence = json.load(file)
 
-        create_img_symlinks(split, dataset_sequence)
-        create_ground_truth(split, dataset_sequence)
+        _create_img_symlinks(split, dataset_sequence)
+        _create_ground_truth(split, dataset_sequence)
+        _create_seqinfo_ini_files(split)
 
-        create_seqinfo_ini_files(split)
 
-
-def create_mot_dirs(split):
+def _create_mot_dirs(split):
     """Create directory structure.
-    
+
+
+    For instance, for sequence "c0":
     |--mot-eval
         |--/c0-test
         |   |--/gt
@@ -87,7 +92,7 @@ def create_mot_dirs(split):
             os.mkdir(f"{dir2}/img1")
 
 
-def create_img_symlinks(split, dataset_sequence) -> None:
+def _create_img_symlinks(split, dataset_sequence) -> None:
     """Create image files in folder `img1` via symlink to the COCO folder."""
     images = dataset_sequence["images"]
 
@@ -108,10 +113,11 @@ def create_img_symlinks(split, dataset_sequence) -> None:
             raise LookupError
 
 
-def create_ground_truth(split, dataset_sequence) -> None:
+def _create_ground_truth(split, dataset_sequence) -> None:
     """Create gt.txt files for each sequence.
     
     These files contain annotations and bounding boxes
+
     """
     annotations = dataset_sequence["annotations"]
 
@@ -160,22 +166,20 @@ def create_ground_truth(split, dataset_sequence) -> None:
         )
 
 
-def create_seqinfo_ini_files(split) -> None:
+def _create_seqinfo_ini_files(split) -> None:
     """Create `seqinfo.ini`-files."""
     for seq in glob.SEQUENCE_IDS:
         dir2 = f"{glob.ROOT}/mot-eval/{seq}-{split}"
 
         # write .ini
         #https://docs.python.org/3/library/configparser.html
-        configparser['Sequence'] = copy.deepcopy(INI_DICT)
-        configparser['Sequence']["name"] = f"{seq}-{split}"
-        configparser['Sequence']['seqLength'] = f"{SPLITS_SEQ_LENGTH[split]}"
+        configparser["Sequence"] = copy.deepcopy(INI_DICT)
+        configparser["Sequence"]["name"] = f"{seq}-{split}"
+        configparser["Sequence"]["seqLength"] = f"{SPLITS_SEQ_LENGTH[split]}"
         # save to a file
-        with open(f"{dir2}/seqinfo.ini", 'w') as configfile:
+        with open(f"{dir2}/seqinfo.ini", "w") as configfile:
             configparser.write(configfile)
 
 
-if __name__ == '__main__':
-
-    main()
-    debug_point = ""
+if __name__ == "__main__":
+    generate_mot_from_coco()
