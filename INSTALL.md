@@ -36,7 +36,7 @@ Switch to `<username>/work/` and install miniconda with Python 3.7 via
 
 - `conda install pytorch==1.7.1 torchvision==0.8.2 cudatoolkit=11.0 -c pytorch`
 
-Unfortunatley, if we install the cudatoolkit via conda, the `nvcc compiler` does not come with it. Therefore, we need to install it on top manually to prevent CUDA from choosing the inappropropriate, locally pre-installed version in `/usr/local/cuda`. Unfavorably, there is no compiler for our CUDA 11.0 (that we have chosen for PyTorch 1.7.1). Therefore, I choose a higher version one more time:
+If you are not on the student server (e.g. you are on the MPI server) you probably want to ignore the next sentences. Unfortunatley, if we install the cudatoolkit via conda, the `nvcc compiler` does not come with it. Therefore, we need to install it on top manually to prevent CUDA from choosing the inappropropriate, locally pre-installed version in `/usr/local/cuda`. Unfavorably, there is no compiler for our CUDA 11.0 (that we have chosen for PyTorch 1.7.1). Therefore, I choose a higher version one more time:
 
  - `conda install -c "nvidia/label/cuda-11.7.0" cuda-nvcc`  
  - `conda install -c conda-forge cudatoolkit-dev`

@@ -34,8 +34,18 @@ First, set `cd data`
     1. Create a `CrowdHuman` and `CrowdHuman/annotations` directory.
     2. Download and extract the `train` and `val` datasets including their corresponding `*.odgt` annotation file into the `CrowdHuman` directory.
        I recommend to use the [gdown package](https://stackoverflow.com/questions/25010369/wget-curl-large-file-from-google-drive) with the Google Drive ID.
-    3. Create a `CrowdHuman/train_val` directory and merge or symlink the `train` and `val` image folders.
-    4. Unsure about this step: Also merge the annotations to `train_val.json`. Json is require by next step, therefore, this is my guess.
+
+       ```
+       gdown https://drive.google.com/u/0/uc?id=134QOvaatwKdy0iIeNqA_p-xkAhkV4F8Y&export=download
+       gdown https://drive.google.com/u/0/uc?id=17evzPh7gc1JBNvnW1ENXLy5Kr4Q_Nnla&export=download
+       gdown https://drive.google.com/u/0/uc?id=1tdp0UCgxrqy1B6p8LkR-Iy0aIJ8l4fJW&export=download
+       gdown https://drive.google.com/u/0/uc?id=18jFI789CoHTppQ7vmRSFEdnGaSQZ4YzO&export=download
+       gdown https://drive.google.com/u/0/uc?id=1UUTea5mYqvlUObsC1Z8CFldHJAtLtMX3&export=download
+       gdown https://drive.google.com/u/0/uc?id=10WIRwu8ju8GRLuCkZ_vT6hnNxs5ptwoL&export=download
+       ```
+       
+    4. Create a `CrowdHuman/train_val` directory and merge or symlink the `train` and `val` image folders.
+    5. Copy the contents of `annotation_train.odgt` and `annotation-val.odgt` into a file named `train_val.json`. A Json viewer helps you avoiding formatting issues when copying.
     4. Run `python src/generate_coco_from_crowdhuman.py`
     5. The final folder structure should resemble this:
         ~~~
@@ -59,7 +69,7 @@ Create WILDTRACK dataset in COCO single-camera tracking format with
 
     cd data  
     wget http://documents.epfl.ch/groups/c/cv/cvlab-unit/www/data/Wildtrack/Wildtrack_dataset_full.zip  
-    jar xf Wiltrack_dataset_full.zip  // unpacking without zip-bomb error
+    jar xf Wildtrack_dataset_full.zip  // unpacking without zip-bomb error
     cd ..  
     python src/wildtrack_generate_coco.py
 
@@ -68,8 +78,14 @@ the evaluation code requires validation and test splits in MOT format. This fact
 
     python src/wildtrack_generate_mot_from_coco.py
     # test whether COCO and MOT data are equal
-    python wildtrack_test.py
+    python src/wildtrack_test.py
 
+## Pretrained Models
+
+Download and unpack pretrained TrackFormer model files in the `models` directory:
+
+    wget https://vision.in.tum.de/webshare/u/meinhard/trackformer_models_v1.zip
+    unzip trackformer_models_v1.zip
 
 ## Finding a free GPU
 
@@ -116,7 +132,7 @@ Switch to the browser window and change environment to the name of the output di
 
 Again, open another new terminal with activated environment. Type
 
-    CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 --use_env src/train.py with \
+    CUDA_VISIBLE_DEVICES=0,1 MASTER_PORT=12340 python -m torch.distributed.launch --nproc_per_node=2 --use_env src/train.py with \
         wildtrack_mot_crowdhuman \
         deformable \
         multi_frame \
