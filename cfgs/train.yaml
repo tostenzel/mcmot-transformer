@@ -1,3 +1,8 @@
+################################################################################
+# TOBIAS: only for multicam datasets and model
+three_dim_multicam: false
+################################################################################
+
 lr: 0.0002
 lr_backbone_names: ['backbone.0']
 lr_backbone: 0.00002
@@ -6,13 +11,7 @@ lr_linear_proj_mult: 0.1
 lr_track: 0.0001
 overwrite_lrs: false
 overwrite_lr_scheduler: false
-
-#####################################################################################################
-# Multicam WILDTRACK: I want to fix batch_size = 1 and use the batch dimension
-# as my camera dimension to make it easier reusing the code
-batch_size: 1
-#####################################################################################################
-
+batch_size: 2
 weight_decay: 0.0001
 epochs: 50
 lr_drop: 40
@@ -114,7 +113,7 @@ img_transform:
 # path where to save, empty for no saving
 output_dir: ''
 # device to use for training / testing
-device: cuda:6
+device: cuda:0
 seed: 42
 # resume from checkpoint
 resume: ''
@@ -140,4 +139,4 @@ dist_url: env://
 vis_server: http://localhost
 vis_port: 8090
 vis_and_log_interval: 50
-no_vis: false
+no_vis: true
