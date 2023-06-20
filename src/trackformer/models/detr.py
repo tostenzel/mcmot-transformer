@@ -18,7 +18,7 @@ class DETR(nn.Module):
     """ This is the DETR module that performs object detection. """
 
     def __init__(self, backbone, transformer, num_classes, num_queries,
-                 aux_loss=False, overflow_boxes=False):
+                 aux_loss=False, overflow_boxes=False, three_dim_multicam=False):
         """ Initializes the model.
         Parameters:
             backbone: torch module of the backbone to be used. See backbone.py
@@ -31,6 +31,7 @@ class DETR(nn.Module):
         """
         super().__init__()
 
+        self.three_dim_multicam = three_dim_multicam
         self.num_queries = num_queries
         self.transformer = transformer
         self.overflow_boxes = overflow_boxes

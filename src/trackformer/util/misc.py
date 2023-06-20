@@ -292,8 +292,13 @@ def get_sha():
     message = f"sha: {sha}, status: {diff}, branch: {branch}"
     return message
 
-
 def collate_fn(batch):
+    batch = list(zip(*batch))
+    batch[0] = nested_tensor_from_tensor_list(batch[0])
+    return tuple(batch)
+
+
+def multicam_collate_fn(batch):
     # Tobias: https://stackoverflow.com/questions/29139350/difference-between-ziplist-and-ziplist
 
     # Tobias: list of batch 0 and batch 1 of list of (x_i and y_i)

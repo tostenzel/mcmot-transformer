@@ -30,7 +30,8 @@ class DeformableDETR(DETR):
     """ This is the Deformable DETR module that performs object detection """
     def __init__(self, backbone, transformer, num_classes, num_queries, num_feature_levels,
                  aux_loss=True, with_box_refine=False, two_stage=False, overflow_boxes=False,
-                 multi_frame_attention=False, multi_frame_encoding=False, merge_frame_features=False):
+                 multi_frame_attention=False, multi_frame_encoding=False, merge_frame_features=False,
+                 three_dim_multicam=False):
         """ Initializes the model.
         Parameters:
             backbone: torch module of the backbone to be used. See backbone.py
@@ -43,7 +44,8 @@ class DeformableDETR(DETR):
             with_box_refine: iterative bounding box refinement
             two_stage: two-stage Deformable DETR
         """
-        super().__init__(backbone, transformer, num_classes, num_queries, aux_loss)
+        super().__init__(backbone, transformer, num_classes, num_queries, aux_loss, three_dim_multicam)
+        self.three_dim_multicam = three_dim_multicam
         ########################################################################
         # Tobias: Trackformer specific
         self.merge_frame_features = merge_frame_features
@@ -138,33 +140,35 @@ class DeformableDETR(DETR):
                - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
                                 dictionnaries containing the two above keys for each decoder layer.
         """
-        # Tobias: list of two times (3, 640, 1137)
+        # Tobias: samples is list of two times w/ shape (3, 640, 1137)
         if not isinstance(samples, NestedTensor):
+            # Tobias: returns one tensor (2, 3, 750, 1333) with mask
             samples = nested_tensor_from_tensor_list(samples)
-            # Tobias: one tensor (2, 3, 750, 1333)
-        # Tobias: This line returns feature maps and positional encoding for every image per cam/batch element
+        
+        # Tobias: This line returns feature maps and positional encoding for every image
+        # per cam/batch element.
         # feats: list of four masked tensors
         # (2, 258, 188, 334), (2, 512, 94, 167), (2, 1024, 47, 84), (2, 2048, 24, 42)
-        # pos: list of four tensors: (2, 2, 288, 188, 334), (2, 2, 288, 94, 167)
+        # pos: list of four tensors (2, 2, 288, 188, 334), (2, 2, 288, 94, 167)
         # (2, 2, 288, 47, 84), (2, 2, 288, 24, 42)
         # TODO: Same temporal encoding for all features over cam
-
-        # QUESTION: feats: (batches, channels, height, width), pos (batch, ?, st. like channels, height, width)
+        # QUESTION about meaning of dims: features: (batches, channels, height, width),
+        # pos (batch, ?, st. like channels, height, width)
         features, pos = self.backbone(samples)
 
-
-        # reshape features and pos here: stack first dimension (num cameras)
+        # Tobias: reshape features and pos here: stack first dimension (num cameras)
         # on last dimension (width feature map; could also take height...)
-        # because first dimension represents batches in the original code
-        # which we have set to 1 and used for feature map of same period but
-        # different camera 
-        for feat_map_idx in range(0, 4):
-            ts = features[feat_map_idx].tensors.shape
-            features[feat_map_idx].tensors = features[feat_map_idx].tensors.reshape(1, ts[1], ts[2], ts[3] * ts[0])
-            ms = features[feat_map_idx].mask.shape
-            features[feat_map_idx].mask = features[feat_map_idx].mask.reshape(1, ms[1], ms[2] * ms[0])
-            ps = pos[feat_map_idx].shape
-            pos[feat_map_idx] = pos[feat_map_idx].reshape(1, ps[1], ps[2], ps[3], ps[4] * ps[0])
+        # Reason: first dimension represents batches in the original code.
+        # We have set `batch size` to 1 and used the slot for image data/feature
+        # maps from different cameras in the same time period.
+        if self.three_dim_multicam is True:
+            for feat_map_idx in range(0, 4):
+                ts = features[feat_map_idx].tensors.shape
+                features[feat_map_idx].tensors = features[feat_map_idx].tensors.reshape(1, ts[1], ts[2], ts[3] * ts[0])
+                ms = features[feat_map_idx].mask.shape
+                features[feat_map_idx].mask = features[feat_map_idx].mask.reshape(1, ms[1], ms[2] * ms[0])
+                ps = pos[feat_map_idx].shape
+                pos[feat_map_idx] = pos[feat_map_idx].reshape(1, ps[1], ps[2], ps[3], ps[4] * ps[0])
 
         features_all = features
         # pos_all = pos

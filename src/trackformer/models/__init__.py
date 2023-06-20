@@ -34,7 +34,8 @@ def build_model(args):
         'num_classes': num_classes - 1 if args.focal_loss else num_classes,
         'num_queries': args.num_queries,
         'aux_loss': args.aux_loss,
-        'overflow_boxes': args.overflow_boxes}
+        'overflow_boxes': args.overflow_boxes,
+        'three_dim_multicam': args.three_dim_multicam}
 
     tracking_kwargs = {
         'track_query_false_positive_prob': args.track_query_false_positive_prob,

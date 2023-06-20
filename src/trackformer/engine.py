@@ -106,6 +106,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
     if visualizers:
         vis_iter_metrics = visualizers['iter_metrics']
 
+    # block was commented out for multicam
     model.train()
     criterion.train()
     metric_logger = utils.MetricLogger(
@@ -117,6 +118,10 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
     metric_logger.add_meter('class_error', utils.SmoothedValue(window_size=1, fmt='{value:.2f}'))
 
     for i, (samples, targets) in enumerate(metric_logger.log_every(data_loader, epoch)):
+    #for i, (samples, targets) in enumerate(data_loader, epoch):
+
+        # batch dimension was now replaced by camera dimension
+        # Tobias: samples (2, 3, 800, 900), targets list of two dicts
         samples = samples.to(device)
         targets = [utils.nested_dict_to_device(t, device) for t in targets]
 
@@ -124,7 +129,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
         # to pass it through as torch.nn.parallel.DistributedDataParallel only
         # passes copies
         outputs, targets, *_ = model(samples, targets)
-
+        if args.three_dim_multicam is True:
+            targets = targets[0]
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
         losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
