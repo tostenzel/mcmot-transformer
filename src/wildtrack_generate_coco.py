@@ -1,96 +1,54 @@
-"""
-Generate `data/WILDTRACK´ (.jpg) from orig. `data/Wildtrack_dataset` (.png).
+"""Generate `data/WILDTRACK´ (.jpg) from orig. `data/Wildtrack_dataset` (.png).
 
 This dataset is a single-camera dataset with seven constructed in contrast to
 the original seven-identical-camera WILDTRACK dataset.
 Important related files are the original WILDTRACK dataset and
 `generate_coco_from_mot.py`.
-bbox in COCO format: (x,y,h,w), 
+bbox in COCO format: (x,y,h,w),
  - x: number of pixels from the left image border to the (upper) left pixel
  - y: number of pixel from the top image border the to the upper (left) pixel
  - h: height of bbox
  - w: width of bbox
 Thus, (x,y) are the coordinates of the top left corner of the bbox viewed from
 an origin at the top left corner of the image.
-Apparently, WILDTRACK has (xmin, ymin, xmax, ymax) with origin at (0,0). This
-means (x,y) = (W-xmax, H-ymax).This
+Apparently, WILDTRACK has (xmin, ymin, xmax, ymax) with origin at the top left
+left corner. This means (x,y) = (W-xmax, H-ymax).This
 [line](https://github.com/Chavdarova/WILDTRACK-toolkit/blob/master/annotations_viewer.py#L314) indicates the point.
 We do not need 1-indexing like Eval modules and MOT format.
 `generat_coco_from_mot.py` does also use 0-indexing.
+
 """
 from typing import List
 
 import copy
 import json
 import os
-import tqdm
 from PIL import Image
 
+import tqdm
+
 import wildtrack_globals as glob
+from wildtrack_shared import convert_wildtrack_to_coco_bbox
 from wildtrack_shared import check_coco_from_wildtrack
+from wildtrack_shared import validate_jpgs
+from wildtrack_shared import flatten_listoflists
+from wildtrack_shared import COCO_BASE_DICT
 
 
 # WILDTRACK format (7 cameras, one frame size, one sequence length)
 # we have to insert the camera views as sequences one by one and pretend that
 # they are unrelated.
 
-# Source paths
-SRC_ANNS = "data/Wildtrack_dataset/annotations_positions"
-SRC_IMG = os.path.join(os.path.dirname(SRC_ANNS), "Image_subsets")
-
-# get number of annotation files (contains data on all cams) to later construct
-# an offset for distributing these annotations equally for one single cam each
-ANNOTATION_FILES = [
-    file for file in os.listdir(SRC_ANNS) if file.endswith(".json")
-    ]
-ANNOTATION_FILES.sort()
-N_ANNOTATIONS = len(ANNOTATION_FILES)
-
 # destination paths
 DEST_COCO_ANNOTATIONS = f"{glob.ROOT}/annotations"
 if os.path.isdir(DEST_COCO_ANNOTATIONS) is False:
     os.makedirs(DEST_COCO_ANNOTATIONS)
 
-COCO_BASE_DICT = {
-    "info": {
-        "year": 2021,
-        "version": 1,
-        "description": "WildTrack dataset",
-        "contributor": "",
-        "url": "https://www.epfl.ch/labs/cvlab/data/data-wildtrack/",
-        "date_created": "2021-08-27"
-    },
-    "licenses": [{
-        "id": 1,
-        "name": "GPL 2",
-        "url": "https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html"
-    }],
-    "images": [],
-    "annotations": [],
-    "categories": [
-        {
-            "id": 1,
-            "name": "person",
-            "supercategory": "person"
-        }
-    ],
-    # tracking specific
-    "frame_range": {'start': 0.0, 'end': 1.0},
-    "sequences": None
-}
 
-def flatten_listoflists(ll: List[list]) -> list:
-    l = []
-    for sublist in ll:
-        l.extend(sublist)
-    return l
-
-
-def main() -> None:
+def generate_coco_from_wildtrack() -> None:
+    """Create one single-camera tracking coco WILDTRACKdataset with 7 sequences.
+    
     """
-    Create one single-camera tracking coco WILDTRACKdataset with seven sequences.
-    """
-
     # each annotation file contains info for all cameras
     train_dataset = copy.deepcopy(COCO_BASE_DICT)
     train_dataset["sequences"] = [id + "-train" for id in glob.SEQUENCE_IDS]
@@ -99,14 +57,20 @@ def main() -> None:
     val_dataset = copy.deepcopy(COCO_BASE_DICT)
     val_dataset["sequences"] = [id + "-val" for id in glob.SEQUENCE_IDS]
 
-    number_train_files = int(glob.TRAIN_SPLIT*len(ANNOTATION_FILES))
-    number_test_files = int(glob.TEST_SPLIT*len(ANNOTATION_FILES))
+    number_train_files = int(glob.TRAIN_SPLIT*len(glob.ANNOTATION_FILES))
+    number_test_files = int(glob.TEST_SPLIT*len(glob.ANNOTATION_FILES))
 
-    train_annotation_files = ANNOTATION_FILES[:number_train_files]
-    test_annotation_files = ANNOTATION_FILES[number_train_files:(number_train_files + number_test_files)]
-    val_annotation_files = ANNOTATION_FILES[(number_train_files + number_test_files):]
+    train_annotation_files = glob.ANNOTATION_FILES[
+        :number_train_files
+    ]
+    test_annotation_files = glob.ANNOTATION_FILES[
+        number_train_files:(number_train_files + number_test_files)
+    ]
+    val_annotation_files = glob.ANNOTATION_FILES[
+        (number_train_files + number_test_files):
+    ]
 
-    mc_data = {
+    split_dict = {
         "train_images": [],
         "train_annotations": [],
         "test_images": [],
@@ -118,70 +82,71 @@ def main() -> None:
     # flexible annotation id for uneven annotation number per camera and sequence
     train_ann_id, test_ann_id, val_ann_id = 0, 0, 0
     for c in range(glob.N_CAMS):
-        
-        train_images, train_annotations, train_ann_id = create_annotations(
+
+        train_images, train_annotations, train_ann_id = _create_annotations(
             train_annotation_files, c, "train", train_ann_id
             )
-        test_images, test_annotations, test_ann_id = create_annotations(
+        test_images, test_annotations, test_ann_id = _create_annotations(
             test_annotation_files, c, "test", test_ann_id
             )
-        val_images, val_annotations, val_ann_id = create_annotations(
+        val_images, val_annotations, val_ann_id = _create_annotations(
             val_annotation_files, c, "val", val_ann_id
             )
 
-        mc_data["train_images"].append(train_images)
-        mc_data["train_annotations"].append(train_annotations)
-        mc_data["test_images"].append(test_images)
-        mc_data["test_annotations"].append(test_annotations)
-        mc_data["val_images"].append(val_images)
-        mc_data["val_annotations"].append(val_annotations)
-   
-    for key in mc_data:
-        mc_data[key] = flatten_listoflists(mc_data[key])
+        split_dict["train_images"].append(train_images)
+        split_dict["train_annotations"].append(train_annotations)
+        split_dict["test_images"].append(test_images)
+        split_dict["test_annotations"].append(test_annotations)
+        split_dict["val_images"].append(val_images)
+        split_dict["val_annotations"].append(val_annotations)
 
-    output_train_annotation = f"train.json"
-    output_test_annotation = f"test.json" 
-    output_val_annotation = f"val.json"
+    for key in split_dict:
+        split_dict[key] = flatten_listoflists(split_dict[key])
+
+    output_train_annotation = "train.json"
+    output_test_annotation = "test.json"
+    output_val_annotation = "val.json"
 
     DEST_COCO_TRAIN = f"{glob.ROOT}/train"
     DEST_COCO_TEST = f"{glob.ROOT}/test"
     DEST_COCO_VAL = f"{glob.ROOT}/val"
-    
+
     for d in [DEST_COCO_TRAIN, DEST_COCO_TEST, DEST_COCO_VAL]:
         if os.path.isdir(d) is False:
             os.mkdir(d)
 
-    create_coco_files(
+    _create_coco_files(
         train_dataset,
-        mc_data["train_images"],
-        mc_data["train_annotations"],
-        output_train_annotation,
+        split_dict["train_images"],
+        split_dict["train_annotations"],
+        DEST_COCO_ANNOTATIONS + "/" + output_train_annotation,
         DEST_COCO_TRAIN
         )
-    create_coco_files(
+    _create_coco_files(
         test_dataset,
-        mc_data["test_images"],
-        mc_data["test_annotations"],
-        output_test_annotation,
+        split_dict["test_images"],
+        split_dict["test_annotations"],
+        DEST_COCO_ANNOTATIONS + "/" + output_test_annotation,
         DEST_COCO_TEST
         )
-    create_coco_files(
+    _create_coco_files(
         val_dataset,
-        mc_data["val_images"],
-        mc_data["val_annotations"],
-        output_val_annotation,
+        split_dict["val_images"],
+        split_dict["val_annotations"],
+        DEST_COCO_ANNOTATIONS + "/" + output_val_annotation,
         DEST_COCO_VAL
         )
-    
 
-def create_annotations(
+
+def _create_annotations(
         ann_files: List[dict],
         c: int,
         split: str="train",
         start_annotation_id: int = 0
         ) -> tuple([List[dict], List[dict]]):
-    """Creates annotations for every object on each image of a single-camera train, test or validation split.
-    
+    """Creates annotations for every object on each image of a single-camera
+    train, test or validation split.
+
     This function is used in function `main` in a loop over the number of cameras.
     WILDTRACK uses the same image and annotations ids for each camera.
     We have to seperate the ids with offset variables.
@@ -196,18 +161,20 @@ def create_annotations(
     up and return
 
     Args:
-        ann_files: WILDTRACK annotation files for this split. 
+        ann_files: WILDTRACK annotation files for this split.
             However, one file contains annotations for every view.
         c: index variable for camera id starting from 0.
         split: flag to indicate whether we should use `TEST_SEQ_LENGHT` or
             `VAL_SEQ_LENGHT` instead.
         start_annotation_id: unique annotation id for the whole dataset.
+
     Returns:
         images: list of immage infos, esp. tracking specific info like
             frame_id, seq_length, and first frame of seq.
         annotations: list of annotations for one object, esp. bbox, ann and
             img ids, and tracking specific info such like track_id and seq id.
         ann_id: Last annotation id to start from in the next function call.
+
     """
     # It seems that all IDs have to start at 0 due to trackformer indexing
     if split == "train":
@@ -227,10 +194,10 @@ def create_annotations(
     annotations = []
 
     for ann_file in ann_files:
-        data = json.load(open(SRC_ANNS + "/" + ann_file, 'r'))  # was .json
+        data = json.load(open(glob.SRC_ANNS + "/" + ann_file, "r"))  # was .json
 
-        image_name = ann_file.rsplit('.', 1)[0] + ".jpg"
-        image_name = f"c{c}-" + ann_file.rsplit('.', 1)[0] + ".jpg"
+        image_name = ann_file.rsplit(".", 1)[0] + ".jpg"
+        image_name = f"c{c}-" + ann_file.rsplit(".", 1)[0] + ".jpg"
         images.append({
             "file_name": f"{image_name}",
             "height": glob.H,
@@ -238,7 +205,7 @@ def create_annotations(
             "id": img_id + img_id_offset,
             "license": 1,
             # tracking specific
-            # `frame_id` is the img's position relative to its sequence,
+            # `frame_id` is the img"s position relative to its sequence,
             # not the whole dataset (0 - 400),
             # see https://github.com/timmeinhardt/trackformer/issues/33#issuecomment-1105108004
             # Starts from 1 in MOT format
@@ -250,13 +217,10 @@ def create_annotations(
         for instance in data:
             # only use data for the selected camera and not for all others,
             # where the same person is also visible
-            xmax, ymax, xmin, ymin = instance["views"][c]['xmax'], instance["views"][c]['ymax'], instance["views"][c][
-            'xmin'], instance["views"][c]['ymin']
+            xmax, ymax, xmin, ymin = instance["views"][c]["xmax"], instance["views"][c]["ymax"], instance["views"][c][
+            "xmin"], instance["views"][c]["ymin"]
             if not (xmax == -1 or ymax == -1 or xmin == -1 or ymin == 1):
-                x = xmin
-                y = ymin
-                w_box = xmax - xmin
-                h_box = ymax - ymin
+                x, y, w_box, h_box = convert_wildtrack_to_coco_bbox(xmax, xmin, ymax, ymin)
                 annotations.append({
                     "id": ann_id,# + annotation_id_offset,
                     "bbox": [
@@ -280,38 +244,42 @@ def create_annotations(
 
             ann_id += 1
         img_id += 1
-   
+
     return images, annotations, ann_id
 
 
-def create_coco_files(
+def _create_coco_files(
         dataset: dict,
         images: List[dict],
         annotations: List[dict],
-        dest_coco_dict: str,
+        dest_coco_dict_path: str,
         dest_img_files: str
     ) -> None:
     """
-    Stores annotations as .json, and converts and stores images for one train or val split.
+    Stores annotations as .json, and converts and stores images for one train
+    or val split.
+
     Also writes image and object annotations into whole dataset annotation.
+
     Args:
         dataset: COCO_BASE_DICT.
         images: image annotations
         annotations: object annotations
-        dest_coco_dict: folder for complete annotation .json file 
+        dest_coco_dict: folder for complete annotation .json file
         dest_img_files: folder for image files
+
     """
-    dataset['images'] = images
-    dataset['annotations'] = annotations
+    dataset["images"] = images
+    dataset["annotations"] = annotations
 
-    json.dump(dataset, open(DEST_COCO_ANNOTATIONS + "/" + dest_coco_dict, 'w'), indent=4)
+    json.dump(dataset, open(dest_coco_dict_path, "w"), indent=4)
 
-    for img in tqdm.tqdm(dataset['images']):
-        src_file_name = img["file_name"].rsplit('-', 1)[1].rsplit('.', 1)[0] + ".png"
-        cam = img["file_name"].rsplit('-', 1)[0] # e.g. "c0" for accessing the "C1" folder
-        full_file_name = os.path.join(SRC_IMG, f"C{int(cam[1])+1}", src_file_name)
+    for img in tqdm.tqdm(dataset["images"]):
+        src_file_name = img["file_name"].rsplit("-", 1)[1].rsplit(".", 1)[0] + ".png"
+        cam = img["file_name"].rsplit("-", 1)[0] # e.g. "c0" for accessing the "C1" folder
+        full_file_name = os.path.join(glob.SRC_IMG, f"C{int(cam[1])+1}", src_file_name)
         im = Image.open(full_file_name)
-        rgb_im = im.convert('RGB')
+        rgb_im = im.convert("RGB")
 
         # save .jpg
         pic_path = os.path.join(
@@ -321,47 +289,25 @@ def create_coco_files(
         im.save(pic_path)
 
 
-def validate_jpgs():
-    """
-    Validate converted .jpgs.
-    
-    Sometimes some files were not valid and caused errors during trainig.
-    Code according to
-    https://stackoverflow.com/questions/46854496/python-script-to-detect-broken-images
-    """
-    for split in ["train", "test", "val"]:
-        path = f'{glob.ROOT}/{split}'
-        for filename in os.listdir(path):
-            if filename.endswith('.jpg'):
-                try:
-                    im = Image.open(f"{path}/{filename}")
-                    im.verify() #I perform also verify, don't know if he sees other types o defects
-                    im.close() #reload is necessary in my case
-                    im = Image.open(f"{path}/{filename}")
-                    im.transpose(Image.FLIP_LEFT_RIGHT)
-                    im.close()
-                except (IOError, SyntaxError) as e:
-                    print(filename)
-
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    generate_coco_from_wildtrack()
     check_coco_from_wildtrack(
+        three_dim_multicam=False,
         img_dir_path = f"{glob.ROOT}/train",
         coco_annotations_path = f"{DEST_COCO_ANNOTATIONS}/train.json",
         split="train"
     )
     check_coco_from_wildtrack(
+        three_dim_multicam=False,
         img_dir_path = f"{glob.ROOT}/test",
         coco_annotations_path = f"{DEST_COCO_ANNOTATIONS}/test.json",
         split="test"
     )
     check_coco_from_wildtrack(
+        three_dim_multicam=False,
         img_dir_path = f"{glob.ROOT}/val",
         coco_annotations_path = f"{DEST_COCO_ANNOTATIONS}/val.json",
         split="val"
     )
 
     validate_jpgs()
-
-    debug_point = ""
