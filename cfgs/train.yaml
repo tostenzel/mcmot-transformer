@@ -1,3 +1,7 @@
+################################################################################
+# TOBIAS: only for multicam datasets and model
+three_dim_multicam: false
+################################################################################
 lr: 0.0002
 lr_backbone_names: ['backbone.0']
 lr_backbone: 0.00002

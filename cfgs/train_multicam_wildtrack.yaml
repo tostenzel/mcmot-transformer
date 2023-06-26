@@ -1,0 +1,32 @@
+################################################################################
+# Register this file in train.py as `multicam_mot_wildtrack`.
+################################################################################
+
+################################################################################
+# Multicam WILDTRACK
+# Whether we use the features for all cameras at once for prediction
+three_dim_multicam: true
+# I want to fix batch_size = 1 and use the batch dimension
+# as my camera dimension to make it easier reusing the code
+batch_size: 1
+################################################################################
+# starting point: `train_mot17_crowdhuman.yaml`
+# dataset-type
+dataset: multicam_mot_wildtrack # "mot" has to be in there for trackig ... see train.py
+
+# don't neet b/c dataset not of type mot_crowdhuman
+#crowdhuman_train_split: train_val
+train_split: train
+val_split: test
+
+mot_path_train: data/multicam_WILDTRACK
+#only one sequence at a time to make comparable to distribtion metrics?
+mot_path_val: data/multicam_WILDTRACK
+
+# pre-trained detector/tracker
+resume: models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth
+
+epochs: 200
+lr_drop: 10
+
+no_vis: true
