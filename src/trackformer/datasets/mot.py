@@ -180,6 +180,46 @@ def build_mot_crowdhuman(image_set, args):
 
     return dataset
 
+
+def build_multicam_wildtrack(image_set, cam, args):
+    if image_set == 'train':
+        root = Path(args.mot_path_train)
+        prev_frame_rnd_augs = args.track_prev_frame_rnd_augs
+        prev_frame_range=args.track_prev_frame_range
+    elif image_set == 'val':
+        root = Path(args.mot_path_val)
+        prev_frame_rnd_augs = 0.0
+        prev_frame_range = 1
+    else:
+        ValueError(f'unknown {image_set}')
+
+    assert root.exists(), f'provided MOT17Det path {root} does not exist'
+    # --------------------------------------------------------------------------
+    # data for sequences now separated by folders named by sequence
+    split = getattr(args, f"{image_set}_split")
+
+    # Tobias 
+    img_folder = root / cam / split
+    ann_file = root / cam /  f"annotations/{split}.json"
+    #---------------------------------------------------------------------------
+
+    transforms, norm_transforms = make_coco_transforms(
+        image_set, args.img_transform, args.overflow_boxes)
+
+    dataset = MOT(
+        img_folder, ann_file, transforms, norm_transforms,
+        prev_frame_range=prev_frame_range,
+        return_masks=args.masks,
+        overflow_boxes=args.overflow_boxes,
+        remove_no_obj_imgs=False,
+        prev_frame=args.tracking,
+        prev_frame_rnd_augs=prev_frame_rnd_augs,
+        prev_prev_frame=args.track_prev_prev_frame,
+        )
+
+    return dataset
+
+
 def build_wildtrack_mot_crowdhuman(image_set, args):
     if image_set == 'train':
         ########################################################################

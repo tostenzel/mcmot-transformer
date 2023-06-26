@@ -18,7 +18,7 @@ def build_model(args):
         num_classes = 91
     elif args.dataset == 'coco_panoptic':
         num_classes = 250
-    elif args.dataset in ['wildtrack_mot_crowdhuman', 'coco_person', 'mot', 'mot_crowdhuman', 'crowdhuman', 'mot_coco_person']:
+    elif args.dataset in ['multicam_mot_wildtrack', 'wildtrack_mot_crowdhuman', 'coco_person', 'mot', 'mot_crowdhuman', 'crowdhuman', 'mot_coco_person']:
         # num_classes = 91
         num_classes = 20
         # num_classes = 1
@@ -34,7 +34,8 @@ def build_model(args):
         'num_classes': num_classes - 1 if args.focal_loss else num_classes,
         'num_queries': args.num_queries,
         'aux_loss': args.aux_loss,
-        'overflow_boxes': args.overflow_boxes}
+        'overflow_boxes': args.overflow_boxes,
+}
 
     tracking_kwargs = {
         'track_query_false_positive_prob': args.track_query_false_positive_prob,

@@ -19,6 +19,8 @@ from trackformer.models import build_model
 from trackformer.util.misc import nested_dict_to_namespace
 from trackformer.util.plot_utils import get_vis_win_names
 from trackformer.vis import build_visualizers
+from wildtrack_globals import SEQUENCE_IDS as WILDTRACK_SEQ_IDS
+
 
 ex = sacred.Experiment('train')
 ex.add_config('cfgs/train.yaml')
@@ -36,6 +38,7 @@ ex.add_named_config('multi_frame', 'cfgs/train_multi_frame.yaml')
 ex.add_named_config('wildtrack_only', 'cfgs/train_wildtrack_only.yaml')
 ex.add_named_config('wildtrack_crowdhuman', 'cfgs/train_wildtrack_crowdhuman.yaml')
 ex.add_named_config('wildtrack_mot_crowdhuman', 'cfgs/train_wildtrack_mot_crowdhuman.yaml')
+ex.add_named_config('multicam_wildtrack', 'cfgs/train_multicam_wildtrack.yaml')
 
 
 def train(args: Namespace) -> None:
@@ -121,7 +124,8 @@ def train(args: Namespace) -> None:
                                   weight_decay=args.weight_decay)
 
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [args.lr_drop])
-
+    
+    args.wildtrack_cam_ids = WILDTRACK_SEQ_IDS
     dataset_train = build_dataset(split='train', args=args)
     dataset_val = build_dataset(split='val', args=args)
 
@@ -136,16 +140,21 @@ def train(args: Namespace) -> None:
     batch_sampler_train = torch.utils.data.BatchSampler(
         sampler_train, args.batch_size, drop_last=True)
 
+    if args.three_dim_multicam is False:
+        collate_fn = utils.collate_fn
+    else:
+        collate_fn = utils.multicam_collate_fn
+
     data_loader_train = DataLoader(
         dataset_train,
         batch_sampler=batch_sampler_train,
-        collate_fn=utils.collate_fn,
+        collate_fn=collate_fn,
         num_workers=args.num_workers)
     data_loader_val = DataLoader(
         dataset_val, args.batch_size,
         sampler=sampler_val,
         drop_last=False,
-        collate_fn=utils.collate_fn,
+        collate_fn=collate_fn,
         num_workers=args.num_workers)
 
     best_val_stats = None
