@@ -14,6 +14,9 @@ Still, we reuse the `_create_coco_files` function from
 NOTE: I filled the COCO "area" field with -1. This might cause problems in
 later in the training pipeline.
 
+I use np.float32 because the cv2 functions require this type. The imprecisions
+in the data most likely come from imprecisions in the camera calibrations.
+
 """
 from typing import List
 
