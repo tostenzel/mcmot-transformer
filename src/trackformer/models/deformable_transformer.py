@@ -24,9 +24,10 @@ class DeformableTransformer(nn.Module):
                  dropout=0.1, activation="relu", return_intermediate_dec=False,
                  num_feature_levels=4, dec_n_points=4,  enc_n_points=4,
                  two_stage=False, two_stage_num_proposals=300,
-                 multi_frame_attention_separate_encoder=False):
+                 multi_frame_attention_separate_encoder=False,
+                 three_dim_multicam=False):
         super().__init__()
-
+        self.three_dim_multicam = three_dim_multicam
         self.d_model = d_model
         self.nhead = nhead
         self.two_stage = two_stage
@@ -132,6 +133,9 @@ class DeformableTransformer(nn.Module):
 
     def forward(self, srcs, masks, pos_embeds, query_embed=None, targets=None):
         assert self.two_stage or query_embed is not None
+        if self.three_dim_multicam is True:
+            if targets is not None:
+                targets = [targets[0]]
 
         # prepare input for encoder
         src_flatten = []
@@ -139,6 +143,8 @@ class DeformableTransformer(nn.Module):
         lvl_pos_embed_flatten = []
         spatial_shapes = []
         for lvl, (src, mask, pos_embed) in enumerate(zip(srcs, masks, pos_embeds)):
+            #print("src shape", src.shape, "mask shape", mask.shape, "pos_embed shape", pos_embed.shape)
+            #print("token shape", src.shape)
             bs, c, h, w = src.shape
             spatial_shape = (h, w)
             spatial_shapes.append(spatial_shape)
@@ -438,6 +444,7 @@ def build_deforamble_transformer(args):
         num_feature_levels *= 2
 
     return DeformableTransformer(
+        three_dim_multicam=args.three_dim_multicam,
         d_model=args.hidden_dim,
         nhead=args.nheads,
         num_encoder_layers=args.enc_layers,

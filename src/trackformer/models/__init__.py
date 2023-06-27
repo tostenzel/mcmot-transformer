@@ -30,18 +30,21 @@ def build_model(args):
     matcher = build_matcher(args)
 
     detr_kwargs = {
+        'three_dim_multicam': args.three_dim_multicam,
         'backbone': backbone,
         'num_classes': num_classes - 1 if args.focal_loss else num_classes,
         'num_queries': args.num_queries,
         'aux_loss': args.aux_loss,
-        'overflow_boxes': args.overflow_boxes,
-}
+        'overflow_boxes': args.overflow_boxes
+    }
 
     tracking_kwargs = {
+        'three_dim_multicam': args.three_dim_multicam,
         'track_query_false_positive_prob': args.track_query_false_positive_prob,
         'track_query_false_negative_prob': args.track_query_false_negative_prob,
         'matcher': matcher,
-        'backprop_prev_frame': args.track_backprop_prev_frame,}
+        'backprop_prev_frame': args.track_backprop_prev_frame
+    }
 
     mask_kwargs = {
         'freeze_detr': args.freeze_detr}
@@ -49,6 +52,7 @@ def build_model(args):
     if args.deformable:
         transformer = build_deforamble_transformer(args)
 
+        detr_kwargs['three_dim_multicam'] = args.three_dim_multicam
         detr_kwargs['transformer'] = transformer
         detr_kwargs['num_feature_levels'] = args.num_feature_levels
         detr_kwargs['with_box_refine'] = args.with_box_refine
@@ -107,6 +111,7 @@ def build_model(args):
 
     criterion = SetCriterion(
         num_classes,
+        three_dim_multicam=args.three_dim_multicam,
         matcher=matcher,
         weight_dict=weight_dict,
         eos_coef=args.eos_coef,
@@ -115,7 +120,8 @@ def build_model(args):
         focal_alpha=args.focal_alpha,
         focal_gamma=args.focal_gamma,
         tracking=args.tracking,
-        track_query_false_positive_eos_weight=args.track_query_false_positive_eos_weight,)
+        track_query_false_positive_eos_weight=args.track_query_false_positive_eos_weight
+        )
     criterion.to(device)
 
     if args.focal_loss:

@@ -304,7 +304,7 @@ def collate_fn(batch):
 def multicam_collate_fn(batch):
     """Load different camera features from same period into batch slot.
     
-    Assumes batch_size=1
+    Assumes batch_size=1.
 
     """
     #---------------------------------------------------------------------------

@@ -202,9 +202,11 @@ def build_multicam_wildtrack(image_set, cam, args):
     img_folder = root / cam / split
     ann_file = root / cam /  f"annotations/{split}.json"
     #---------------------------------------------------------------------------
-
     transforms, norm_transforms = make_coco_transforms(
         image_set, args.img_transform, args.overflow_boxes)
+    # Tobias: Try to stop resizing stuff for harmonizing sizes b/w cams
+    # and easy data loading and merging b/w cams
+    transforms = None
 
     dataset = MOT(
         img_folder, ann_file, transforms, norm_transforms,

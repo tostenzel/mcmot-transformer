@@ -118,12 +118,16 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
 
     for i, (samples, targets) in enumerate(metric_logger.log_every(data_loader, epoch)):
         samples = samples.to(device)
+        # print("samples shape:", samples.tensors.shape)
         targets = [utils.nested_dict_to_device(t, device) for t in targets]
 
         # in order to be able to modify targets inside the forward call we need
         # to pass it through as torch.nn.parallel.DistributedDataParallel only
         # passes copies
         outputs, targets, *_ = model(samples, targets)
+
+        if args.three_dim_multicam is True:
+            targets = [targets[0]]
 
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
@@ -167,6 +171,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
                 results[0],
                 targets[0],
                 args.tracking)
+
+        print("iteration in epoch:", i, "DONE")
+
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
