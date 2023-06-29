@@ -27,6 +27,7 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
     rvec: torch.Tensor,
     tvec: torch.Tensor,
     camera_matrix: torch.Tensor,
+    device: str
 ) -> torch.Tensor:
     """Transforms N 3D cylinders to 2D bbox in COCO given camera calibration.
 
@@ -42,9 +43,20 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
         Shape: (N, 4)
 
     """
-    R = Rodrigues(rvec)
+
+    # Move tensors to the GPU device
+    cylinder = cylinder.to(device)
+    rvec = rvec.to(device)
+    tvec = tvec.to(device)
+    camera_matrix = camera_matrix.to(device)
+
+    R = Rodrigues(rvec).to(device)
     Ctilde = (-torch.matmul(R.T, tvec)).flatten()
-    X_foot = torch.stack([cylinder[:, 0], cylinder[:, 1], torch.zeros(cylinder.shape[0])], dim=1)
+    X_foot = torch.stack([
+        cylinder[:, 0],
+        cylinder[:, 1],
+        torch.zeros(cylinder.shape[0]).to(device)
+        ], dim=1).to(device)
 
     X0_lowerright_corner_temp = _shift_2D_points_perpendicular(
         P1=X_foot[:, :2],
@@ -52,19 +64,18 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
         dist=cylinder[:, 3]
     )
 
-    #X0_lowerright_corner = torch.zeros_like(X0_lowerright_corner_temp)
-    #X0_lowerright_corner[:, :2] = X0_lowerright_corner_temp
     X0_lowerright_corner = torch.stack([
         X0_lowerright_corner_temp[:, 0],
         X0_lowerright_corner_temp[:, 1],
-        torch.zeros(cylinder.shape[0])
-        ], dim=1)
+        torch.zeros(cylinder.shape[0]).to(device)
+        ], dim=1).to(device)
 
     x0_lowerright_corner = projectPoints(
         X=X0_lowerright_corner,
         rvec=rvec,
         tvec=tvec,
-        camera_matrix=camera_matrix
+        camera_matrix=camera_matrix,
+        device=device
     )
 
     # MINUS radius
@@ -79,13 +90,14 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
         X0_lowerright_corner_temp[:, 1],
         cylinder[:, 2]
         ],
-        dim=1)
+        dim=1).to(device)
 
     x0_upperright_corner = projectPoints(
         X=X0_upperright_corner,
         rvec=rvec,
         tvec=tvec,
-        camera_matrix=camera_matrix
+        camera_matrix=camera_matrix,
+        device=device
     )
 
     # see convert_wildtrack_to_coco_bbox in wildtrack_shared.py
@@ -100,7 +112,7 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
     #---------------------------------------------------------------------------
     # Conditions if a cylinder is not visible in the image of a camera
 
-    # xmin, ymin must be positive, height and width strichtly positive
+    # xmin, ymin must be positive, height and width strictly positive
     condition_1 = (bbox[:, 0] < 0) | (bbox[:, 1] < 0) | (bbox[:, 2] < 1) | (bbox[:, 3] < 1)
     # xmin or xmin + width > W
     condition_2 = bbox[:, 0] + bbox[:, 2] > W
@@ -111,7 +123,7 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
     violated = torch.any(torch.stack([condition_1, condition_2, condition_3], dim=1), dim=1)
 
     # Set rows to (-1, -1, -1, -1) where conditions are violated
-    bbox = torch.where(violated.unsqueeze(1), torch.tensor([-1, -1, -1, -1], dtype=torch.float32), bbox)
+    bbox = torch.where(violated.unsqueeze(1), torch.tensor([-1., -1., -1., -1.], dtype=torch.float32).to(device), bbox)
     #---------------------------------------------------------------------------
 
     return torch.round(bbox)
@@ -129,7 +141,6 @@ def convert_wildtrack_to_coco_bbox(xmax, xmin, ymax, ymin):
     width = xmax - xmin
     height_box = ymax - ymin
     return x, y, width, height_box
-
 
 
 def _shift_2D_points_perpendicular(
@@ -173,12 +184,12 @@ def _shift_2D_points_perpendicular(
     return new_P1
 
 
-
 def projectPoints(
     X: torch.Tensor,
     rvec: torch.Tensor,
     tvec: torch.Tensor,
-    camera_matrix: torch.Tensor
+    camera_matrix: torch.Tensor,
+    device
 ) -> torch.Tensor:
     """Project 3D points onto the image plane similar to cv2.projectPoints.
 
@@ -187,23 +198,24 @@ def projectPoints(
         rvec: Camera rotation vector (extrinsic parameters). Shape: (3, 1).
         tvec: Camera translation vector (extrinsic parameters). Shape: (3, 1).
         camera_matrix: Camera matrix (intrinsic parameters). Shape: (3, 3).
+        device: device (lol)
 
     Returns:
         Projected 2D points on the image plane. Shape: (N, 2), where N is the number of points.
 
     """
     # Create homogeneous representations of the 3D points
-    X_homo = torch.ones((X.shape[0], 4), dtype=torch.float32)
+    X_homo = torch.ones((X.shape[0], 4), dtype=torch.float32).to(device)
     X_homo[:, :3] = X
 
     # Convert the rotation vector to a rotation matrix
-    R = Rodrigues(rvec)
+    R = Rodrigues(rvec).to(device)
 
     # Concatenate the rotation matrix and translation vector
     Rt_inhomo = torch.cat((R, tvec), dim=1)
 
     # Compute the projection matrix
-    P = camera_matrix @ Rt_inhomo
+    P = (camera_matrix @ Rt_inhomo).to(device)
 
     # Project the points onto the image plane
     x_homo = torch.matmul(X_homo, P.t())

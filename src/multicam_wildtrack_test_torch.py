@@ -68,8 +68,8 @@ true_X_foot_np = decode_3D_cylinder_center(positionID)
 true_X_foot = torch.from_numpy(true_X_foot_np).reshape((1,3))
 stacked_X_foot = torch.cat([true_X_foot, true_X_foot], dim=0)
 
-x = projectPoints(true_X_foot, rvec0, tvec0, camera_matrix0)
-stacked_x = projectPoints(stacked_X_foot, rvec0, tvec0, camera_matrix0)
+x = projectPoints(true_X_foot, rvec0, tvec0, camera_matrix0, device="cpu")
+stacked_x = projectPoints(stacked_X_foot, rvec0, tvec0, camera_matrix0, device="cpu")
 x_np, _ = cv2projectPoints(true_X_foot_np, rvec0_np, tvec0_np, camera_matrix0_np, None)
 
 torch.isclose(x, torch.from_numpy(x_np))
@@ -90,7 +90,7 @@ bbox0_np = convert_wildtrack_to_coco_bbox(**bbox0_np)
 bbox1_np = convert_wildtrack_to_coco_bbox(**bbox1_np)
 # why type conversion?
 bbox_stacked_np = np.vstack((bbox0_np, bbox1_np)).astype(np.float32)
-bbox_stacked = transform_3D_cylinder_to_2D_COCO_bbox_params(cyl_stacked, rvec0, tvec0, camera_matrix0)
+bbox_stacked = transform_3D_cylinder_to_2D_COCO_bbox_params(cyl_stacked, rvec0, tvec0, camera_matrix0, device="cpu")
 
 torch.equal(torch.from_numpy(bbox_stacked_np), bbox_stacked)
 
