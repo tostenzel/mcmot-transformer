@@ -15,41 +15,6 @@ import numpy as np
 from wildtrack_globals import INTRINSIC_CALIBRATION_FILES, \
     EXTRINSIC_CALIBRATION_FILES, SRC_CALIBRATION
 
-def load_opencv_xml(
-        filename: str,
-        element_name: str,
-        dtype: str='float32'
-) -> np.array:
-    """Loads particular element from a given OpenCV XML file.
-
-    Raises:
-        FileNotFoundError: the given file cannot be read/found
-        UnicodeDecodeError: if error occurs while decoding the file
-
-    Args:
-        filename: name of the OpenCV XML file
-        element_name: element in the file
-        dtype: type of element, default: 'float32'
-
-    Returns:
-        the value of the element_name
-
-    """
-    if not isfile(filename):
-        raise FileNotFoundError("File %s not found." % filename)
-    try:
-        tree = ElementTree.parse(filename)
-        rows = int(tree.find(element_name).find('rows').text)
-        cols = int(tree.find(element_name).find('cols').text)
-        return np.fromstring(
-            tree.find(element_name).find('data').text,
-            dtype,
-            count=rows*cols,
-            sep=' '
-        ).reshape((rows, cols))
-    except Exception:
-        raise UnicodeDecodeError('Error while decoding file %s.' % filename)
-
 
 def load_all_extrinsics() -> Tuple[np.array, np.array]:
     """Loads all the extrinsic files.
@@ -90,9 +55,45 @@ def load_all_intrinsics() -> Tuple[List[np.array], List[np.array]]:
     camera_matrices, distortion_coefficients = [], []
     for _file in INTRINSIC_CALIBRATION_FILES:
         camera_matrices.append(
-            load_opencv_xml(SRC_CALIBRATION + '/intrinsic_zero/' + _file, 'camera_matrix')
+            _load_opencv_xml(SRC_CALIBRATION + '/intrinsic_zero/' + _file, 'camera_matrix')
         )
         distortion_coefficients.append(
-            load_opencv_xml(SRC_CALIBRATION + '/intrinsic_zero/' + _file, 'distortion_coefficients')
+            _load_opencv_xml(SRC_CALIBRATION + '/intrinsic_zero/' + _file, 'distortion_coefficients')
             )
     return camera_matrices, distortion_coefficients
+
+
+def _load_opencv_xml(
+        filename: str,
+        element_name: str,
+        dtype: str='float32'
+) -> np.array:
+    """Loads particular element from a given OpenCV XML file.
+
+    Raises:
+        FileNotFoundError: the given file cannot be read/found
+        UnicodeDecodeError: if error occurs while decoding the file
+
+    Args:
+        filename: name of the OpenCV XML file
+        element_name: element in the file
+        dtype: type of element, default: 'float32'
+
+    Returns:
+        the value of the element_name
+
+    """
+    if not isfile(filename):
+        raise FileNotFoundError("File %s not found." % filename)
+    try:
+        tree = ElementTree.parse(filename)
+        rows = int(tree.find(element_name).find('rows').text)
+        cols = int(tree.find(element_name).find('cols').text)
+        return np.fromstring(
+            tree.find(element_name).find('data').text,
+            dtype,
+            count=rows*cols,
+            sep=' '
+        ).reshape((rows, cols))
+    except Exception:
+        raise UnicodeDecodeError('Error while decoding file %s.' % filename)
