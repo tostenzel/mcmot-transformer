@@ -193,8 +193,41 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
         delimiter="  ",
         debug=args.debug)
     metric_logger.add_meter('class_error', utils.SmoothedValue(window_size=1, fmt='{value:.2f}'))
+    
+    if args.three_dim_multicam is True:
+        # Load targets as COCO datasets
+        base_ds = get_coco_api_from_dataset(data_loader.dataset.datasets[0])
 
-    base_ds = get_coco_api_from_dataset(data_loader.dataset)
+        from multicam_wildtrack_torch_3D_to_2D import load_spec_intrinsics
+        from multicam_wildtrack_torch_3D_to_2D import load_spec_extrinsics
+        from multicam_wildtrack_torch_3D_to_2D import transform_3D_cylinder_to_2D_COCO_bbox_params as get_bbox
+
+        rvec, tvec = load_spec_extrinsics(view=0)
+        camera_matrix, _ = load_spec_intrinsics(view=0)
+        
+        for i in range(0, len(base_ds.anns)):
+            cyl = base_ds.anns[i]["bbox"]
+            bbox_coco = get_bbox(
+                torch.tensor(cyl).reshape((1, 4)),
+                rvec,
+                tvec,
+                camera_matrix,
+                device=args.device
+            )[0, :]
+            # if, bbox not in camera remove from list
+            if torch.equal(
+                bbox_coco,
+                torch.tensor([-1., -1., -1., -1.], dtype=torch.float32).to(device).reshape((1, 4))
+                ):
+                del base_ds.anns[i]
+                print(f"bbox {i} was deleted")
+            else:
+                # gives bbox xmin, ymin, width, height (origin upper left corner of img)
+                base_ds.anns[i]["bbox"] = bbox_coco.tolist()
+                base_ds.anns[i]["area"] = base_ds.anns[i]["bbox"][2] * base_ds.anns[i]["bbox"][3]
+    else:
+        base_ds = get_coco_api_from_dataset(data_loader.dataset)
+
     iou_types = tuple(k for k in ('bbox', 'segm') if k in postprocessors.keys())
     coco_evaluator = CocoEvaluator(base_ds, iou_types)
     # coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0, 0.1, 0.5, 0.75]
@@ -212,6 +245,9 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
         targets = [utils.nested_dict_to_device(t, device) for t in targets]
 
         outputs, targets, *_ = model(samples, targets)
+
+        if args.three_dim_multicam is True:
+            targets = [targets[0]]
 
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
@@ -239,6 +275,22 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
                 args.tracking)
         else:
             results_orig, _ = make_results(outputs, targets, postprocessors, args.tracking)
+
+        if args.three_dim_multicam is True:
+            # load 500 bbox propositions from model
+            cyl = results_orig[0]["boxes"]
+
+            # at the start, we get here only (-1, -1, -1, -1) for every bbox
+            # especially height appears to be always way too highwrong.
+            # probably due to pretraining on bounding boxes.
+            bbox_coco = get_bbox(
+                cyl,
+                rvec,
+                tvec,
+                camera_matrix,
+                device=args.device
+            )
+            results_orig[0]["boxes"] = bbox_coco
 
         # TODO. remove cocoDts from coco eval and change example results output
         if coco_evaluator is not None:
