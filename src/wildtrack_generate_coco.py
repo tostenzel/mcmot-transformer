@@ -178,15 +178,15 @@ def _create_annotations(
     """
     # It seems that all IDs have to start at 0 due to trackformer indexing
     if split == "train":
-        img_id_offset = c * glob.TRAIN_SEQ_LENGTH
+        seq_length = glob.TRAIN_SEQ_LENGTH
         seq_name_appendix = "-train"
     elif split =="test":
-        img_id_offset = c * glob.TEST_SEQ_LENGTH
+        seq_length = glob.TEST_SEQ_LENGTH
         seq_name_appendix = "-test"
     elif split == "val":
-        img_id_offset = c * glob.VAL_SEQ_LENGTH
+        seq_length = glob.VAL_SEQ_LENGTH
         seq_name_appendix = "-val"
-
+    img_id_offset = c * seq_length
     #annotation_id_offset = c * N_ANNOTATIONS
     img_id = 0
     ann_id = start_annotation_id#0#c * N_ANNOTATIONS
@@ -210,7 +210,7 @@ def _create_annotations(
             # see https://github.com/timmeinhardt/trackformer/issues/33#issuecomment-1105108004
             # Starts from 1 in MOT format
             "frame_id": img_id,
-            "seq_length": glob.TRAIN_SEQ_LENGTH,
+            "seq_length": seq_length,
             "first_frame_image_id": 0 + img_id_offset
         })
 
