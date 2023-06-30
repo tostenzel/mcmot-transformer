@@ -120,11 +120,11 @@ The multiple GPU part contains the command for generating the baseline results. 
 Follow up by opening another new terminal with activated environment and start the training process on a single GPU e.g. via
 
     CUDA_VISIBLE_DEVICES=0 python src/train.py with \
-        wildtrack_mot_crowdhuman \
+        wildtrack_only \
         deformable \
         multi_frame \
         tracking \
-        output_dir=models/test_wildtrack_only
+        output_dir=models/test_wildtrack_only %> log_wildtrack_only.txt
 
 Switch to the browser window and change environment to the name of the output directory from the previous command e.g. `models/mot17_deformable_multi_frame`
 
@@ -137,7 +137,7 @@ Again, open another new terminal with activated environment. Type
         deformable \
         multi_frame \
         tracking \
-        output_dir=models/baseline_wildtrack_mot_crowdhuman
+        output_dir=models/baseline_wildtrack_mot_crowdhuman &> log_wildtrack_mot_crowdhuman.txt
 
 
 ## Process management
