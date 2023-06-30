@@ -15,3 +15,5 @@ resume: models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth
 
 epochs: 100
 lr_drop: 10
+
+no_vis: false
