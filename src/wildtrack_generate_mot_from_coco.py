@@ -31,7 +31,7 @@ import skimage.io as io
 
 import wildtrack_globals as glob
 
-SRC_COCO_ANNOTATIONS = glob.ROOT + "/annotations"
+COCO_ROOT = glob.ROOT
 SPLITS_SEQ_LENGTH = {"test": glob.TEST_SEQ_LENGTH, "val": glob.VAL_SEQ_LENGTH}
 INI_DICT = {
     "name": "",
@@ -47,22 +47,22 @@ configparser = configparser.ConfigParser()
 configparser.optionxform = str
 
 
-def generate_mot_from_coco() -> None:
+def generate_mot_from_coco(coco_root: str=COCO_ROOT, multicam: bool=False) -> None:
     # We only need the validation data in MOT format for the evaluation code,
     # i.e. test and validation splits
     for split in ["test", "val"]:
 
-        _create_mot_dirs(split)
+        _create_mot_dirs(split, coco_root, multicam)
 
-        file = open(f"{SRC_COCO_ANNOTATIONS}/{split}.json")
+        file = open(f"{coco_root}/annotations/{split}.json")
         dataset_sequence = json.load(file)
 
-        _create_img_symlinks(split, dataset_sequence)
-        _create_ground_truth(split, dataset_sequence)
-        _create_seqinfo_ini_files(split)
+        _create_img_symlinks(split, dataset_sequence, coco_root)
+        _create_ground_truth(split, dataset_sequence, coco_root, multicam)
+        _create_seqinfo_ini_files(split, coco_root, multicam)
 
 
-def _create_mot_dirs(split):
+def _create_mot_dirs(split, coco_root, multicam):
     """Create directory structure.
 
 
@@ -76,11 +76,16 @@ def _create_mot_dirs(split):
             |--seqinfo.ini
         
     """
-    dir1 = f"{glob.ROOT}/mot-eval"
+    dir1 = f"{coco_root}/mot-eval"
     if os.path.isdir(dir1) is False:
         os.mkdir(dir1)
-    for seq in glob.SEQUENCE_IDS:
-        dir2 = f"{glob.ROOT}/mot-eval/{seq}-{split}"
+    if multicam is False:
+        seq_ids = glob.SEQUENCE_IDS
+    else:
+        seq_ids = [glob.SEQUENCE_IDS[0]]
+
+    for seq in seq_ids:
+        dir2 = f"{coco_root}/mot-eval/{seq}-{split}"
         # folder for .det and .ini files
         if os.path.isdir(dir2) is False:
             os.mkdir(dir2)
@@ -92,16 +97,16 @@ def _create_mot_dirs(split):
             os.mkdir(f"{dir2}/img1")
 
 
-def _create_img_symlinks(split, dataset_sequence) -> None:
+def _create_img_symlinks(split, dataset_sequence, coco_root) -> None:
     """Create image files in folder `img1` via symlink to the COCO folder."""
     images = dataset_sequence["images"]
 
     # create symlinks for images
     for img in images:
-        src = f"{glob.ROOT}/{split}/{img['file_name']}"
+        src = f"{coco_root}/{split}/{img['file_name']}"
         seq = img['file_name'].split('-')[0]
         dotjpg = img['file_name']
-        dst = f"{glob.ROOT}/mot-eval/{seq}-{split}/img1/{dotjpg}"
+        dst = f"{coco_root}/mot-eval/{seq}-{split}/img1/{dotjpg}"
         #if os.path.isfile(dst) is True:
         #    continue
         #    #print(f"{dst} already exists. Do not write file.")
@@ -113,7 +118,7 @@ def _create_img_symlinks(split, dataset_sequence) -> None:
             raise LookupError
 
 
-def _create_ground_truth(split, dataset_sequence) -> None:
+def _create_ground_truth(split, dataset_sequence, coco_root, multicam: bool=False) -> None:
     """Create gt.txt files for each sequence.
     
     These files contain annotations and bounding boxes
@@ -122,7 +127,11 @@ def _create_ground_truth(split, dataset_sequence) -> None:
     annotations = dataset_sequence["annotations"]
 
     gt_file_dict = {}
-    for seq in glob.SEQUENCE_IDS:
+    if multicam is False:
+        seq_ids = glob.SEQUENCE_IDS
+    else:
+        seq_ids = [glob.SEQUENCE_IDS[0]]
+    for seq in seq_ids:
         gt_file_dict[f"{seq}-{split}"] = []
 
     for ann in annotations:
@@ -148,14 +157,14 @@ def _create_ground_truth(split, dataset_sequence) -> None:
     for k in gt_file_dict.keys():
         gt_file_dict[k] = np.vstack(gt_file_dict[k]).astype(int)
 
-    for seq in glob.SEQUENCE_IDS:
+    for seq in seq_ids:
         # arr sorted by track id, then frame_id
         # see https://stackoverflow.com/questions/29352511/numpy-sort-ndarray-on-multiple-columns
         # pass col indices in reverse order
         sorted_arr = copy.deepcopy(gt_file_dict[f"{seq}-{split}"])
         sorted_arr = sorted_arr[np.lexsort((sorted_arr[:,0], sorted_arr[:,1]))]
         gt_file_dict[f"{seq}-{split}"] = sorted_arr
-        dir2 = f"{glob.ROOT}/mot-eval/{seq}-{split}"
+        dir2 = f"{coco_root}/mot-eval/{seq}-{split}"
         if os.path.isdir(dir2) is False:
             os.mkdir(dir2)
         # fmt="'%i'" for writing integers (avoiding many decimals for readability)
@@ -166,10 +175,15 @@ def _create_ground_truth(split, dataset_sequence) -> None:
         )
 
 
-def _create_seqinfo_ini_files(split) -> None:
+def _create_seqinfo_ini_files(split, coco_root, multicam: bool) -> None:
     """Create `seqinfo.ini`-files."""
-    for seq in glob.SEQUENCE_IDS:
-        dir2 = f"{glob.ROOT}/mot-eval/{seq}-{split}"
+    if multicam is False:
+        seq_ids = glob.SEQUENCE_IDS
+    else:
+        seq_ids = [glob.SEQUENCE_IDS[0]]
+
+    for seq in seq_ids:
+        dir2 = f"{coco_root}/mot-eval/{seq}-{split}"
 
         # write .ini
         #https://docs.python.org/3/library/configparser.html
