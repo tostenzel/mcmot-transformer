@@ -115,9 +115,9 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
     # xmin, ymin must be positive, height and width strictly positive
     condition_1 = (bbox[:, 0] < 0) | (bbox[:, 1] < 0) | (bbox[:, 2] < 1) | (bbox[:, 3] < 1)
     # xmin or xmin + width > W
-    condition_2 = bbox[:, 0] + bbox[:, 2] > W
+    condition_2 = bbox[:, 0] > W
     # ymin or ymin + height > H
-    condition_3 = bbox[:, 1] + bbox[:, 3] > H
+    condition_3 = bbox[:, 1] > H
 
     # Check if any condition is violated along the row dimension
     violated = torch.any(torch.stack([condition_1, condition_2, condition_3], dim=1), dim=1)
