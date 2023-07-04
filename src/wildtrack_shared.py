@@ -48,7 +48,8 @@ def check_coco_from_wildtrack(
         split: str = "train",
         write_path = "data/WILDTRACK/debug_coco_images",
         read_symlinked_symlinked_jpgs: bool = False,
-        num_img = 5
+        num_img = 5,
+        no_img_id_offset = False
     ) -> None:
     """Visualizes and stores generated COCO data.
 
@@ -97,6 +98,11 @@ def check_coco_from_wildtrack(
             img_id_offset = glob.TEST_SEQ_LENGTH
         elif split == "val":
             img_id_offset = glob.VAL_SEQ_LENGTH
+
+    if no_img_id_offset is True:
+        img_id_offset = 0
+    else:
+        pass
 
     for c in range(n_cams):
 
@@ -164,6 +170,8 @@ def check_coco_from_wildtrack(
                         bbox_annotation["area"] = w_box * h_box
                         cylinder_anns.append(bbox_annotation)
                 anns = cylinder_anns
+            else:
+                pass
 
             coco.showAnns(anns, draw_bbox=True)
             plt.savefig(f"{write_path}/debug_{file_name}")
