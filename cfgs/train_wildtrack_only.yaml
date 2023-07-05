@@ -22,3 +22,5 @@ epochs: 200
 lr_drop: 10
 
 no_vis: false
+device: cuda:3
+batch_size: 1
