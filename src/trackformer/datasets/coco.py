@@ -55,7 +55,6 @@ class CocoDetection(torchvision.datasets.CocoDetection):
                 'torch': torch.random.get_rng_state()}
             random.setstate(random_state['random'])
             torch.random.set_rng_state(random_state['torch'])
-
         img, target = super(CocoDetection, self).__getitem__(image_id)
         image_id = self.ids[image_id]
         target = {'image_id': image_id,
@@ -204,14 +203,17 @@ class ConvertCocoPolysToMask(object):
         anno = [obj for obj in anno if 'iscrowd' not in obj or obj['iscrowd'] == 0]
 
         boxes = [obj["bbox"] for obj in anno]
+        #-----------------------------------------------------------------------
+        # Tobias: Do not change boxes...
         # guard against no boxes via resizing
         boxes = torch.as_tensor(boxes, dtype=torch.float32).reshape(-1, 4)
         # x,y,w,h --> x,y,x,y
-        boxes[:, 2:] += boxes[:, :2]
-        if not self.overflow_boxes:
-            boxes[:, 0::2].clamp_(min=0, max=w)
-            boxes[:, 1::2].clamp_(min=0, max=h)
-
+        #print(f"orig. boxes: {boxes}")
+        #boxes[:, 2:] += boxes[:, :2]
+        #if not self.overflow_boxes:
+        #    boxes[:, 0::2].clamp_(min=0, max=w)
+        #    boxes[:, 1::2].clamp_(min=0, max=h)
+        #print(f"transformed boxes: {boxes}")        #-----------------------------------------------------------------------
         classes = [obj["category_id"] for obj in anno]
         classes = torch.tensor(classes, dtype=torch.int64)
 
@@ -226,15 +228,16 @@ class ConvertCocoPolysToMask(object):
             num_keypoints = keypoints.shape[0]
             if num_keypoints:
                 keypoints = keypoints.view(num_keypoints, -1, 3)
+        #-----------------------------------------------------------------------
+        # Tobias: Do not change boxes...
+        #keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
 
-        keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
-
-        boxes = boxes[keep]
-        classes = classes[keep]
+        boxes = boxes#[keep]
+        classes = classes#[keep]
         if self.return_masks:
-            masks = masks[keep]
+            masks = masks#[keep]
         if keypoints is not None:
-            keypoints = keypoints[keep]
+            keypoints = keypoints#[keep]
 
         target = {}
         target["boxes"] = boxes
@@ -248,7 +251,7 @@ class ConvertCocoPolysToMask(object):
 
         if anno and "track_id" in anno[0]:
             track_ids = torch.tensor([obj["track_id"] for obj in anno])
-            target["track_ids"] = track_ids[keep]
+            target["track_ids"] = track_ids#[keep]
         elif not len(boxes):
             target["track_ids"] = torch.empty(0)
 
@@ -257,9 +260,10 @@ class ConvertCocoPolysToMask(object):
         iscrowd = torch.tensor([obj["iscrowd"] if "iscrowd" in obj else 0 for obj in anno])
         ignore = torch.tensor([obj["ignore"] if "ignore" in obj else 0 for obj in anno])
 
-        target["area"] = area[keep]
-        target["iscrowd"] = iscrowd[keep]
-        target["ignore"] = ignore[keep]
+        target["area"] = area#[keep]
+        target["iscrowd"] = iscrowd#[keep]
+        target["ignore"] = ignore#[keep]
+        #-----------------------------------------------------------------------
 
         target["orig_size"] = torch.as_tensor([int(h), int(w)])
         target["size"] = torch.as_tensor([int(h), int(w)])

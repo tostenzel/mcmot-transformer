@@ -303,10 +303,14 @@ class SetCriterion(nn.Module):
         losses = {}
         losses['loss_bbox'] = loss_bbox.sum() / num_boxes
 
-        loss_giou = 1 - torch.diag(box_ops.generalized_box_iou(
-            box_ops.box_cxcywh_to_xyxy(src_boxes),
-            box_ops.box_cxcywh_to_xyxy(target_boxes)))
-        losses['loss_giou'] = loss_giou.sum() / num_boxes
+        #-----------------------------------------------------------------------
+        # Tobias: Remove GIoU, I fixed bbox formats anyway...
+        #loss_giou = 1 - torch.diag(box_ops.generalized_box_iou(
+        #    box_ops.box_cxcywh_to_xyxy(src_boxes),
+        #    box_ops.box_cxcywh_to_xyxy(target_boxes)))
+        #losses['loss_giou'] = loss_giou.sum() / num_boxes
+        #-----------------------------------------------------------------------
+
 
         # compute seperate track and object query losses
         # track_query_target_masks = []
@@ -447,12 +451,15 @@ class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
 
     def process_boxes(self, boxes, target_sizes):
+        #-----------------------------------------------------------------------
+        # Tobias: Do not process target boxes
         # convert to [x0, y0, x1, y1] format
-        boxes = box_ops.box_cxcywh_to_xyxy(boxes)
+        #boxes = box_ops.box_cxcywh_to_xyxy(boxes)
         # and from relative [0, 1] to absolute [0, height] coordinates
-        img_h, img_w = target_sizes.unbind(1)
-        scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
-        boxes = boxes * scale_fct[:, None, :]
+        #img_h, img_w = target_sizes.unbind(1)
+        #scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
+        #boxes = boxes * scale_fct[:, None, :]
+        #-----------------------------------------------------------------------
 
         return boxes
 
