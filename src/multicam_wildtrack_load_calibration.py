@@ -15,7 +15,7 @@ import numpy as np
 from wildtrack_globals import INTRINSIC_CALIBRATION_FILES, \
     EXTRINSIC_CALIBRATION_FILES, SRC_CALIBRATION
 
-def load_opencv_xml(
+def _load_opencv_xml(
         filename: str,
         element_name: str,
         dtype: str='float32'
@@ -90,9 +90,9 @@ def load_all_intrinsics() -> Tuple[List[np.array], List[np.array]]:
     camera_matrices, distortion_coefficients = [], []
     for _file in INTRINSIC_CALIBRATION_FILES:
         camera_matrices.append(
-            load_opencv_xml(SRC_CALIBRATION + '/intrinsic_zero/' + _file, 'camera_matrix')
+            _load_opencv_xml(SRC_CALIBRATION + '/intrinsic_zero/' + _file, 'camera_matrix')
         )
         distortion_coefficients.append(
-            load_opencv_xml(SRC_CALIBRATION + '/intrinsic_zero/' + _file, 'distortion_coefficients')
+            _load_opencv_xml(SRC_CALIBRATION + '/intrinsic_zero/' + _file, 'distortion_coefficients')
             )
     return camera_matrices, distortion_coefficients
