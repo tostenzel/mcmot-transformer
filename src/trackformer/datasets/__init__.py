@@ -9,7 +9,8 @@ from torchvision.datasets import CocoDetection
 
 from .coco import build as build_coco
 from .crowdhuman import build_crowdhuman
-from .mot import build_mot, build_mot_crowdhuman, build_mot_coco_person, build_wildtrack_mot_crowdhuman
+from .mot import build_mot, build_mot_crowdhuman, build_mot_coco_person
+from .mot import build_wildtrack_mot_crowdhuman, build_mot_less_transforms
 
 
 def get_coco_api_from_dataset(dataset: Subset) -> COCO:
@@ -36,6 +37,8 @@ def build_dataset(split: str, args: Namespace) -> Dataset:
         dataset = build_coco(split, args, 'person_keypoints')
     elif args.dataset == 'mot':
         dataset = build_mot(split, args)
+    elif args.dataset == 'mot_less_transforms':
+        dataset = build_mot_less_transforms(split, args)
     elif args.dataset == 'crowdhuman':
         dataset = build_crowdhuman(split, args)
     elif args.dataset == 'mot_crowdhuman':
