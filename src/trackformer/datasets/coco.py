@@ -81,8 +81,12 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
         if random_jitter:
             img, target = self._add_random_jitter(img, target)
+        #-----------------------------------------------------------------------
+        # Tobias: My potential change at bottom
         img, target = self._norm_transforms(img, target)
-
+        #if self._norm_transforms is not None:
+        #    img, target = self._norm_transforms(img, target)
+        #-----------------------------------------------------------------------
         return img, target
 
     # TODO: add to the transforms and merge norm_transforms into transforms
@@ -207,7 +211,11 @@ class ConvertCocoPolysToMask(object):
         # guard against no boxes via resizing
         boxes = torch.as_tensor(boxes, dtype=torch.float32).reshape(-1, 4)
         # x,y,w,h --> x,y,x,y
-        boxes[:, 2:] += boxes[:, :2]
+        #-----------------------------------------------------------------------
+        # Tobias: Turn off to keep cylinders
+
+        #boxes[:, 2:] += boxes[:, :2]
+        #-----------------------------------------------------------------------
         if not self.overflow_boxes:
             boxes[:, 0::2].clamp_(min=0, max=w)
             boxes[:, 1::2].clamp_(min=0, max=h)
@@ -227,14 +235,18 @@ class ConvertCocoPolysToMask(object):
             if num_keypoints:
                 keypoints = keypoints.view(num_keypoints, -1, 3)
 
-        keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
+        #-----------------------------------------------------------------------
+        # Tobias: Turn off to keep cylinders
+        #keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
 
-        boxes = boxes[keep]
-        classes = classes[keep]
-        if self.return_masks:
-            masks = masks[keep]
-        if keypoints is not None:
-            keypoints = keypoints[keep]
+        #boxes = boxes[keep]
+        #classes = classes[keep]
+        #if self.return_masks:
+        #    masks = masks[keep]
+        #if keypoints is not None:
+        #    keypoints = keypoints[keep]
+
+        #-----------------------------------------------------------------------
 
         target = {}
         target["boxes"] = boxes
@@ -248,7 +260,11 @@ class ConvertCocoPolysToMask(object):
 
         if anno and "track_id" in anno[0]:
             track_ids = torch.tensor([obj["track_id"] for obj in anno])
-            target["track_ids"] = track_ids[keep]
+            #-------------------------------------------------------------------
+            # Tobias: Turn off to keep cylinders
+
+            target["track_ids"] = track_ids#[keep]
+            #-------------------------------------------------------------------
         elif not len(boxes):
             target["track_ids"] = torch.empty(0)
 
@@ -257,9 +273,12 @@ class ConvertCocoPolysToMask(object):
         iscrowd = torch.tensor([obj["iscrowd"] if "iscrowd" in obj else 0 for obj in anno])
         ignore = torch.tensor([obj["ignore"] if "ignore" in obj else 0 for obj in anno])
 
-        target["area"] = area[keep]
-        target["iscrowd"] = iscrowd[keep]
-        target["ignore"] = ignore[keep]
+        #-------------------------------------------------------------------
+        # Tobias: Turn off to keep cylinders
+        target["area"] = area#[keep]
+        target["iscrowd"] = iscrowd#[keep]
+        target["ignore"] = ignore#[keep]
+        #-------------------------------------------------------------------
 
         target["orig_size"] = torch.as_tensor([int(h), int(w)])
         target["size"] = torch.as_tensor([int(h), int(w)])

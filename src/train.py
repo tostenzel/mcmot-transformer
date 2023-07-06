@@ -83,6 +83,7 @@ def train(args: Namespace) -> None:
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
 
+    # Tobias: attention: turn postprocessors off somehow
     model, criterion, postprocessors = build_model(args)
     model.to(device)
 
@@ -134,7 +135,11 @@ def train(args: Namespace) -> None:
         # sampler_train = DistributedSampler(dataset_train)
         sampler_val = DistributedSampler(dataset_val, shuffle=False)
     else:
-        sampler_train = torch.utils.data.RandomSampler(dataset_train)
+        if args.three_dim_multicam is True:
+            # start with image id 0 instead random id
+            sampler_train = torch.utils.data.SequentialSampler(dataset_train)
+        if args.three_dim_multicam is False:
+            sampler_train = torch.utils.data.RandomSampler(dataset_train)
         sampler_val = torch.utils.data.SequentialSampler(dataset_val)
 
     batch_sampler_train = torch.utils.data.BatchSampler(

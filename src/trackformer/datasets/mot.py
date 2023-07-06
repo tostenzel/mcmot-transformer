@@ -209,7 +209,10 @@ def build_multicam_wildtrack(image_set, cam, args):
     transforms = None
 
     dataset = MOT(
+        #-----------------------------------------------------------------------
+        # Tobias: Turn off to keep cylinders
         img_folder, ann_file, transforms, norm_transforms,
+        #-----------------------------------------------------------------------
         prev_frame_range=prev_frame_range,
         return_masks=args.masks,
         overflow_boxes=args.overflow_boxes,

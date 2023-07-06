@@ -21,4 +21,7 @@ resume: models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth
 epochs: 200
 lr_drop: 10
 
-no_vis: false
+no_vis: true
+batch_size: 1
+eval_only: false
+device: cuda

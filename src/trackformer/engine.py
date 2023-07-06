@@ -173,6 +173,16 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
                 args.tracking)
 
         print("iteration in epoch:", i, "DONE")
+        #torch.cuda.empty_cache()
+        #print("cache emptied")
+        #total = torch.cuda.get_device_properties(device=device).total_memory
+        #reserved = torch.cuda.memory_reserved(device=device)
+        #allocated = torch.cuda.memory_allocated(device=device)
+        #free = reserved - allocated
+        #print(
+        #    free, "/", total,
+        #    f" free / total memory on device {device})"
+        #)
 
 
     # gather the stats from all processes
@@ -195,36 +205,8 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
     metric_logger.add_meter('class_error', utils.SmoothedValue(window_size=1, fmt='{value:.2f}'))
     
     if args.three_dim_multicam is True:
-        # Load targets as COCO datasets
+        # Load targets as COCO datasets, coco targets are now in 2D already
         base_ds = get_coco_api_from_dataset(data_loader.dataset.datasets[0])
-
-        from multicam_wildtrack_torch_3D_to_2D import load_spec_intrinsics
-        from multicam_wildtrack_torch_3D_to_2D import load_spec_extrinsics
-        from multicam_wildtrack_torch_3D_to_2D import transform_3D_cylinder_to_2D_COCO_bbox_params as get_bbox
-
-        rvec, tvec = load_spec_extrinsics(view=0)
-        camera_matrix, _ = load_spec_intrinsics(view=0)
-        
-        for i in range(0, len(base_ds.anns)):
-            cyl = base_ds.anns[i]["bbox"]
-            bbox_coco = get_bbox(
-                torch.tensor(cyl).reshape((1, 4)),
-                rvec,
-                tvec,
-                camera_matrix,
-                device=args.device
-            )[0, :]
-            # if, bbox not in camera remove from list
-            if torch.equal(
-                bbox_coco,
-                torch.tensor([-1., -1., -1., -1.], dtype=torch.float32).to(device).reshape((1, 4))
-                ):
-                del base_ds.anns[i]
-                print(f"bbox {i} was deleted")
-            else:
-                # gives bbox xmin, ymin, width, height (origin upper left corner of img)
-                base_ds.anns[i]["bbox"] = bbox_coco.tolist()
-                base_ds.anns[i]["area"] = base_ds.anns[i]["bbox"][2] * base_ds.anns[i]["bbox"][3]
     else:
         base_ds = get_coco_api_from_dataset(data_loader.dataset)
 
@@ -240,15 +222,25 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
             output_dir=os.path.join(output_dir, "panoptic_eval"),
         )
 
+    # TOBIAS: Need to do this for all sequences for COCO
     for i, (samples, targets) in enumerate(metric_logger.log_every(data_loader, 'Test:')):
+        # here they use the MCMOT dataset. I need also the normal MOTS for the sequences as targets
+
+        # out loop get samples from MCMOT dataloader,
+        # inner loop from seven MOT dataloaders?
         samples = samples.to(device)
+        if args.three_dim_multicam is True:
+            targets = [targets[0]]
         targets = [utils.nested_dict_to_device(t, device) for t in targets]
 
+        # targets should be 2D here, outputs are 500 pred boxes
         outputs, targets, *_ = model(samples, targets)
 
         if args.three_dim_multicam is True:
             targets = [targets[0]]
-
+            # turn IoU loss component on termporarily, have to set it off afterwarsd
+            criterion.three_dim_multicam = False
+        # hm ok criterion is 3D style
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
 
@@ -346,7 +338,10 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
         ex.logger = logging.getLogger("submitit")
 
         # distribute evaluation of seqs to processes
-        seqs = data_loader.dataset.sequences
+        if args.three_dim_multicam is True:
+            seqs = data_loader.dataset.sequences
+        else:
+            seqs = data_loader.datasets
         seqs_per_rank = {i: [] for i in range(utils.get_world_size())}
         for i, seq in enumerate(seqs):
             rank = i % utils.get_world_size()

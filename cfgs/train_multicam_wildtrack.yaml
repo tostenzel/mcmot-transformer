@@ -19,13 +19,11 @@ dataset: multicam_mot_wildtrack # "mot" has to be in there for trackig ... see t
 train_split: train
 val_split: test
 
+# COCO paths
 mot_path_train: data/multicam_WILDTRACK
 #only one sequence at a time to make comparable to distribtion metrics?
+mot_path_val: data/multicam_WILDTRACK
 
-#-------------------------------------------------------------------------------
-# Use singlecam data for evaluation
-mot_path_val: data/WILDTRACK
-#-------------------------------------------------------------------------------
 
 
 # pre-trained detector/tracker
@@ -35,5 +33,5 @@ epochs: 200
 lr_drop: 10
 
 no_vis: true
-debug: true
-device: cuda:6
+debug: false
+device: cuda:3

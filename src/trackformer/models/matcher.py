@@ -96,7 +96,7 @@ class HungarianMatcher(nn.Module):
         cost_bbox = torch.cdist(out_bbox, tgt_bbox, p=1)
 
         # Compute the giou cost betwen boxes
-        if self.three_dim_multicam is False:
+        if self.three_dim_multicam is True:
             cost_giou = 0
         else:
             cost_giou = -generalized_box_iou(
