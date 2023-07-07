@@ -130,7 +130,10 @@ def train(args: Namespace) -> None:
         # sampler_train = DistributedSampler(dataset_train)
         sampler_val = DistributedSampler(dataset_val, shuffle=False)
     else:
-        sampler_train = torch.utils.data.RandomSampler(dataset_train)
+        #-----------------------------------------------------------------------
+        #sampler_train = torch.utils.data.RandomSampler(dataset_train)
+        sampler_train = torch.utils.data.SequentialSampler(dataset_train)
+        #-----------------------------------------------------------------------
         sampler_val = torch.utils.data.SequentialSampler(dataset_val)
 
     batch_sampler_train = torch.utils.data.BatchSampler(
