@@ -4,15 +4,15 @@ This dataset is a single-camera dataset with seven constructed in contrast to
 the original seven-identical-camera WILDTRACK dataset.
 Important related files are the original WILDTRACK dataset and
 `generate_coco_from_mot.py`.
-bbox in COCO format: (x,y,h,w),
+bbox in COCO format: (x,y,w,h),
  - x: number of pixels from the left image border to the (upper) left pixel
  - y: number of pixel from the top image border the to the upper (left) pixel
- - h: height of bbox
  - w: width of bbox
+ - h: height of bbox
 Thus, (x,y) are the coordinates of the top left corner of the bbox viewed from
-an origin at the top left corner of the image.
+an origin at the top left corner of the image, i.e. (xmin, ymin).
 Apparently, WILDTRACK has (xmin, ymin, xmax, ymax) with origin at the top left
-left corner. This means (x,y) = (W-xmax, H-ymax).This
+left corner. This means (x,y) = (W-xmax, H-ymax) = (xmax-w, ymax-h).This
 [line](https://github.com/Chavdarova/WILDTRACK-toolkit/blob/master/annotations_viewer.py#L314) indicates the point.
 We do not need 1-indexing like Eval modules and MOT format.
 `generat_coco_from_mot.py` does also use 0-indexing.
