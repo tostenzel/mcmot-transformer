@@ -163,13 +163,10 @@ def build_mot(image_set, args):
 
 
 def build_mot_less_transforms(image_set, args):
-    """Create DataLoader that only normalizes the image.
+    """Create DataLoader that only normalizes the image and scales the targets.
     
-    The target bbox values at index 2 and 3 in the original trackformer version
-    are still transformed during training for fitting some model or API.
-    
+    Important part in the call of `make_coco_transforms`.
     """
-    # only normalize input
     if image_set == 'train':
         root = Path(args.mot_path_train)
         prev_frame_rnd_augs = args.track_prev_frame_rnd_augs
@@ -188,6 +185,7 @@ def build_mot_less_transforms(image_set, args):
     img_folder = root / split
     ann_file = root / f"annotations/{split}.json"
 
+    # important part: `less_transforms=True`
     _, norm_transforms = make_coco_transforms(
         image_set=image_set,
         img_transform=None,
