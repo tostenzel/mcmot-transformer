@@ -29,6 +29,13 @@ def prevent_empty_bboxes(boxes: torch.Tensor):
     boxes = bbox_xyxy_to_wywh(boxes)
     return boxes
 
+def three_dim_box_xywh_to_xyxy(x):
+    xmin, ymin, w, h = x.unbind(-1)
+    b = [(xmin), (ymin),
+         (xmin + w), (ymin + h)]
+    return torch.stack(b, dim=-1)
+
+
 
 def bbox_xywh_to_xyxy(boxes: torch.Tensor):
     """1st target transform."""
