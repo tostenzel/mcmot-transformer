@@ -192,7 +192,7 @@ def build_mot_less_transforms(image_set, args):
         image_set=image_set,
         img_transform=None,
         overflow_boxes=False,
-        transform_input_only=True
+        less_transforms=True
     )
 
     dataset = MOT(

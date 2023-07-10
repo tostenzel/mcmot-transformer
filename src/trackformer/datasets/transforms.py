@@ -473,7 +473,7 @@ class Normalize:
         return image, target
 
 
-class NormalizeInputOnly:
+class NormalizeInputAndScaleTargetsOnly:
     def __init__(self, mean, std):
         self.mean = mean
         self.std = std
