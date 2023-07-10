@@ -93,6 +93,8 @@ class HungarianMatcher(nn.Module):
         cost_bbox = torch.cdist(out_bbox, tgt_bbox, p=1)
 
         #-----------------------------------------------------------------------
+        # TOBIAS: I do not use the GIoU b/c I plan to train on cylinders
+
         # Compute the giou cost betwen boxes
         #cost_giou = -generalized_box_iou(
         #    box_cxcywh_to_xyxy(out_bbox),
