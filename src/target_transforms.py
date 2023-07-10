@@ -1,49 +1,47 @@
-"""These are transformations necessary for evaluation.
+"""Transformations for different bbox data formats in Trackformer.
 
-Trackformer trains on x_center/W, y_center/H, w/W. h/H
+Trackformer trains on x_center/W, y_center/H, w/W h/H.
+and evaluates on xmin, ymin, xmax, ymax.
 
-Thus, the input transformation on the data is
-(xmin, ymin, w, h) -> (x_center/W, y_center/H, w/W, h/H)
+It also prevents empty bboxes. I use the respective function in the modules
+that generate data.
 
-The idea is to not train in my data format, then transform the predicted
-data to trackformers bbox format in order to use trackformers' eval methods
-w/o changes.
+I need to match the evaluation format and test whether I can train on
+x_min/W, y_min/H, w/W h/H.
 
 """
 from wildtrack_globals import W, H
 import torch
 
 
-
 def prevent_empty_bboxes(boxes: torch.Tensor):
-    """
-    
-    Done in preprocessing which I turned off
-    """
-
-    # x,y,w,h --> x,y,x,y
     boxes = bbox_xywh_to_xyxy(boxes)
     boxes[:, 0::2].clamp_(min=0, max=W)
     boxes[:, 1::2].clamp_(min=0, max=H)
-    # x,y,x,y --> x,y,w,h
     boxes = bbox_xyxy_to_wywh(boxes)
     return boxes
 
-def three_dim_box_xywh_to_xyxy(x):
+def clamp_x(x: float):
+    min_value = 0
+    max_value = W
+    return max(min_value, min(x, max_value))
+
+def clamp_y(y: float):
+    min_value = 0
+    max_value = H
+    return max(min_value, min(y, max_value))
+
+
+def bbox_xywh_to_xyxy(x):
     xmin, ymin, w, h = x.unbind(-1)
+    # boxes[:, 2:] += boxes[:, :2]
     b = [(xmin), (ymin),
          (xmin + w), (ymin + h)]
     return torch.stack(b, dim=-1)
 
 
-
-def bbox_xywh_to_xyxy(boxes: torch.Tensor):
-    """1st target transform."""
-    # target transform in coco.py
-    #x _min, y_min, w, h --> x_min, y_min, x_max, y_max
-    boxes[:, 2:] += boxes[:, :2]
-    return boxes
-
+#-------------------------------------------------------------------------------
+# Unused copies from trackformer/util/box_ops.py
 
 def bbox_xyxy_to_wywh(boxes: torch.Tensor):
     boxes[:, 2:] -= boxes[:, :2]
@@ -89,3 +87,5 @@ def _box_cxcywh_to_xyxy(x):
     b = [(x_c - 0.5 * w), (y_c - 0.5 * h),
          (x_c + 0.5 * w), (y_c + 0.5 * h)]
     return torch.stack(b, dim=-1)
+
+#-------------------------------------------------------------------------------

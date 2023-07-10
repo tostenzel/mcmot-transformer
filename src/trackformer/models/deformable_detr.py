@@ -21,7 +21,7 @@ from ..util import box_ops
 from ..util.misc import NestedTensor, inverse_sigmoid, nested_tensor_from_tensor_list
 from .detr import DETR, PostProcess, SetCriterion
 
-from target_transforms import three_dim_box_xywh_to_xyxy
+from target_transforms import bbox_xywh_to_xyxy
 
 
 def _get_clones(module, N):
@@ -318,10 +318,10 @@ class DeformablePostProcess(PostProcess):
         scores, labels = prob.max(-1)
         # scores, labels = prob[..., 0:1].max(-1)
         #-----------------------------------------------------------------------
+        # TOBIAS: I train on xywh (not cxcy) but need xyxy for eval 
         boxes = out_bbox
         #boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
-        # Tobias I train on xywh (not cyxy) but need xyxy for eval 
-        boxes = three_dim_box_xywh_to_xyxy(out_bbox)
+        boxes = bbox_xywh_to_xyxy(out_bbox)
 
         # and from relative [0, 1] to absolute [0, height] coordinates
         img_h, img_w = target_sizes.unbind(1)
