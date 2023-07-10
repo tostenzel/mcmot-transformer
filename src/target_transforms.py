@@ -21,10 +21,12 @@ def prevent_empty_bboxes(boxes: torch.Tensor):
     boxes = bbox_xyxy_to_wywh(boxes)
     return boxes
 
+
 def clamp_x(x: float):
     min_value = 0
     max_value = W
     return max(min_value, min(x, max_value))
+
 
 def clamp_y(y: float):
     min_value = 0
