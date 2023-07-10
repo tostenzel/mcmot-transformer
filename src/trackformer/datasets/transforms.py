@@ -483,7 +483,7 @@ class NormalizeInputOnly:
         if target is None:
             return image, None
         #-----------------------------------------------------------------------
-        # Tobias: Do not normalize the target, perhaps 3D cylinders
+        # TOBIAS: train on (xmin/W, ymin/H, w/W, h/H)
         target = target.copy()
         h, w = image.shape[-2:]
         if "boxes" in target:
