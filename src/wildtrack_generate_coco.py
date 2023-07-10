@@ -25,6 +25,7 @@ import json
 import os
 from PIL import Image
 
+import torch
 import tqdm
 
 import wildtrack_globals as glob
@@ -33,6 +34,7 @@ from wildtrack_shared import check_coco_from_wildtrack
 from wildtrack_shared import validate_jpgs
 from wildtrack_shared import flatten_listoflists
 from wildtrack_shared import COCO_BASE_DICT
+from target_transforms import prevent_empty_bboxes
 
 
 # WILDTRACK format (7 cameras, one frame size, one sequence length)
@@ -221,13 +223,16 @@ def _create_annotations(
             "xmin"], instance["views"][c]["ymin"]
             if not (xmax == -1 or ymax == -1 or xmin == -1 or ymin == 1):
                 x, y, w_box, h_box = convert_wildtrack_to_coco_bbox(xmax, xmin, ymax, ymin)
+                bbox = prevent_empty_bboxes(
+                    torch.tensor([x, y, w_box, h_box]).reshape((1, 4))
+                )
                 annotations.append({
                     "id": ann_id,# + annotation_id_offset,
                     "bbox": [
-                        int(round(x)),
-                        int(round(y)),
-                        int(round(w_box)),
-                        int(round(h_box))
+                        int(round(bbox[0, 0].item())),
+                        int(round(bbox[0, 1].item())),
+                        int(round(bbox[0, 2].item())),
+                        int(round(bbox[0, 3].item()))
                         ],
                     "image_id": img_id + img_id_offset, #+ val_img_id_offset,
                     "segmentation": [],
