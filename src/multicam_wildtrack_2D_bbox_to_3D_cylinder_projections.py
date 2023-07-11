@@ -14,7 +14,7 @@ from numpy.linalg import inv#, pinv
 from scipy.stats import norm
 
 from wildtrack_globals import CM_TO_3D_WORLD
-from target_transforms import clamp_x, clamp_y
+from target_bbox_transforms import clamp_x, clamp_y
 
 
 # Parameters used for generating points used to fit the cylinder height

@@ -21,7 +21,7 @@ from ..util import box_ops
 from ..util.misc import NestedTensor, inverse_sigmoid, nested_tensor_from_tensor_list
 from .detr import DETR, PostProcess, SetCriterion
 
-from target_transforms import bbox_xywh_to_xyxy
+from target_bbox_transforms import bbox_xywh_to_xyxy
 
 
 def _get_clones(module, N):

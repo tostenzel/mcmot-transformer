@@ -34,7 +34,7 @@ from wildtrack_shared import check_coco_from_wildtrack
 from wildtrack_shared import validate_jpgs
 from wildtrack_shared import flatten_listoflists
 from wildtrack_shared import COCO_BASE_DICT
-from target_transforms import prevent_empty_bboxes
+from target_bbox_transforms import prevent_empty_bboxes
 
 
 # WILDTRACK format (7 cameras, one frame size, one sequence length)

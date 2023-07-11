@@ -12,7 +12,7 @@ from visdom import Visdom
 
 from .util.plot_utils import fig_to_numpy
 
-from target_transforms import bbox_xywh_to_xyxy
+from target_bbox_transforms import bbox_xywh_to_xyxy
 
 logging.getLogger('visdom').setLevel(logging.CRITICAL)
 
