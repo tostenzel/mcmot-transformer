@@ -39,6 +39,8 @@ from wildtrack_generate_coco import _create_coco_files
 from wildtrack_shared import check_coco_from_wildtrack
 from wildtrack_shared import validate_jpgs
 from wildtrack_shared import COCO_BASE_DICT
+from target_transforms import prevent_empty_bboxes
+
 
 # Now destination paths inside cam folder
 for id_ in glob.SEQUENCE_IDS:
@@ -84,16 +86,26 @@ def generate_3D_coco_from_wildtrack() -> None:
     output_train_annotation = "train.json"
     output_test_annotation = "test.json"
     output_val_annotation = "val.json"
+    # analysis lists used to analyze how to best scale the cylinders to [0,1]^4
     for c in tqdm.tqdm(range(glob.N_CAMS)):
 
-        train_images, train_annotations, train_ann_id = _create_3D_annotations(
+        train_images, train_annotations, train_ann_id, train_analysis_list = _create_3D_annotations(
             train_annotation_files, c, "train", train_ann_id
             )
-        test_images, test_annotations, test_ann_id = _create_3D_annotations(
+        test_images, test_annotations, test_ann_id, test_analysis_list = _create_3D_annotations(
             test_annotation_files, c, "test", test_ann_id
             )
-        val_images, val_annotations, val_ann_id = _create_3D_annotations(
+        val_images, val_annotations, val_ann_id, val_analysis_list = _create_3D_annotations(
             val_annotation_files, c, "val", val_ann_id
+            )
+        
+        if c==0:
+            # only train data used
+            cylinder_analysis_array = np.vstack(train_analysis_list)
+            os.makedirs(f"{glob.MULTICAM_ROOT}/cylinder_analysis", exist_ok=True)           
+            np.save(
+                f"{glob.MULTICAM_ROOT}/cylinder_analysis/cylinder_analysis_array.npy",
+                cylinder_analysis_array
             )
 
         DEST_COCO_TRAIN = f"{glob.MULTICAM_ROOT}/{glob.SEQUENCE_IDS[c]}/train"
@@ -133,7 +145,8 @@ def _create_3D_annotations(
         ann_files: List[dict],
         c: int,
         split: str="train",
-        start_annotation_id: int = 0
+        start_annotation_id: int = 0,
+        create_analysis_list: bool = True
         ) -> tuple([List[dict], List[dict]]):
     """Creates annotations for every object on each image of a single-camera
     train, test or validation split.
@@ -160,6 +173,8 @@ def _create_3D_annotations(
     ann_id = start_annotation_id
     images = []
     annotations = []
+
+    analysis_list = []
     #---------------------------------------------------------------------------
     # 3d coordinates only in annoation of c0, separate folders and anns per seq
     if split == "train":
@@ -221,7 +236,16 @@ def _create_3D_annotations(
                         "seq": f"c{c}" + seq_name_appendix,
                         "track_id": instance["personID"]
                     })
-
+                    if create_analysis_list is True:
+                        analysis_list.append(
+                            np.array([
+                                cylinder_mean[0],
+                                cylinder_mean[1],
+                                cylinder_mean[2],
+                                cylinder_mean[3]
+                                ]
+                            )
+                        )
                     ann_id += 1
             img_id += 1
     #---------------------------------------------------------------------------
@@ -280,7 +304,7 @@ def _create_3D_annotations(
                 ann_id += 1
             img_id += 1
     #---------------------------------------------------------------------------
-    return images, annotations, ann_id
+    return images, annotations, ann_id, analysis_list
 
 
 if __name__ == "__main__":
