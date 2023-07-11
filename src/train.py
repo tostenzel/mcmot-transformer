@@ -131,6 +131,8 @@ def train(args: Namespace) -> None:
         sampler_val = DistributedSampler(dataset_val, shuffle=False)
     else:
         #-----------------------------------------------------------------------
+        # TOBIAS: Start training from the first image frame of the sequence, too
+
         #sampler_train = torch.utils.data.RandomSampler(dataset_train)
         sampler_train = torch.utils.data.SequentialSampler(dataset_train)
         #-----------------------------------------------------------------------
