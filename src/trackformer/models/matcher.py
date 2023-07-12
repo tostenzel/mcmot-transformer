@@ -19,7 +19,8 @@ class HungarianMatcher(nn.Module):
     """
 
     def __init__(self, cost_class: float = 1, cost_bbox: float = 1, cost_giou: float = 1,
-                 focal_loss: bool = False, focal_alpha: float = 0.25, focal_gamma: float = 2.0):
+                 focal_loss: bool = False, focal_alpha: float = 0.25, focal_gamma: float = 2.0,
+                 three_dim_multicam: bool = False):
         """Creates the matcher
 
         Params:
@@ -30,6 +31,7 @@ class HungarianMatcher(nn.Module):
                        matching cost
         """
         super().__init__()
+        self.three_dim_multicam = three_dim_multicam
         self.cost_class = cost_class
         self.cost_bbox = cost_bbox
         self.cost_giou = cost_giou
@@ -62,6 +64,7 @@ class HungarianMatcher(nn.Module):
             For each batch element, it holds:
                 len(index_i) = len(index_j) = min(num_queries, num_target_boxes)
         """
+        targets = [targets[0]]
         batch_size, num_queries = outputs["pred_logits"].shape[:2]
 
         # We flatten to compute the cost matrices in a batch
@@ -143,4 +146,5 @@ def build_matcher(args):
         cost_giou=args.set_cost_giou,
         focal_loss=args.focal_loss,
         focal_alpha=args.focal_alpha,
-        focal_gamma=args.focal_gamma,)
+        focal_gamma=args.focal_gamma,
+        three_dim_multicam=args.three_dim_multicam)

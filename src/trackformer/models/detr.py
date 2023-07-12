@@ -18,7 +18,7 @@ class DETR(nn.Module):
     """ This is the DETR module that performs object detection. """
 
     def __init__(self, backbone, transformer, num_classes, num_queries,
-                 aux_loss=False, overflow_boxes=False):
+                 aux_loss=False, overflow_boxes=False, three_dim_multicam=False):
         """ Initializes the model.
         Parameters:
             backbone: torch module of the backbone to be used. See backbone.py
@@ -113,7 +113,8 @@ class DETR(nn.Module):
 
         assert mask is not None
         hs, hs_without_norm, memory = self.transformer(
-            src, mask, query_embed, pos, tgt)
+            src, mask, query_embed, pos, tgt,
+            three_dim_multicam=self.three_dim_multicam)
 
         outputs_class = self.class_embed(hs)
         outputs_coord = self.bbox_embed(hs).sigmoid()
@@ -143,7 +144,8 @@ class SetCriterion(nn.Module):
         2) we supervise each pair of matched ground-truth / prediction (supervise class and box)
     """
     def __init__(self, num_classes, matcher, weight_dict, eos_coef, losses,
-                 focal_loss, focal_alpha, focal_gamma, tracking, track_query_false_positive_eos_weight):
+                 focal_loss, focal_alpha, focal_gamma, tracking, track_query_false_positive_eos_weight,
+                 three_dim_multicam):
         """ Create the criterion.
         Parameters:
             num_classes: number of object categories, omitting the special no-object category
@@ -155,6 +157,7 @@ class SetCriterion(nn.Module):
                     available losses.
         """
         super().__init__()
+        self.three_dim_multicam = three_dim_multicam
         self.num_classes = num_classes
         self.matcher = matcher
         self.weight_dict = weight_dict
@@ -173,6 +176,8 @@ class SetCriterion(nn.Module):
         """Classification loss (NLL)
         targets dicts must contain the key "labels" containing a tensor of dim [nb_target_boxes]
         """
+        if self.three_dim_multicam is True:
+            targets = [targets[0]]
         assert 'pred_logits' in outputs
         src_logits = outputs['pred_logits']
 
@@ -214,6 +219,8 @@ class SetCriterion(nn.Module):
         """Classification loss (NLL)
         targets dicts must contain the key "labels" containing a tensor of dim [nb_target_boxes]
         """
+        if self.three_dim_multicam is True:
+            targets = [targets[0]]
         assert 'pred_logits' in outputs
         src_logits = outputs['pred_logits']
 
@@ -278,6 +285,8 @@ class SetCriterion(nn.Module):
             predicted non-empty boxes. This is not really a loss, it is intended
             for logging purposes only. It doesn't propagate gradients
         """
+        if self.three_dim_multicam is True:
+            targets = [targets[0]]
         pred_logits = outputs['pred_logits']
         device = pred_logits.device
         tgt_lengths = torch.as_tensor([len(v["labels"]) for v in targets], device=device)
@@ -293,6 +302,8 @@ class SetCriterion(nn.Module):
            a tensor of dim [nb_target_boxes, 4]. The target boxes are expected in
            format (center_x, center_y, h, w), normalized by the image size.
         """
+        if self.three_dim_multicam is True:
+            targets = [targets[0]]
         assert 'pred_boxes' in outputs
         idx = self._get_src_permutation_idx(indices)
         src_boxes = outputs['pred_boxes'][idx]
@@ -342,6 +353,8 @@ class SetCriterion(nn.Module):
            targets dicts must contain the key "masks" containing a tensor of
            dim [nb_target_boxes, h, w]
         """
+        if self.three_dim_multicam is True:
+            targets = [targets[0]]
         assert "pred_masks" in outputs
 
         src_idx = self._get_src_permutation_idx(indices)
@@ -380,6 +393,8 @@ class SetCriterion(nn.Module):
         return batch_idx, tgt_idx
 
     def get_loss(self, loss, outputs, targets, indices, num_boxes, **kwargs):
+        if self.three_dim_multicam is True:
+            targets = [targets[0]]
         loss_map = {
             'labels': self.loss_labels_focal if self.focal_loss else self.loss_labels,
             'cardinality': self.loss_cardinality,
@@ -397,6 +412,8 @@ class SetCriterion(nn.Module):
                       The expected keys in each dict depends on the losses applied,
                       see each loss' doc
         """
+        if self.three_dim_multicam is True:
+            targets = [targets[0]]
         outputs_without_aux = {k: v for k, v in outputs.items() if k != 'aux_outputs'}
 
         # Retrieve the matching between the outputs of the last layer and the targets

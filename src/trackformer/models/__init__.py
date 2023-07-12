@@ -37,6 +37,7 @@ def build_model(args):
     matcher = build_matcher(args)
 
     detr_kwargs = {
+        'three_dim_multicam': args.three_dim_multicam,
         'backbone': backbone,
         'num_classes': num_classes - 1 if args.focal_loss else num_classes,
         'num_queries': args.num_queries,
@@ -44,6 +45,7 @@ def build_model(args):
         'overflow_boxes': args.overflow_boxes}
 
     tracking_kwargs = {
+        'three_dim_multicam': args.three_dim_multicam,
         'track_query_false_positive_prob': args.track_query_false_positive_prob,
         'track_query_false_negative_prob': args.track_query_false_negative_prob,
         'matcher': matcher,
@@ -55,6 +57,7 @@ def build_model(args):
     if args.deformable:
         transformer = build_deforamble_transformer(args)
 
+        detr_kwargs['three_dim_multicam'] = args.three_dim_multicam
         detr_kwargs['transformer'] = transformer
         detr_kwargs['num_feature_levels'] = args.num_feature_levels
         detr_kwargs['with_box_refine'] = args.with_box_refine
@@ -113,6 +116,7 @@ def build_model(args):
 
     criterion = SetCriterion(
         num_classes,
+        three_dim_multicam=args.three_dim_multicam,
         matcher=matcher,
         weight_dict=weight_dict,
         eos_coef=args.eos_coef,
