@@ -14,6 +14,61 @@ from wildtrack_globals import W, H
 import torch
 
 
+from wildtrack_globals import X_CENTER, Y_CENTER, HEIGHT, RADIUS
+
+MIN_VALS = [X_CENTER["min"], Y_CENTER["min"], HEIGHT["min"], RADIUS["min"]]
+MAX_VALS = [X_CENTER["max"], Y_CENTER["max"], HEIGHT["max"], RADIUS["max"]]
+
+
+def min_max_scaling(cylinders, min_vals=MIN_VALS, max_vals=MAX_VALS):
+    """
+    Apply min-max scaling to a torch.Tensor along the vertical axis with different
+    min and max values for each column.
+
+    Args:
+        cylinder (torch.Tensor): Input tensor of shape (N, 4).
+        min_vals (list or tuple): List or tuple of length 4 containing the minimum values
+                                  for each column.
+        max_vals (list or tuple): List or tuple of length 4 containing the maximum values
+                                  for each column.
+
+    Returns:
+        torch.Tensor: Scaled tensor of the same shape as the input tensor.
+    """
+    # Perform min-max scaling
+    scaled_tensor = (cylinders - torch.tensor(min_vals, dtype=cylinders.dtype, device=cylinders.device)) \
+                    / (torch.tensor(max_vals, dtype=cylinders.dtype, device=cylinders.device) \
+                       - torch.tensor(min_vals, dtype=cylinders.dtype, device=cylinders.device))
+
+    return scaled_tensor
+
+
+def inverse_min_max_scaling(scaled_tensor, min_vals=MIN_VALS, max_vals=MAX_VALS):
+    original_tensor = scaled_tensor * (torch.tensor(max_vals, dtype=scaled_tensor.dtype, device=scaled_tensor.device) \
+                                       - torch.tensor(min_vals, dtype=scaled_tensor.dtype, device=scaled_tensor.device)) \
+                      + torch.tensor(min_vals, dtype=scaled_tensor.dtype, device=scaled_tensor.device)
+
+    return original_tensor
+
+"""
+# test
+# Input tensor
+tensor = torch.tensor([[1.0, 2.0, 3.0, 4.0],
+                       [5.0, 6.0, 7.0, 8.0],
+                       [9.0, 10.0, 11.0, 12.0]])
+
+# Minimum and maximum values for each column
+min_vals_ = [0.0, 1.0, 2.0, 3.0]
+max_vals_ = [10.0, 20.0, 30.0, 40.0]
+
+# Apply min-max scaling
+scaled_tensor = min_max_scaling(tensor, min_vals_, max_vals_)
+original_tensor = inverse_min_max_scaling(scaled_tensor, min_vals_, max_vals_)
+
+print(tensor, scaled_tensor, original_tensor)
+"""
+
+
 def prevent_empty_bboxes(boxes: torch.Tensor):
     boxes = bbox_xywh_to_xyxy(boxes)
     boxes[:, 0::2].clamp_(min=0, max=W)
