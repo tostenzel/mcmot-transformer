@@ -196,47 +196,48 @@ def _create_3D_annotations(
                 "first_frame_image_id": 0# + img_id_offset
             })
             # generate object specific data (esp. 3D cylinders) only once.
-            if c == 0:
-                for instance in data:
-                    cylinder_list = []
-                    # always use max number of cameras because there may be some
-                    # empty cylinder_arrs that the code does not handle for now
-                    for cam in range(7):
-                        # only use data for the selected camera and not for all others,
-                        # where the same person is also visible
-                        xmax, ymax, xmin, ymin = instance["views"][cam]["xmax"], instance["views"][cam]["ymax"], instance["views"][cam][
-                        "xmin"], instance["views"][cam]["ymin"]
-                        if not (xmax == -1 or ymax == -1 or xmin == -1 or ymin == 1):
-                            #x = xmin
-                            #y = ymin
-                            #w_box = xmax - xmin
-                            #h_box = ymax - ymin
-                            cylinder = get_cylinder(instance["views"][cam], rvecs[cam], tvecs[cam], camera_matrices[cam])
-                            cylinder_arr = np.fromiter(cylinder.values(), dtype=float)
-                            cylinder_list.append(cylinder_arr)
-                        
-                    cylinder_mean = np.mean(cylinder_list, axis=0)
-                    cylinder_list = []
-                    annotations.append({
-                        "id": ann_id,# + annotation_id_offset,
-                        "bbox": [
-                            # rounding not here but in proction from 3D to 2D.
-                            cylinder_mean[0],
-                            cylinder_mean[1],
-                            cylinder_mean[2],
-                            cylinder_mean[3]
-                            ],
-                        "image_id": img_id,# + img_id_offset
-                        "segmentation": [],
-                        "visibility": 1.0,
-                        # "area": w_box * h_box,
-                        "area": -1,
-                        "category_id": 1,
-                        "iscrowd": 0,
-                        "seq": f"c{c}" + seq_name_appendix,
-                        "track_id": instance["personID"]
-                    })
-                    if create_analysis_list is True:
+            #if c == 0:
+            for instance in data:
+                cylinder_list = []
+                # always use max number of cameras because there may be some
+                # empty cylinder_arrs that the code does not handle for now
+                for cam in range(7):
+                    # only use data for the selected camera and not for all others,
+                    # where the same person is also visible
+                    xmax, ymax, xmin, ymin = instance["views"][cam]["xmax"], instance["views"][cam]["ymax"], instance["views"][cam][
+                    "xmin"], instance["views"][cam]["ymin"]
+                    if not (xmax == -1 or ymax == -1 or xmin == -1 or ymin == 1):
+                        #x = xmin
+                        #y = ymin
+                        #w_box = xmax - xmin
+                        #h_box = ymax - ymin
+                        cylinder = get_cylinder(instance["views"][cam], rvecs[cam], tvecs[cam], camera_matrices[cam])
+                        cylinder_arr = np.fromiter(cylinder.values(), dtype=float)
+                        cylinder_list.append(cylinder_arr)
+                    
+                cylinder_mean = np.mean(cylinder_list, axis=0)
+                cylinder_list = []
+                annotations.append({
+                    "id": ann_id,# + annotation_id_offset,
+                    "bbox": [
+                        # rounding not here but in proction from 3D to 2D.
+                        cylinder_mean[0],
+                        cylinder_mean[1],
+                        cylinder_mean[2],
+                        cylinder_mean[3]
+                        ],
+                    "image_id": img_id,# + img_id_offset
+                    "segmentation": [],
+                    "visibility": 1.0,
+                    # "area": w_box * h_box,
+                    "area": -1,
+                    "category_id": 1,
+                    "iscrowd": 0,
+                    "seq": f"c{c}" + seq_name_appendix,
+                    "track_id": instance["personID"]
+                })
+                if create_analysis_list is True:
+                    if c == 0:
                         analysis_list.append(
                             np.array([
                                 cylinder_mean[0],
@@ -246,7 +247,7 @@ def _create_3D_annotations(
                                 ]
                             )
                         )
-                    ann_id += 1
+                ann_id += 1
             img_id += 1
     #---------------------------------------------------------------------------
     # 2D coordinates in annotation of seq in separate folders
