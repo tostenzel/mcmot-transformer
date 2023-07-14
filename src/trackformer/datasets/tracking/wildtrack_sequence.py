@@ -52,7 +52,7 @@ class WILDTRACKSequence(Dataset):
         # Makes no sense, but try to run train.py...
         self._test_folders = os.listdir(os.path.join(self._data_dir, 'mot-eval'))
 
-        self.transforms = Compose(make_coco_transforms('test', img_transform, overflow_boxes=True))
+        self.transforms = Compose(make_coco_transforms('test', img_transform, less_transforms=True, overflow_boxes=True))
 
         self.data = []
         self.no_gt = True
