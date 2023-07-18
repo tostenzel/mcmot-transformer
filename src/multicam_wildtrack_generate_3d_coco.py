@@ -251,7 +251,7 @@ def _create_3D_annotations(
             img_id += 1
     #---------------------------------------------------------------------------
     # 2D coordinates in annotation of seq in separate folders
-    # straight copy from `wildtrack_generate_coco.py`` except img_id_offset       
+    # straight copy from `wildtrack_generate_coco.py` except img_id_offset       
     else:
         for ann_file in ann_files:
             data = json.load(open(glob.SRC_ANNS + "/" + ann_file, "r"))  # was .json
@@ -327,7 +327,6 @@ if __name__ == "__main__":
             three_dim_multicam=False,
             img_dir_path = f"{glob.MULTICAM_ROOT}/{id_}/val",
             write_path = f"{glob.MULTICAM_ROOT}/debug_coco_images",
-            # Fix to c0
             coco_annotations_path = f"{glob.MULTICAM_ROOT}/{id_}/annotations/val.json",
             num_img=5,
             no_img_id_offset=True
@@ -337,7 +336,6 @@ if __name__ == "__main__":
             three_dim_multicam=False,
             img_dir_path = f"{glob.MULTICAM_ROOT}/{id_}/test",
             write_path = f"{glob.MULTICAM_ROOT}/debug_coco_images",
-            # Fix to c0
             coco_annotations_path = f"{glob.MULTICAM_ROOT}/{id_}/annotations/test.json",
             num_img=5,
             no_img_id_offset=True
