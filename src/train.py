@@ -23,6 +23,9 @@ from trackformer.vis import build_visualizers
 from wildtrack_globals import SEQUENCE_IDS as WILDTRACK_SEQ_IDS
 
 
+# TOBIAS: for debugging
+torch.set_printoptions(sci_mode=False)
+
 ex = sacred.Experiment('train')
 ex.add_config('cfgs/train.yaml')
 ex.add_named_config('deformable', 'cfgs/train_deformable.yaml')
