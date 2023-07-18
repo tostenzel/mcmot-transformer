@@ -61,7 +61,13 @@ class HungarianMatcher(nn.Module):
                 - index_j is the indices of the corresponding selected targets (in order)
             For each batch element, it holds:
                 len(index_i) = len(index_j) = min(num_queries, num_target_boxes)
+                
         """
+        #-----------------------------------------------------------------------
+        # TOBIAS: Select only first target for MCMOT setting
+
+        targets = [targets[0]]
+        #-----------------------------------------------------------------------
         batch_size, num_queries = outputs["pred_logits"].shape[:2]
 
         # We flatten to compute the cost matrices in a batch

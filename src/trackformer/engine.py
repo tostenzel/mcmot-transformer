@@ -125,6 +125,12 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
         # passes copies
         outputs, targets, *_ = model(samples, targets)
 
+        #-----------------------------------------------------------------------
+        # TOBIAS: same cylinder target annotations only first tensor
+
+        targets = [targets[0]]
+        #-----------------------------------------------------------------------
+
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
         losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
@@ -168,7 +174,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
                 targets[0],
                 args.tracking)
             
-    print(f"Iter: {i}")
+        print(f"Train Iter: {i} \n")
+        print(f"Loss value: {loss_value} \n")
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
