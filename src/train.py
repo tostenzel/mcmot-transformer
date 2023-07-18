@@ -316,6 +316,10 @@ def train(args: Namespace) -> None:
 
         checkpoint_paths = [output_dir / 'checkpoint.pth']
 
+        #-----------------------------------------------------------------------
+        # TOBIAS: only train on this branch
+
+        """
         # VAL
         if epoch == 1 or not epoch % args.val_interval:
             val_stats, _ = evaluate(
@@ -358,6 +362,8 @@ def train(args: Namespace) -> None:
                     'vis_win_names': get_vis_win_names(visualizers),
                     'best_val_stats': best_val_stats
                 }, checkpoint_path)
+        """
+        #-----------------------------------------------------------------------
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
