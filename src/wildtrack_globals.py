@@ -65,3 +65,12 @@ INTRINSIC_CALIBRATION_FILES = [
     "intr_IDIAP3.xml"
 ]
 #-------------------------------------------------------------------------------
+
+# train cylinder stats with not enough values (REDO)
+
+X_CENTER = {"min": -305.0 ,"max": 907.0}
+Y_CENTER = {"min": -862.0 ,"max": 2479.0}
+HEIGHT = {"min": 173.0 ,"max": 178.6}
+RADIUS = {"min": 13.0,"max": 52.0}
+#-------------------------------------------------------------------------------
+
