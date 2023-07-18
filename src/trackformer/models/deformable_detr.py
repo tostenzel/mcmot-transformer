@@ -306,7 +306,7 @@ class DeformablePostProcess(PostProcess):
     """ This module converts the model's output into the format expected by the coco api"""
 
     @torch.no_grad()
-    def forward(self, outputs, target_sizes, view=0, results_mask=None):
+    def forward(self, outputs, target_sizes, view, results_mask=None):
         """ Perform the computation
         Parameters:
             outputs: raw outputs of the model
@@ -370,3 +370,19 @@ class DeformablePostProcess(PostProcess):
                     results[i][k] = v[mask]
 
         return results
+
+
+    @staticmethod
+    def process_boxes(boxes: torch.tensor, view: int):
+        boxes = inverse_min_max_scaling(boxes)
+        rvec, tvec = load_spec_extrinsics(view)
+        camera_matrix, _ = load_spec_intrinsics(view)
+        boxes = transform_3D_cylinder_to_2D_COCO_bbox_params(
+            cylinder=boxes,
+            rvec=rvec,
+            tvec=tvec,
+            camera_matrix=camera_matrix,
+            device=boxes.device
+        )
+        boxes = bbox_xywh_to_xyxy(boxes)
+        return boxes
