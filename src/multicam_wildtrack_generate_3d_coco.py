@@ -39,6 +39,8 @@ from wildtrack_generate_coco import _create_coco_files
 from wildtrack_shared import check_coco_from_wildtrack
 from wildtrack_shared import validate_jpgs
 from wildtrack_shared import COCO_BASE_DICT
+from target_transforms import prevent_empty_bboxes
+
 
 # Now destination paths inside cam folder
 for id_ in glob.SEQUENCE_IDS:
@@ -84,16 +86,26 @@ def generate_3D_coco_from_wildtrack() -> None:
     output_train_annotation = "train.json"
     output_test_annotation = "test.json"
     output_val_annotation = "val.json"
+    # analysis lists used to analyze how to best scale the cylinders to [0,1]^4
     for c in tqdm.tqdm(range(glob.N_CAMS)):
 
-        train_images, train_annotations, train_ann_id = _create_3D_annotations(
+        train_images, train_annotations, train_ann_id, train_analysis_list = _create_3D_annotations(
             train_annotation_files, c, "train", train_ann_id
             )
-        test_images, test_annotations, test_ann_id = _create_3D_annotations(
+        test_images, test_annotations, test_ann_id, test_analysis_list = _create_3D_annotations(
             test_annotation_files, c, "test", test_ann_id
             )
-        val_images, val_annotations, val_ann_id = _create_3D_annotations(
+        val_images, val_annotations, val_ann_id, val_analysis_list = _create_3D_annotations(
             val_annotation_files, c, "val", val_ann_id
+            )
+        
+        if c==0:
+            # only train data used
+            cylinder_analysis_array = np.vstack(train_analysis_list)
+            os.makedirs(f"{glob.MULTICAM_ROOT}/cylinder_analysis", exist_ok=True)           
+            np.save(
+                f"{glob.MULTICAM_ROOT}/cylinder_analysis/cylinder_analysis_array.npy",
+                cylinder_analysis_array
             )
 
         DEST_COCO_TRAIN = f"{glob.MULTICAM_ROOT}/{glob.SEQUENCE_IDS[c]}/train"
@@ -133,7 +145,8 @@ def _create_3D_annotations(
         ann_files: List[dict],
         c: int,
         split: str="train",
-        start_annotation_id: int = 0
+        start_annotation_id: int = 0,
+        create_analysis_list: bool = True
         ) -> tuple([List[dict], List[dict]]):
     """Creates annotations for every object on each image of a single-camera
     train, test or validation split.
@@ -160,6 +173,8 @@ def _create_3D_annotations(
     ann_id = start_annotation_id
     images = []
     annotations = []
+
+    analysis_list = []
     #---------------------------------------------------------------------------
     # 3d coordinates only in annoation of c0, separate folders and anns per seq
     if split == "train":
@@ -181,52 +196,62 @@ def _create_3D_annotations(
                 "first_frame_image_id": 0# + img_id_offset
             })
             # generate object specific data (esp. 3D cylinders) only once.
-            if c == 0:
-                for instance in data:
-                    cylinder_list = []
-                    # always use max number of cameras because there may be some
-                    # empty cylinder_arrs that the code does not handle for now
-                    for cam in range(7):
-                        # only use data for the selected camera and not for all others,
-                        # where the same person is also visible
-                        xmax, ymax, xmin, ymin = instance["views"][cam]["xmax"], instance["views"][cam]["ymax"], instance["views"][cam][
-                        "xmin"], instance["views"][cam]["ymin"]
-                        if not (xmax == -1 or ymax == -1 or xmin == -1 or ymin == 1):
-                            #x = xmin
-                            #y = ymin
-                            #w_box = xmax - xmin
-                            #h_box = ymax - ymin
-                            cylinder = get_cylinder(instance["views"][cam], rvecs[cam], tvecs[cam], camera_matrices[cam])
-                            cylinder_arr = np.fromiter(cylinder.values(), dtype=float)
-                            cylinder_list.append(cylinder_arr)
-                        
-                    cylinder_mean = np.mean(cylinder_list, axis=0)
-                    cylinder_list = []
-                    annotations.append({
-                        "id": ann_id,# + annotation_id_offset,
-                        "bbox": [
-                            # rounding not here but in proction from 3D to 2D.
-                            cylinder_mean[0],
-                            cylinder_mean[1],
-                            cylinder_mean[2],
-                            cylinder_mean[3]
-                            ],
-                        "image_id": img_id,# + img_id_offset
-                        "segmentation": [],
-                        "visibility": 1.0,
-                        # "area": w_box * h_box,
-                        "area": -1,
-                        "category_id": 1,
-                        "iscrowd": 0,
-                        "seq": f"c{c}" + seq_name_appendix,
-                        "track_id": instance["personID"]
-                    })
-
-                    ann_id += 1
+            #if c == 0:
+            for instance in data:
+                cylinder_list = []
+                # always use max number of cameras because there may be some
+                # empty cylinder_arrs that the code does not handle for now
+                for cam in range(7):
+                    # only use data for the selected camera and not for all others,
+                    # where the same person is also visible
+                    xmax, ymax, xmin, ymin = instance["views"][cam]["xmax"], instance["views"][cam]["ymax"], instance["views"][cam][
+                    "xmin"], instance["views"][cam]["ymin"]
+                    if not (xmax == -1 or ymax == -1 or xmin == -1 or ymin == 1):
+                        #x = xmin
+                        #y = ymin
+                        #w_box = xmax - xmin
+                        #h_box = ymax - ymin
+                        cylinder = get_cylinder(instance["views"][cam], rvecs[cam], tvecs[cam], camera_matrices[cam])
+                        cylinder_arr = np.fromiter(cylinder.values(), dtype=float)
+                        cylinder_list.append(cylinder_arr)
+                    
+                cylinder_mean = np.mean(cylinder_list, axis=0)
+                cylinder_list = []
+                annotations.append({
+                    "id": ann_id,# + annotation_id_offset,
+                    "bbox": [
+                        # rounding not here but in proction from 3D to 2D.
+                        cylinder_mean[0],
+                        cylinder_mean[1],
+                        cylinder_mean[2],
+                        cylinder_mean[3]
+                        ],
+                    "image_id": img_id,# + img_id_offset
+                    "segmentation": [],
+                    "visibility": 1.0,
+                    # "area": w_box * h_box,
+                    "area": -1,
+                    "category_id": 1,
+                    "iscrowd": 0,
+                    "seq": f"c{c}" + seq_name_appendix,
+                    "track_id": instance["personID"]
+                })
+                if create_analysis_list is True:
+                    if c == 0:
+                        analysis_list.append(
+                            np.array([
+                                cylinder_mean[0],
+                                cylinder_mean[1],
+                                cylinder_mean[2],
+                                cylinder_mean[3]
+                                ]
+                            )
+                        )
+                ann_id += 1
             img_id += 1
     #---------------------------------------------------------------------------
     # 2D coordinates in annotation of seq in separate folders
-    # straight copy from `wildtrack_generate_coco.py`` except img_id_offset       
+    # straight copy from `wildtrack_generate_coco.py` except img_id_offset       
     else:
         for ann_file in ann_files:
             data = json.load(open(glob.SRC_ANNS + "/" + ann_file, "r"))  # was .json
@@ -280,7 +305,7 @@ def _create_3D_annotations(
                 ann_id += 1
             img_id += 1
     #---------------------------------------------------------------------------
-    return images, annotations, ann_id
+    return images, annotations, ann_id, analysis_list
 
 
 if __name__ == "__main__":
@@ -302,7 +327,6 @@ if __name__ == "__main__":
             three_dim_multicam=False,
             img_dir_path = f"{glob.MULTICAM_ROOT}/{id_}/val",
             write_path = f"{glob.MULTICAM_ROOT}/debug_coco_images",
-            # Fix to c0
             coco_annotations_path = f"{glob.MULTICAM_ROOT}/{id_}/annotations/val.json",
             num_img=5,
             no_img_id_offset=True
@@ -312,12 +336,9 @@ if __name__ == "__main__":
             three_dim_multicam=False,
             img_dir_path = f"{glob.MULTICAM_ROOT}/{id_}/test",
             write_path = f"{glob.MULTICAM_ROOT}/debug_coco_images",
-            # Fix to c0
             coco_annotations_path = f"{glob.MULTICAM_ROOT}/{id_}/annotations/test.json",
             num_img=5,
             no_img_id_offset=True
         )
 
     validate_jpgs(multicam=True)
-
-    debug_point = ""

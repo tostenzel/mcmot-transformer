@@ -122,9 +122,8 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
     # Check if any condition is violated along the row dimension
     violated = torch.any(torch.stack([condition_1, condition_2, condition_3], dim=1), dim=1)
 
-    # Set rows to (-1, -1, -1, -1) where conditions are violated
-    bbox = torch.where(violated.unsqueeze(1), torch.tensor([-1., -1., -1., -1.], dtype=torch.float32).to(device), bbox)
-    #---------------------------------------------------------------------------
+    # Keep the rows that do not violate the conditions
+    bbox = bbox[~violated]
 
     return torch.round(bbox)
 
