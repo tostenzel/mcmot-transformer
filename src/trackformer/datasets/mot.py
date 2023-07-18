@@ -187,14 +187,25 @@ def build_mot_less_transforms(image_set, cam, args):
     ann_file = root / cam /  f"annotations/{split}.json"
      
     #---------------------------------------------------------------------------
-
+    # TOBIAS: Do not transform bbox targets AT ALL -> No loss computations on eval
     # important part: `less_transforms=True`
-    _, norm_transforms = make_coco_transforms(
-        image_set=image_set,
-        img_transform=None,
-        overflow_boxes=False,
-        less_transforms=True
-    )
+    if image_set == 'train':
+        _, norm_transforms = make_coco_transforms(
+            image_set=image_set,
+            train=True,
+            img_transform=None,
+            overflow_boxes=False,
+            less_transforms=True
+        )
+    if image_set == 'val':
+        _, norm_transforms = make_coco_transforms(
+            image_set=image_set,
+            train=False,
+            img_transform=None,
+            overflow_boxes=False,
+            less_transforms=True
+        )
+
 
     dataset = MOT(
         img_folder, ann_file, None, norm_transforms,

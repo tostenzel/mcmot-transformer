@@ -271,17 +271,23 @@ class ConvertCocoPolysToMask(object):
         return image, target
 
 
-def make_coco_transforms(image_set, img_transform=None, overflow_boxes=False, less_transforms=False):
+def make_coco_transforms(image_set, train: bool, img_transform=None, overflow_boxes=False, less_transforms=False):
     if less_transforms is False:
         normalize = T.Compose([
             T.ToTensor(),
             T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     else:
-        normalize = T.Compose([
-            T.ToTensor(),
-            T.NormalizeInputAndScaleTargetsOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
+        if train is True:
+            normalize = T.Compose([
+                T.ToTensor(),
+                T.NormalizeInputAndScaleTargetCylindersOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ])
+        else:
+            normalize = T.Compose([
+                T.ToTensor(),
+                T.NormalizeInputAndLeaveTargetBboxesOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ])
     
     #---------------------------------------------------------------------------
     # TOBIAS: Make sure this transformation is not applied
@@ -342,10 +348,23 @@ def build(image_set, args, mode='instances'):
 
     if image_set == 'train':
         prev_frame_rnd_augs = args.coco_and_crowdhuman_prev_frame_rnd_augs
+        transforms, norm_transforms = make_coco_transforms(
+            image_set,
+            train=True,
+            img_transform=args.img_transform,
+            overflow_boxes=args.overflow_boxes
+        )
+    
+    # TOBIAS: No min-max scaling on bbox data
     elif image_set == 'val':
         prev_frame_rnd_augs = 0.0
+        transforms, norm_transforms = make_coco_transforms(
+            image_set,
+            train=False,
+            img_transform=args.img_transform,
+            overflow_boxes=args.overflow_boxes
+        )
 
-    transforms, norm_transforms = make_coco_transforms(image_set, args.img_transform, args.overflow_boxes)
     img_folder, ann_file = splits[split]
     dataset = CocoDetection(
         img_folder, ann_file, transforms, norm_transforms,
