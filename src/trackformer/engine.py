@@ -20,8 +20,11 @@ from .util.box_ops import box_iou
 from .util.track_utils import evaluate_mot_accums
 from .vis import vis_results
 
+from target_transforms import bbox_xywh_to_xyxy
 
-def make_results(outputs, targets, postprocessors, tracking, return_only_orig=True):
+
+def make_results(outputs, targets, postprocessors, tracking, return_only_orig=True,
+                 eval: bool = False, view: int = bool):
     target_sizes = torch.stack([t["size"] for t in targets], dim=0)
     orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
 
@@ -47,8 +50,8 @@ def make_results(outputs, targets, postprocessors, tracking, return_only_orig=Tr
 
     results = None
     if not return_only_orig:
-        results = postprocessors['bbox'](outputs, target_sizes)
-    results_orig = postprocessors['bbox'](outputs, orig_target_sizes)
+        results = postprocessors['bbox'](outputs, target_sizes, view)
+    results_orig = postprocessors['bbox'](outputs, orig_target_sizes, view)
 
     if 'segm' in postprocessors:
         results_orig = postprocessors['segm'](
@@ -60,6 +63,9 @@ def make_results(outputs, targets, postprocessors, tracking, return_only_orig=Tr
     if results is None:
         return results_orig, results
 
+    #---------------------------------------------------------------------------
+    #
+
     for i, result in enumerate(results):
         target = targets[i]
         target_size = target_sizes[i].unsqueeze(dim=0)
@@ -67,23 +73,56 @@ def make_results(outputs, targets, postprocessors, tracking, return_only_orig=Tr
         result['target'] = {}
         result['boxes'] = result['boxes'].cpu()
 
-        # revert boxes for visualization
-        for key in ['boxes', 'track_query_boxes']:
-            if key in target:
-                target[key] = postprocessors['bbox'].process_boxes(
-                    target[key], target_size)[0].cpu()
+        # # revert boxes for visualization
+        # for key in ['boxes', 'track_query_boxes']:
+        #     if key in target:
+        #         target[key] = postprocessors['bbox'].process_boxes(
+        #             target[key], target_size)[0].cpu()
 
-        if tracking and 'prev_target' in target:
-            if 'prev_prev_target' in target:
-                target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
-                    target['prev_prev_target']['boxes'],
-                    target['prev_prev_target']['size'].unsqueeze(dim=0))[0].cpu()
+        # if tracking and 'prev_target' in target:
+        #     if 'prev_prev_target' in target:
+        #         target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
+        #             target['prev_prev_target']['boxes'],
+        #             target['prev_prev_target']['size'].unsqueeze(dim=0))[0].cpu()
 
-            target['prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
-                target['prev_target']['boxes'],
-                target['prev_target']['size'].unsqueeze(dim=0))[0].cpu()
+        #     target['prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
+        #         target['prev_target']['boxes'],
+        #         target['prev_target']['size'].unsqueeze(dim=0))[0].cpu()
+
+        # in training, we have to map cylinder targets to xyxy
+        if eval is False:
+
+            # revert boxes for visualization
+            for key in ['boxes', 'track_query_boxes']:
+                if key in target:
+                    target[key] = postprocessors['bbox'].process_boxes(target[key], view=0).cpu()
+
+            if tracking and 'prev_target' in target:
+                if 'prev_prev_target' in target:
+                    target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
+                        target['prev_prev_target']['boxes'], view=0).cpu()
+
+                target['prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
+                    target['prev_target']['boxes'], view=0).cpu()
+        
+        else:
+            # revert boxes for visualization
+            for key in ['boxes', 'track_query_boxes']:
+                if key in target:
+                    target[key] = bbox_xywh_to_xyxy(target[key]).cpu()
+
+            if tracking and 'prev_target' in target:
+                if 'prev_prev_target' in target:
+                    target['prev_prev_target']['boxes'] = bbox_xywh_to_xyxy(
+                        target['prev_prev_target']['boxes']).cpu()
+
+                target['prev_target']['boxes'] = bbox_xywh_to_xyxy(
+                    target['prev_target']['boxes']).cpu()
+
+    #---------------------------------------------------------------------------
 
             if 'track_query_match_ids' in target and len(target['track_query_match_ids']):
+                # TOBIAS: requires xyxy format
                 track_queries_iou, _ = box_iou(
                     target['boxes'][target['track_query_match_ids']],
                     result['boxes'])
@@ -128,6 +167,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
         if args.three_dim_multicam is True:
             targets = [targets[0]]
 
+        #print(targets[0]["boxes"])    
+
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
         losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
@@ -160,16 +201,23 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
         metric_logger.update(lr=optimizer.param_groups[0]["lr"],
                              lr_backbone=optimizer.param_groups[1]["lr"])
 
+        #-----------------------------------------------------------------------
+        # I train on cylinder data: Postprocessor has to project outputs AND
+        # targets to image of default view 0
+
+        # this also updates targets somehow...
         if visualizers and (i == 0 or not i % args.vis_and_log_interval):
             _, results = make_results(
-                outputs, targets, postprocessors, args.tracking, return_only_orig=False)
+                outputs, targets, postprocessors, args.tracking, return_only_orig=False, eval=False, view=0)
 
             vis_results(
                 visualizers['example_results'],
                 samples.unmasked_tensor(0),
                 results[0],
                 targets[0],
-                args.tracking)
+                args.tracking
+            )
+        #-----------------------------------------------------------------------
             
         print(f" Train Iter: {i}")
 
@@ -193,12 +241,12 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
     metric_logger.add_meter('class_error', utils.SmoothedValue(window_size=1, fmt='{value:.2f}'))
     #---------------------------------------------------------------------------
     # TODO: generalize the Detection eval stats to a mean over all sequences
-    initial_postprocess = postprocessors["bbox"]
+    #initial_postprocess = postprocessors["bbox"]
     for seq_index in range(len(data_loader.dataset.datasets)):
 
         #-------------------------------------------------------------------
-        from functools import partial
-        postprocessors["bbox"] = partial(postprocessors["bbox"], view=seq_index)
+        #from functools import partial
+        #postprocessors["bbox"] = partial(postprocessors["bbox"], view=seq_index)
         #-------------------------------------------------------------------
 
         base_ds = get_coco_api_from_dataset(data_loader.dataset.datasets[seq_index])
@@ -232,6 +280,8 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
             if args.three_dim_multicam is True:
                 # TOBIAS: Inputs targets at first and only index
                 targets = [targets[0]]
+
+            #print(targets[0]["boxes"])
             
             loss_dict = criterion(outputs, targets)
             weight_dict = criterion.weight_dict
@@ -247,19 +297,23 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
                                 **loss_dict_reduced_unscaled)
             metric_logger.update(class_error=loss_dict_reduced['class_error'])
 
-
+            #-------------------------------------------------------------------
+            # I evaluate cylinder model outputs on bbox targets in COCO,
+            # Need to only project cylinder outputs to respective image view
             if visualizers and (i == 0 or not i % args.vis_and_log_interval):
                 results_orig, results = make_results(
-                    outputs, targets, postprocessors, args.tracking, return_only_orig=False)
+                    outputs, targets, postprocessors, args.tracking, return_only_orig=False, eval=True, view=seq_index)
 
                 vis_results(
                     visualizers['example_results'],
                     samples.unmasked_tensor(0),
                     results[0],
                     targets[0],
-                    args.tracking)
+                    args.tracking
+                    )
             else:
-                results_orig, _ = make_results(outputs, targets, postprocessors, args.tracking)
+                results_orig, _ = make_results(outputs, targets, postprocessors, args.tracking, eval=True, view=seq_index)
+            #-------------------------------------------------------------------
 
             # TODO. remove cocoDts from coco eval and change example results output
             if coco_evaluator is not None:
@@ -313,7 +367,7 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
     # TRACK EVAL
 
     # TOBIAS: the view-dependent postprocessing will be set in `track.py`
-    postprocessors["bbox"] = initial_postprocess
+    #postprocessors["bbox"] = initial_postprocess
     if args.tracking and args.tracking_eval:
         stats['track_bbox'] = []
 
