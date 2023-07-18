@@ -4,15 +4,15 @@
 
 # starting point: `train_mot17_crowdhuman.yaml`
 # dataset-type
-dataset: mot_less_transforms # less preprocessing to prepare training on 3D data
+dataset: mcmot_less_transforms # less preprocessing to prepare training on 3D data
 # don't neet b/c dataset not of type mot_crowdhuman
 #crowdhuman_train_split: train_val
 train_split: train
 val_split: test
 
-mot_path_train: data/WILDTRACK
+mot_path_train: data/multicam_WILDTRACK
 #only one sequence at a time to make comparable to distribtion metrics?
-mot_path_val: data/WILDTRACK
+mot_path_val: data/multicam_WILDTRACK
 
 # pre-trained detector/tracker
 resume: models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth

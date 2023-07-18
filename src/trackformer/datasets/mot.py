@@ -162,7 +162,7 @@ def build_mot(image_set, args):
     return dataset
 
 
-def build_mot_less_transforms(image_set, args):
+def build_mot_less_transforms(image_set, cam, args):
     """Create DataLoader that only normalizes the image and scales the targets.
     
     Important part in the call of `make_coco_transforms`.
@@ -182,9 +182,13 @@ def build_mot_less_transforms(image_set, args):
 
     split = getattr(args, f"{image_set}_split")
 
-    img_folder = root / split
-    ann_file = root / f"annotations/{split}.json"
+    #---------------------------------------------------------------------------
+    # TOBIAS: Adjust COCO path for multicam settingwith camera-specific folders.
 
+    img_folder = root / cam / split
+    ann_file = root / cam /  f"annotations/{split}.json"
+     
+    #---------------------------------------------------------------------------
     # important part: `less_transforms=True`
     _, norm_transforms = make_coco_transforms(
         image_set=image_set,

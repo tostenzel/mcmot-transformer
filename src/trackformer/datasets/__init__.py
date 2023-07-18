@@ -10,6 +10,7 @@ from torchvision.datasets import CocoDetection
 from .coco import build as build_coco
 from .crowdhuman import build_crowdhuman
 from .mot import build_mot, build_mot_crowdhuman, build_mot_coco_person, build_wildtrack_mot_crowdhuman, build_mot_less_transforms
+from .mcmot import MCMOT
 
 
 def get_coco_api_from_dataset(dataset: Subset) -> COCO:
@@ -36,8 +37,23 @@ def build_dataset(split: str, args: Namespace) -> Dataset:
         dataset = build_coco(split, args, 'person_keypoints')
     elif args.dataset == 'mot':
         dataset = build_mot(split, args)
-    elif args.dataset == 'mot_less_transforms':
-        dataset = build_mot_less_transforms(split, args)
+    #---------------------------------------------------------------------------
+    # TOBIAS: build MCMOT from MOT with less input and other target transforms
+
+    elif args.dataset == 'mcmot_less_transforms':
+        
+        # get list of single-cam datasets here
+        singlecam_datasets = []
+
+        # build two-cam dataset that has the same training-relevant function signatures
+        # as the single-cam datasets but outputs data for two cameras
+        for cam in args.wildtrack_cam_ids:
+            singlecam_datasets.append(
+                build_mot_less_transforms(split, cam, args)
+            )
+
+        dataset = MCMOT(singlecam_datasets)
+    #---------------------------------------------------------------------------
     elif args.dataset == 'crowdhuman':
         dataset = build_crowdhuman(split, args)
     elif args.dataset == 'mot_crowdhuman':

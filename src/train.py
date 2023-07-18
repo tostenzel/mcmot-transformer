@@ -20,6 +20,9 @@ from trackformer.util.misc import nested_dict_to_namespace
 from trackformer.util.plot_utils import get_vis_win_names
 from trackformer.vis import build_visualizers
 
+from wildtrack_globals import SEQUENCE_IDS as WILDTRACK_SEQ_IDS
+
+
 ex = sacred.Experiment('train')
 ex.add_config('cfgs/train.yaml')
 ex.add_named_config('deformable', 'cfgs/train_deformable.yaml')
@@ -122,8 +125,12 @@ def train(args: Namespace) -> None:
 
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [args.lr_drop])
 
+    #---------------------------------------------------------------------------
+    # TOBIAS: inside function, loop over cams to build MCMOT dataset
+    args.wildtrack_cam_ids = WILDTRACK_SEQ_IDS
     dataset_train = build_dataset(split='train', args=args)
     dataset_val = build_dataset(split='val', args=args)
+    #---------------------------------------------------------------------------
 
     if args.distributed:
         sampler_train = utils.DistributedWeightedSampler(dataset_train)
@@ -141,17 +148,24 @@ def train(args: Namespace) -> None:
     batch_sampler_train = torch.utils.data.BatchSampler(
         sampler_train, args.batch_size, drop_last=True)
 
+    #---------------------------------------------------------------------------
+    # TOBIAS: load different camera features from same period into batch slot
+    collate_fn = utils.multicam_collate_fn
+
     data_loader_train = DataLoader(
         dataset_train,
         batch_sampler=batch_sampler_train,
-        collate_fn=utils.collate_fn,
+        #collate_fn=utils.collate_fn,
+        collate_fn=collate_fn,
         num_workers=args.num_workers)
     data_loader_val = DataLoader(
         dataset_val, args.batch_size,
         sampler=sampler_val,
         drop_last=False,
-        collate_fn=utils.collate_fn,
+        #collate_fn=utils.collate_fn,
+        collate_fn=collate_fn,
         num_workers=args.num_workers)
+    #---------------------------------------------------------------------------
 
     best_val_stats = None
     if args.resume:
