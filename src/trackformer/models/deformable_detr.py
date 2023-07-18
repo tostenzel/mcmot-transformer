@@ -142,6 +142,18 @@ class DeformableDETR(DETR):
             samples = nested_tensor_from_tensor_list(samples)
         features, pos = self.backbone(samples)
 
+        #-----------------------------------------------------------------------
+        # TOBIAS: move subsequent cam tokens from batch slot to width slot
+
+        for feat_map_idx in range(0, 4):
+            ts = features[feat_map_idx].tensors.shape
+            features[feat_map_idx].tensors = features[feat_map_idx].tensors.reshape(1, ts[1], ts[2], ts[3] * ts[0])
+            ms = features[feat_map_idx].mask.shape
+            features[feat_map_idx].mask = features[feat_map_idx].mask.reshape(1, ms[1], ms[2] * ms[0])
+            ps = pos[feat_map_idx].shape
+            pos[feat_map_idx] = pos[feat_map_idx].reshape(1, ps[1], ps[2], ps[3], ps[4] * ps[0])
+        #-----------------------------------------------------------------------
+
         features_all = features
         # pos_all = pos
         # return_layers = {"layer2": "0", "layer3": "1", "layer4": "2"}
