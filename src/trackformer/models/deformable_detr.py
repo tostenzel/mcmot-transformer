@@ -23,6 +23,11 @@ from .detr import DETR, PostProcess, SetCriterion
 
 from target_bbox_transforms import bbox_xywh_to_xyxy
 
+from target_transforms import inverse_min_max_scaling
+from multicam_wildtrack_torch_3D_to_2D import load_spec_extrinsics
+from multicam_wildtrack_torch_3D_to_2D import load_spec_intrinsics
+from multicam_wildtrack_torch_3D_to_2D import transform_3D_cylinder_to_2D_COCO_bbox_params
+
 
 def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
@@ -301,7 +306,7 @@ class DeformablePostProcess(PostProcess):
     """ This module converts the model's output into the format expected by the coco api"""
 
     @torch.no_grad()
-    def forward(self, outputs, target_sizes, results_mask=None):
+    def forward(self, outputs, target_sizes, view, results_mask=None):
         """ Perform the computation
         Parameters:
             outputs: raw outputs of the model
@@ -333,12 +338,28 @@ class DeformablePostProcess(PostProcess):
         # TOBIAS: I train on xywh (not cxcy) but need xyxy for eval 
         boxes = out_bbox
         #boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
-        boxes = bbox_xywh_to_xyxy(out_bbox)
+        #boxes = bbox_xywh_to_xyxy(out_bbox)
 
+        boxes = inverse_min_max_scaling(boxes)
+        rvec, tvec = load_spec_extrinsics(view)
+        camera_matrix, _ = load_spec_intrinsics(view)
+
+        # ignore batch dimension
+        boxes_reshaped = torch.squeeze(boxes, dim=0)
+        boxes_reshaped = transform_3D_cylinder_to_2D_COCO_bbox_params(
+            cylinder=boxes_reshaped,
+            rvec=rvec,
+            tvec=tvec,
+            camera_matrix=camera_matrix,
+            device=boxes.device
+        )
+        boxes = boxes_reshaped.unsqueeze(dim=0)
+
+        boxes = bbox_xywh_to_xyxy(boxes)
         # and from relative [0, 1] to absolute [0, height] coordinates
-        img_h, img_w = target_sizes.unbind(1)
-        scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
-        boxes = boxes * scale_fct[:, None, :]
+        #img_h, img_w = target_sizes.unbind(1)
+        #scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
+        #boxes = boxes * scale_fct[:, None, :]
         #-----------------------------------------------------------------------
 
         results = [
@@ -351,3 +372,25 @@ class DeformablePostProcess(PostProcess):
                     results[i][k] = v[mask]
 
         return results
+    
+    def process_cylinders(self, boxes, view):
+        """Project cylinders to bbox in XYXY format."""
+
+        # if function receives `tensor([], size=(0, 4))`, return it.
+        if boxes.numel() == 0:
+            return boxes
+        
+        else:
+            boxes = inverse_min_max_scaling(boxes)
+            rvec, tvec = load_spec_extrinsics(view)
+            camera_matrix, _ = load_spec_intrinsics(view)
+            boxes = transform_3D_cylinder_to_2D_COCO_bbox_params(
+                cylinder=boxes,
+                rvec=rvec,
+                tvec=tvec,
+                camera_matrix=camera_matrix,
+                device=boxes.device
+            )
+            boxes = bbox_xywh_to_xyxy(boxes)
+
+            return boxes
