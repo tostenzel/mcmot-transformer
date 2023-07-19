@@ -109,6 +109,7 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
         x0_lowerright_corner[:, 1] - x0_upperright_corner[:, 1]
     ]).T
 
+    """
     #---------------------------------------------------------------------------
     # Conditions if a cylinder is not visible in the image of a camera
 
@@ -124,6 +125,7 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
 
     # Keep the rows that do not violate the conditions
     bbox = bbox[~violated]
+    """
 
     return torch.round(bbox)
 
