@@ -49,6 +49,12 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         # if random state is given we do the data augmentation with the state
         # and then apply the random jitter. this ensures that (simulated) adjacent
         # frames have independent jitter.
+
+        #-----------------------------------------------------------------------
+        # TOBIAS: Turn off random jitter that changes targets to unusable cylinders
+        
+        random_jitter=False
+        #-----------------------------------------------------------------------
         if random_state is not None:
             curr_random_state = {
                 'random': random.getstate(),
@@ -81,6 +87,7 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
         if random_jitter:
             img, target = self._add_random_jitter(img, target)
+        
         img, target = self._norm_transforms(img, target)
 
         return img, target
