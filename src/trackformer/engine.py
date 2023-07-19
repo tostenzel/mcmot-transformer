@@ -21,7 +21,7 @@ from .util.track_utils import evaluate_mot_accums
 from .vis import vis_results
 
 
-def make_results(outputs, targets, postprocessors, tracking, return_only_orig=True):
+def make_results(outputs, targets, postprocessors, tracking, view: int, cylinder_results: bool, return_only_orig=True):
     target_sizes = torch.stack([t["size"] for t in targets], dim=0)
     orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
 
@@ -47,10 +47,11 @@ def make_results(outputs, targets, postprocessors, tracking, return_only_orig=Tr
 
     results = None
     if not return_only_orig:
-        results = postprocessors['bbox'](outputs, target_sizes)
-    results_orig = postprocessors['bbox'](outputs, orig_target_sizes)
+        results = postprocessors['bbox'](outputs, target_sizes, view)
+    results_orig = postprocessors['bbox'](outputs, orig_target_sizes, view)
 
     if 'segm' in postprocessors:
+        raise ValueError("code should not be accessed")
         results_orig = postprocessors['segm'](
             results_orig, outputs, orig_target_sizes, target_sizes)
         if not return_only_orig:
@@ -68,32 +69,68 @@ def make_results(outputs, targets, postprocessors, tracking, return_only_orig=Tr
         result['boxes'] = result['boxes'].cpu()
 
         # revert boxes for visualization
-        for key in ['boxes', 'track_query_boxes']:
-            if key in target:
-                target[key] = postprocessors['bbox'].process_boxes(
-                    target[key], target_size)[0].cpu()
 
-        if tracking and 'prev_target' in target:
-            if 'prev_prev_target' in target:
-                target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
-                    target['prev_prev_target']['boxes'],
-                    target['prev_prev_target']['size'].unsqueeze(dim=0))[0].cpu()
+        #-----------------------------------------------------------------------
+        # TOBIAS: process cylinders for training
+        if cylinder_results is True:
+            for key in ['boxes', 'track_query_boxes']:
+                if key in target:
+                    # I changed the process function completely (also used below)
+                    target[key] = postprocessors['bbox'].process_cylinders(
+                        target[key], view=view).cpu()
 
-            target['prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
-                target['prev_target']['boxes'],
-                target['prev_target']['size'].unsqueeze(dim=0))[0].cpu()
+            if tracking and 'prev_target' in target:
+                if 'prev_prev_target' in target:
+                    target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_cylinders(
+                        target['prev_prev_target']['boxes'],
+                        view=view).cpu()
 
-            if 'track_query_match_ids' in target and len(target['track_query_match_ids']):
-                track_queries_iou, _ = box_iou(
-                    target['boxes'][target['track_query_match_ids']],
-                    result['boxes'])
+                target['prev_target']['boxes'] = postprocessors['bbox'].process_cylinders(
+                    target['prev_target']['boxes'],
+                    view=view).cpu()
 
-                box_ids = [box_id
-                    for box_id, (is_track_query, is_fals_pos_track_query)
-                    in enumerate(zip(target['track_queries_mask'], target['track_queries_fal_pos_mask']))
-                    if is_track_query and not is_fals_pos_track_query]
+                if 'track_query_match_ids' in target and len(target['track_query_match_ids']):
+                    track_queries_iou, _ = box_iou(
+                        target['boxes'][target['track_query_match_ids']],
+                        result['boxes'])
 
-                result['track_queries_with_id_iou'] = torch.diagonal(track_queries_iou[:, box_ids])
+                    box_ids = [box_id
+                        for box_id, (is_track_query, is_fals_pos_track_query)
+                        in enumerate(zip(target['track_queries_mask'], target['track_queries_fal_pos_mask']))
+                        if is_track_query and not is_fals_pos_track_query]
+
+                    result['track_queries_with_id_iou'] = torch.diagonal(track_queries_iou[:, box_ids])
+        #-----------------------------------------------------------------------
+        # Process COCO boxes for eval
+        else:
+        
+            for key in ['boxes', 'track_query_boxes']:
+                if key in target:
+                    target[key] = postprocessors['bbox'].process_boxes(
+                        target[key], target_size)[0].cpu()
+
+            if tracking and 'prev_target' in target:
+                if 'prev_prev_target' in target:
+                    target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
+                        target['prev_prev_target']['boxes'],
+                        target['prev_prev_target']['size'].unsqueeze(dim=0))[0].cpu()
+
+                target['prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
+                    target['prev_target']['boxes'],
+                    target['prev_target']['size'].unsqueeze(dim=0))[0].cpu()
+
+                if 'track_query_match_ids' in target and len(target['track_query_match_ids']):
+                    track_queries_iou, _ = box_iou(
+                        target['boxes'][target['track_query_match_ids']],
+                        result['boxes'])
+
+                    box_ids = [box_id
+                        for box_id, (is_track_query, is_fals_pos_track_query)
+                        in enumerate(zip(target['track_queries_mask'], target['track_queries_fal_pos_mask']))
+                        if is_track_query and not is_fals_pos_track_query]
+
+                    result['track_queries_with_id_iou'] = torch.diagonal(track_queries_iou[:, box_ids])
+    #---------------------------------------------------------------------------
 
     return results_orig, results
 
@@ -163,9 +200,12 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
         metric_logger.update(lr=optimizer.param_groups[0]["lr"],
                              lr_backbone=optimizer.param_groups[1]["lr"])
 
-        if visualizers and (i == 0 or not i % args.vis_and_log_interval):
+        #-----------------------------------------------------------------------
+        # TOBIAS: train vis only for camera 0
+
+        if visualizers and (i == 0 or not (i + 1) % args.vis_and_log_interval):
             _, results = make_results(
-                outputs, targets, postprocessors, args.tracking, return_only_orig=False)
+                outputs, targets, postprocessors, args.tracking, view=0, cylinder_results=True, return_only_orig=False)
 
             vis_results(
                 visualizers['example_results'],
@@ -173,9 +213,10 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
                 results[0],
                 targets[0],
                 args.tracking)
+        #-----------------------------------------------------------------------
             
-        print(f"Train Iter: {i} \n")
-        print(f"Loss value: {loss_value} \n")
+        #print(f"Train Iter: {i} \n")
+        #print(f"Loss value: {loss_value} \n")
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
