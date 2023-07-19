@@ -224,13 +224,13 @@ def vis_results(visualizer, img, result, target, tracking):
         #-----------------------------------------------------------------------
         # TOBIAS: we train now on data with targets in (xmin, ymin, w, h) format
 
-            x1, y1, x2, y2 = frame_target['boxes'][j]
+            xmin, ymin, xmax, ymax = frame_target['boxes'][j]
             #print(f"Track box: {frame_target['boxes'][j]}")
             axarr[i].text(
-                x1, y1, f"track_id={track_id}",
+                xmin, ymin, f"track_id={track_id}",
                 fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
             axarr[i].add_patch(plt.Rectangle(
-                (x1, y1), x2 - x1, y2 - y1,
+                (xmin, ymin), xmax - xmin, ymax - ymin,
                 fill=False, color='green', linewidth=2))
         #-----------------------------------------------------------------------
 

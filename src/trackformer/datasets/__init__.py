@@ -37,6 +37,7 @@ def build_dataset(split: str, args: Namespace) -> Dataset:
         dataset = build_coco(split, args, 'person_keypoints')
     elif args.dataset == 'mot':
         dataset = build_mot(split, args)
+
     #---------------------------------------------------------------------------
     # TOBIAS: build MCMOT from MOT with less input and other target transforms
 
@@ -45,7 +46,7 @@ def build_dataset(split: str, args: Namespace) -> Dataset:
         # get list of single-cam datasets here
         singlecam_datasets = []
 
-        # build two-cam dataset that has the same training-relevant function signatures
+        # build multiple-cam dataset that has the same class methods
         # as the single-cam datasets but outputs data for two cameras
         for cam in args.wildtrack_cam_ids:
             singlecam_datasets.append(

@@ -13,6 +13,7 @@ from .mot import MOT
 class MCMOT():
     def __init__(self, singlecam_MOT_datasets: List[MOT]):
         self.datasets = singlecam_MOT_datasets
+
     #--------------------------------------------------------------------------
     # overwrite class functions from MOT class
     @property
@@ -37,7 +38,6 @@ class MCMOT():
         img = [ds.__getitem__(idx)[0] for ds in self.datasets]
         target = [ds.__getitem__(idx)[1] for ds in self.datasets]
 
-        # Why do image tensors have different sizes? Some transformations beforehand?
         return img, target
 
     #---------------------------------------------------------------------------

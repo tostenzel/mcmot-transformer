@@ -404,21 +404,16 @@ class DeformablePostProcess(PostProcess):
     def process_cylinders(self, boxes, view):
         """Project cylinders to bbox in XYXY format."""
 
-        # if function receives `tensor([], size=(0, 4))`, return it.
-        if boxes.numel() == 0:
-            return boxes
-        
-        else:
-            boxes = inverse_min_max_scaling(boxes)
-            rvec, tvec = load_spec_extrinsics(view)
-            camera_matrix, _ = load_spec_intrinsics(view)
-            boxes = transform_3D_cylinder_to_2D_COCO_bbox_params(
-                cylinder=boxes,
-                rvec=rvec,
-                tvec=tvec,
-                camera_matrix=camera_matrix,
-                device=boxes.device
-            )
-            boxes = bbox_xywh_to_xyxy(boxes)
+        boxes = inverse_min_max_scaling(boxes)
+        rvec, tvec = load_spec_extrinsics(view)
+        camera_matrix, _ = load_spec_intrinsics(view)
+        boxes = transform_3D_cylinder_to_2D_COCO_bbox_params(
+            cylinder=boxes,
+            rvec=rvec,
+            tvec=tvec,
+            camera_matrix=camera_matrix,
+            device=boxes.device
+        )
+        boxes = bbox_xywh_to_xyxy(boxes)
 
-            return boxes
+        return boxes

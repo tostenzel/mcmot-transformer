@@ -311,19 +311,18 @@ def multicam_collate_fn(batch):
     #---------------------------------------------------------------------------
     # in the comments: collate_fn with comments
 
-    # Tobias: https://stackoverflow.com/questions/29139350/difference-between-ziplist-and-ziplist
+    # TOBIAS: https://stackoverflow.com/questions/29139350/difference-between-ziplist-and-ziplist
 
-    # Tobias: list of batch 0 and batch 1 of list of (x_i and y_i)
+    # TOBIAS: list of batch 0 and batch 1 of list of (x_i and y_i)
     #batch = list(zip(*batch))
-    # Tobias: list of (list of x_0, x_1 and list of y_0 and y_1)
+    # TOBIAS: list of (list of x_0, x_1 and list of y_0 and y_1)
     # TODO use nesstedtensor list and then resort batch
     #batch[0] = nested_tensor_from_tensor_list(batch[0])
-    # Tobias: batch is  list of (list of x_0, x_1 and list of y_0 and y_1)
+    # TOBIAS: batch is  list of (list of x_0, x_1 and list of y_0 and y_1)
     # where the x_i have the shape of the largest x and each has a mask 
     #return tuple(batch)
     #---------------------------------------------------------------------------
 
-    # Tobias:
     cam_list = []
     for cam in range(len(WILDTRACK_SEQ_IDS)):
         # first 0 index stands for our only batch
