@@ -190,12 +190,25 @@ def build_mot_less_transforms(image_set, cam, args):
      
     #---------------------------------------------------------------------------
     # important part: `less_transforms=True`
-    _, norm_transforms = make_coco_transforms(
-        image_set=image_set,
-        img_transform=None,
-        overflow_boxes=False,
-        less_transforms=True
-    )
+
+    # Different scaling for train (cylinder) and val (bbox) targets
+    if image_set == 'train':
+        _, norm_transforms = make_coco_transforms(
+            image_set=image_set,
+            train=True,
+            img_transform=None,
+            overflow_boxes=False,
+            less_transforms=True
+        )
+    if image_set == 'val':
+        _, norm_transforms = make_coco_transforms(
+            image_set=image_set,
+            train=False,
+            img_transform=None,
+            overflow_boxes=False,
+            less_transforms=True
+        )
+    #---------------------------------------------------------------------------
 
     dataset = MOT(
         img_folder, ann_file, None, norm_transforms,

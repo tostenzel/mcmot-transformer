@@ -498,6 +498,22 @@ class NormalizeInputAndScaleTargetCylindersOnly:
         return image, target
     
 
+class NormalizeInputAndScaleTargetBboxesOnly:
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+    def __call__(self, image, target=None):
+        h, w = image.shape[-2:]
+        if "boxes" in target:
+            boxes = target["boxes"]
+            #boxes = box_xyxy_to_cxcywh(boxes)
+            boxes = boxes / torch.tensor([w, h, w, h], dtype=torch.float32)
+
+            target["boxes"] = boxes
+
+        return image, target
+    
+
 class Compose:
     def __init__(self, transforms):
         self.transforms = transforms
