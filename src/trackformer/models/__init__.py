@@ -24,7 +24,10 @@ def build_model(args):
         'mot_crowdhuman',
         'crowdhuman',
         'mot_coco_person',
-        'mot_less_transforms'
+        #-----------------------------------------------------------------------
+        # TOBIAS: Register MCMOT dataset
+        'mcmot_less_transforms'
+        #-----------------------------------------------------------------------
     ]:
         # num_classes = 91
         num_classes = 20

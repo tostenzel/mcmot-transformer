@@ -172,7 +172,14 @@ class SetCriterion(nn.Module):
     def loss_labels(self, outputs, targets, indices, _, log=True):
         """Classification loss (NLL)
         targets dicts must contain the key "labels" containing a tensor of dim [nb_target_boxes]
+
         """
+        #-----------------------------------------------------------------------
+        # TOBIAS: Select only first target for MCMOT setting
+
+        targets = [targets[0]]
+        #-----------------------------------------------------------------------
+
         assert 'pred_logits' in outputs
         src_logits = outputs['pred_logits']
 
@@ -213,7 +220,13 @@ class SetCriterion(nn.Module):
     def loss_labels_focal(self, outputs, targets, indices, num_boxes, log=True):
         """Classification loss (NLL)
         targets dicts must contain the key "labels" containing a tensor of dim [nb_target_boxes]
+
         """
+        #-----------------------------------------------------------------------
+        # TOBIAS: Select only first target for MCMOT setting
+
+        targets = [targets[0]]
+        #-----------------------------------------------------------------------
         assert 'pred_logits' in outputs
         src_logits = outputs['pred_logits']
 
@@ -277,7 +290,13 @@ class SetCriterion(nn.Module):
         """ Compute the cardinality error, ie the absolute error in the number of
             predicted non-empty boxes. This is not really a loss, it is intended
             for logging purposes only. It doesn't propagate gradients
+
         """
+        #-----------------------------------------------------------------------
+        # TOBIAS: Select only first target for MCMOT setting
+
+        targets = [targets[0]]
+        #-----------------------------------------------------------------------
         pred_logits = outputs['pred_logits']
         device = pred_logits.device
         tgt_lengths = torch.as_tensor([len(v["labels"]) for v in targets], device=device)
@@ -292,7 +311,13 @@ class SetCriterion(nn.Module):
            and the GIoU loss targets dicts must contain the key "boxes" containing
            a tensor of dim [nb_target_boxes, 4]. The target boxes are expected in
            format (center_x, center_y, h, w), normalized by the image size.
+
         """
+        #-----------------------------------------------------------------------
+        # TOBIAS: Select only first target for MCMOT setting
+
+        targets = [targets[0]]
+        #-----------------------------------------------------------------------
         assert 'pred_boxes' in outputs
         idx = self._get_src_permutation_idx(indices)
         src_boxes = outputs['pred_boxes'][idx]
@@ -342,6 +367,11 @@ class SetCriterion(nn.Module):
            targets dicts must contain the key "masks" containing a tensor of
            dim [nb_target_boxes, h, w]
         """
+        #-----------------------------------------------------------------------
+        # TOBIAS: Select only first target for MCMOT setting
+
+        targets = [targets[0]]
+        #-----------------------------------------------------------------------
         assert "pred_masks" in outputs
 
         src_idx = self._get_src_permutation_idx(indices)
@@ -380,6 +410,11 @@ class SetCriterion(nn.Module):
         return batch_idx, tgt_idx
 
     def get_loss(self, loss, outputs, targets, indices, num_boxes, **kwargs):
+        #-----------------------------------------------------------------------
+        # TOBIAS: Select only first target for MCMOT setting
+
+        targets = [targets[0]]
+        #-----------------------------------------------------------------------
         loss_map = {
             'labels': self.loss_labels_focal if self.focal_loss else self.loss_labels,
             'cardinality': self.loss_cardinality,
@@ -397,6 +432,11 @@ class SetCriterion(nn.Module):
                       The expected keys in each dict depends on the losses applied,
                       see each loss' doc
         """
+        #-----------------------------------------------------------------------
+        # TOBIAS: Select only first target for MCMOT setting
+
+        targets = [targets[0]]
+        #-----------------------------------------------------------------------
         outputs_without_aux = {k: v for k, v in outputs.items() if k != 'aux_outputs'}
 
         # Retrieve the matching between the outputs of the last layer and the targets

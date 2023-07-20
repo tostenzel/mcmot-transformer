@@ -13,6 +13,8 @@ import torchvision.transforms.functional as F
 from ..util.box_ops import box_xyxy_to_cxcywh
 from ..util.misc import interpolate
 
+from target_transforms import min_max_scaling
+
 
 def crop(image, target, region, overflow_boxes=False):
     i, j, h, w = region
@@ -473,7 +475,7 @@ class Normalize:
         return image, target
 
 
-class NormalizeInputAndScaleTargetsOnly:
+class NormalizeInputAndScaleTargetCylindersOnly:
     def __init__(self, mean, std):
         self.mean = mean
         self.std = std
@@ -485,11 +487,12 @@ class NormalizeInputAndScaleTargetsOnly:
         #-----------------------------------------------------------------------
         # TOBIAS: train on (xmin/W, ymin/H, w/W, h/H)
         target = target.copy()
-        h, w = image.shape[-2:]
+        #h, w = image.shape[-2:]
         if "boxes" in target:
             boxes = target["boxes"]
             #boxes = box_xyxy_to_cxcywh(boxes)
-            boxes = boxes / torch.tensor([w, h, w, h], dtype=torch.float32)
+            #boxes = boxes / torch.tensor([w, h, w, h], dtype=torch.float32)
+            boxes = min_max_scaling(boxes)
             target["boxes"] = boxes
         #-----------------------------------------------------------------------
         return image, target

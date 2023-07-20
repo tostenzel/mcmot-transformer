@@ -133,6 +133,13 @@ class DeformableTransformer(nn.Module):
     def forward(self, srcs, masks, pos_embeds, query_embed=None, targets=None):
         assert self.two_stage or query_embed is not None
 
+        #-----------------------------------------------------------------------
+        # TOBIAS: Select only first target for MCMOT setting
+
+        if targets is not None:
+            targets = [targets[0]]
+        #-----------------------------------------------------------------------
+
         # prepare input for encoder
         src_flatten = []
         mask_flatten = []

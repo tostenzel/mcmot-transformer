@@ -49,6 +49,12 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         # if random state is given we do the data augmentation with the state
         # and then apply the random jitter. this ensures that (simulated) adjacent
         # frames have independent jitter.
+
+        #-----------------------------------------------------------------------
+        # TOBIAS: Turn off random jitter that changes targets to unusable cylinders
+        
+        random_jitter=False
+        #-----------------------------------------------------------------------
         if random_state is not None:
             curr_random_state = {
                 'random': random.getstate(),
@@ -81,6 +87,7 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
         if random_jitter:
             img, target = self._add_random_jitter(img, target)
+        
         img, target = self._norm_transforms(img, target)
 
         return img, target
@@ -272,16 +279,23 @@ class ConvertCocoPolysToMask(object):
 
 
 def make_coco_transforms(image_set, img_transform=None, overflow_boxes=False, less_transforms=False):
-    if less_transforms is False:
+    
+    transforms = []
+    if less_transforms is True:
+        normalize = T.Compose([
+            T.ToTensor(),
+            T.NormalizeInputAndScaleTargetCylindersOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+
+    #---------------------------------------------------------------------------
+    # TOBIAS: make sure this code is not accessed
+    else:
+        raise ValueError("Code should not be accessed")
         normalize = T.Compose([
             T.ToTensor(),
             T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
-    else:
-        normalize = T.Compose([
-            T.ToTensor(),
-            T.NormalizeInputAndScaleTargetsOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
+    """
     # default
     max_size = 1333
     val_width = 800
@@ -298,6 +312,7 @@ def make_coco_transforms(image_set, img_transform=None, overflow_boxes=False, le
         scales = [int(scale * s) for s in scales]
         random_resizes = [int(scale * s) for s in random_resizes]
         random_size_crop = [int(scale * s) for s in random_size_crop]
+
 
     if image_set == 'train':
         transforms = [
@@ -319,6 +334,9 @@ def make_coco_transforms(image_set, img_transform=None, overflow_boxes=False, le
         ValueError(f'unknown {image_set}')
 
     # transforms.append(normalize)
+    """
+    #---------------------------------------------------------------------------
+
     return T.Compose(transforms), normalize
 
 

@@ -37,6 +37,17 @@ class DETRTrackingBase(nn.Module):
         self._tracking = True
 
     def add_track_queries_to_targets(self, targets, prev_indices, prev_out, add_false_pos=True):
+        """
+        TOBIAS: Update current target dict IN-PLACE with information from
+        matched previous precitions.
+        
+        Track queries follow objects through a video sequence carrying over their identity information while adapting to
+        their changing position in an autoregressive manner.
+
+        Each new object detection initializes a track query with the
+        corresponding output embedding of the previous frame.
+       
+        """
         device = prev_out['pred_boxes'].device
 
         # for i, (target, prev_ind) in enumerate(zip(targets, prev_indices)):
@@ -217,6 +228,12 @@ class DETRTrackingBase(nn.Module):
         #     target['track_queries_placeholder_mask'][:num_add] = True
 
     def forward(self, samples: NestedTensor, targets: list = None, prev_features=None):
+        """
+        TOBIAS: Add track queries (described in above function) to the targets
+        in training mode by performing forward passes for the previous frame and,
+        optionally, the previous previous frame. 
+        
+        """
         if targets is not None and not self._tracking:
             prev_targets = [target['prev_target'] for target in targets]
 
