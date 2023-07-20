@@ -28,7 +28,7 @@ from multicam_wildtrack_torch_3D_to_2D import load_spec_extrinsics
 from multicam_wildtrack_torch_3D_to_2D import load_spec_intrinsics
 from multicam_wildtrack_torch_3D_to_2D import transform_3D_cylinder_to_2D_COCO_bbox_params
 
-from wildtrack_globals import N_CAMS
+from wildtrack_globals import N_CAMS, W, H
 
 def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
@@ -416,4 +416,12 @@ class DeformablePostProcess(PostProcess):
         )
         boxes = bbox_xywh_to_xyxy(boxes)
 
+        return boxes
+
+
+    def process_bboxes(self, boxes):
+        """Project bbox to bbox in XYXY format."""
+
+        boxes = bbox_xywh_to_xyxy(boxes)
+        boxes = boxes * torch.tensor([W, H, W, H], dtype=torch.float32, device=boxes.device)
         return boxes
