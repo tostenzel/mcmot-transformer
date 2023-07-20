@@ -78,16 +78,16 @@ def make_results(outputs, targets, postprocessors, tracking, view: Optional[int]
             for key in ['boxes', 'track_query_boxes']:
                 if key in target:
                     # I changed the process function completely (also used below)
-                    target[key] = postprocessors['bbox'].process_cylinders(
+                    target[key] = postprocessors['bbox'].process_target_cylinders(
                         target[key], view=view).cpu()
 
             if tracking and 'prev_target' in target:
                 if 'prev_prev_target' in target:
-                    target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_cylinders(
+                    target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_target_cylinders(
                         target['prev_prev_target']['boxes'],
                         view=view).cpu()
 
-                target['prev_target']['boxes'] = postprocessors['bbox'].process_cylinders(
+                target['prev_target']['boxes'] = postprocessors['bbox'].process_target_cylinders(
                     target['prev_target']['boxes'],
                     view=view).cpu()
 
@@ -108,16 +108,16 @@ def make_results(outputs, targets, postprocessors, tracking, view: Optional[int]
         
             for key in ['boxes', 'track_query_boxes']:
                 if key in target:
-                    target[key] = postprocessors['bbox'].process_bboxes(
+                    target[key] = postprocessors['bbox'].process_target_bboxes(
                         target[key]).cpu()
 
             if tracking and 'prev_target' in target:
                 if 'prev_prev_target' in target:
-                    target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_bboxes(
+                    target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_target_bboxes(
                         target['prev_prev_target']['boxes'],
                         ).cpu()
 
-                target['prev_target']['boxes'] = postprocessors['bbox'].process_bboxes(
+                target['prev_target']['boxes'] = postprocessors['bbox'].process_target_bboxes(
                     target['prev_target']['boxes'],
                     ).cpu()
 
@@ -328,7 +328,7 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
             print(f"Eval Iter: {i}")
 
         #-----------------------------------------------------------------------
-        # TOBIAS: comment out
+        # TOBIAS: leaving out losses
 
         # gather the stats from all processes
         #metric_logger.synchronize_between_processes()

@@ -401,7 +401,7 @@ class DeformablePostProcess(PostProcess):
 
         return results
     
-    def process_cylinders(self, boxes, view):
+    def process_target_cylinders(self, boxes, view):
         """Project cylinders to bbox in XYXY format."""
 
         boxes = inverse_min_max_scaling(boxes)
@@ -419,7 +419,7 @@ class DeformablePostProcess(PostProcess):
         return boxes
 
 
-    def process_bboxes(self, boxes):
+    def process_target_bboxes(self, boxes):
         """Project bbox to bbox in XYXY format."""
 
         boxes = bbox_xywh_to_xyxy(boxes)
