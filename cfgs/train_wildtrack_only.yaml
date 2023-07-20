@@ -1,6 +1,6 @@
-##############################################################################
+#-------------------------------------------------------------------------------
 # Register this file in train.py as `wildtrack_only`.
-##############################################################################
+#-------------------------------------------------------------------------------
 
 # starting point: `train_mot17_crowdhuman.yaml`
 # dataset-type
@@ -20,5 +20,19 @@ resume: models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth
 epochs: 200
 lr_drop: 10
 
-no_vis: true
+#-------------------------------------------------------------------------------
+# must be 1 because I abuse the batch_size dimension for storing data from other
+# cams
+#-------------------------------------------------------------------------------
+
 batch_size: 1
+
+no_vis: false
+vis_and_log_interval: 40 # instead 50
+
+track_query_false_positive_prob: 0.0 # from 0.1
+track_query_false_negative_prob: 0.0  # from 0.4
+
+#-------------------------------------------------------------------------------
+# change `num_queries` from 500 in `train_multi_frame.yaml`
+#-------------------------------------------------------------------------------
