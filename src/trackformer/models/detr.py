@@ -457,6 +457,7 @@ class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
 
     def process_boxes(self, boxes, target_sizes):
+        raise ValueError("fn should not be accessed")
         # convert to [x0, y0, x1, y1] format
         boxes = box_ops.box_cxcywh_to_xyxy(boxes)
         # and from relative [0, 1] to absolute [0, height] coordinates
