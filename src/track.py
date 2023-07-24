@@ -19,6 +19,9 @@ from trackformer.util.misc import nested_dict_to_namespace
 from trackformer.util.track_utils import (evaluate_mot_accums, get_mot_accum,
                                           interpolate_tracks, plot_sequence)
 
+from functools import partial
+
+
 mm.lap.default_solver = 'lap'
 
 ex = sacred.Experiment('track')
@@ -65,7 +68,11 @@ def main(seed, dataset_name, obj_detect_checkpoint_file, tracker_cfg,
             os.path.dirname(obj_detect_checkpoint_file),
             'config.yaml')
         obj_detect_args = nested_dict_to_namespace(yaml.unsafe_load(open(obj_detect_config_path)))
-        img_transform = obj_detect_args.img_transform
+        #-----------------------------------------------------------------------
+        # TOBIAS: prevent img transforms
+
+        img_transform = None#obj_detect_args.img_transform
+        #-----------------------------------------------------------------------
         obj_detector, _, obj_detector_post = build_model(obj_detect_args)
 
         obj_detect_checkpoint = torch.load(
@@ -90,7 +97,11 @@ def main(seed, dataset_name, obj_detect_checkpoint_file, tracker_cfg,
     else:
         obj_detector = obj_detector_model['model']
         obj_detector_post = obj_detector_model['post']
-        img_transform = obj_detector_model['img_transform']
+        #-----------------------------------------------------------------------
+        # TOBIAS: prevent img transforms
+
+        img_transform = None#obj_detector_model['img_transform']
+        #-----------------------------------------------------------------------
 
     if hasattr(obj_detector, 'tracking'):
         obj_detector.tracking()
@@ -98,17 +109,32 @@ def main(seed, dataset_name, obj_detect_checkpoint_file, tracker_cfg,
     track_logger = None
     if verbose:
         track_logger = _log.info
-    tracker = Tracker(
-        obj_detector, obj_detector_post, tracker_cfg,
-        generate_attention_maps, track_logger, verbose)
+    #---------------------------------------------------------------------------
+    # TOBIAS: init later, requires view-specific postprocessors
+
+    #tracker = Tracker(
+    #    obj_detector, obj_detector_post, tracker_cfg,
+    #    generate_attention_maps, track_logger, verbose)
+    #---------------------------------------------------------------------------
 
     time_total = 0
     num_frames = 0
     mot_accums = []
     dataset = TrackDatasetFactory(
         dataset_name, root_dir=data_root_dir, img_transform=img_transform)
+    #---------------------------------------------------------------------------
+    # TOBIAS: Target respective sequence validation data but use all sequences
+    # for the image input
 
-    for seq in dataset:
+    #for seq in dataset:
+    for seq_index, seq in enumerate(dataset):
+
+        # select mapping from 3D cylinder to right 2d camera view
+        post_process_cylinder = {"bbox": partial(obj_detector_post["bbox"], view=seq_index)}
+
+        tracker = Tracker(
+        obj_detector, post_process_cylinder , tracker_cfg,
+        generate_attention_maps, track_logger, verbose)
         tracker.reset()
 
         _log.info(f"------------------")
@@ -117,8 +143,17 @@ def main(seed, dataset_name, obj_detect_checkpoint_file, tracker_cfg,
         start_frame = int(frame_range['start'] * len(seq))
         end_frame = int(frame_range['end'] * len(seq))
 
-        seq_loader = DataLoader(
-            torch.utils.data.Subset(seq, range(start_frame, end_frame)))
+        #-----------------------------------------------------------------------
+
+        #seq_loader = DataLoader(
+        #    torch.utils.data.Subset(seq, range(start_frame, end_frame)))
+        seq_loader_list = []
+        for seq in dataset:
+            seq_loader = DataLoader(
+                torch.utils.data.Subset(seq, range(start_frame, end_frame)))
+            seq_loader_list.append(seq)
+        
+        #-----------------------------------------------------------------------
 
         num_frames += len(seq_loader)
 
@@ -126,8 +161,31 @@ def main(seed, dataset_name, obj_detect_checkpoint_file, tracker_cfg,
 
         if not results:
             start = time.time()
+            #-------------------------------------------------------------------
+            # TOBIAS: need to fill in frame_data["img"] of all other sequences
+            # into batch slot of frame_data["img"]
+            # (like in `multicam_collate_fn` for COCO dataloaders)
 
-            for frame_id, frame_data in enumerate(tqdm.tqdm(seq_loader, file=sys.stdout)):
+            #for frame_id, frame_data in enumerate(tqdm.tqdm(seq_loader, file=sys.stdout)):
+ 
+            for frame_id, frame_data in enumerate(tqdm.tqdm(seq_loader_list[seq_index], file=sys.stdout)):
+
+                img_list = []
+                for s in range(0, len(dataset_name)):
+                    img_temp = seq_loader_list[s].__getitem__(frame_id)["img"]
+                    img_list.append(img_temp)
+
+                frame_data["img"] = img_list
+
+                # ad-hoc bugfix for result_size dimension error in
+                # Deformable PostProcess
+                if torch.equal(
+                    frame_data["orig_size"],
+                    torch.tensor([1080, 1920], dtype=torch.int64)
+                ):
+                    frame_data["orig_size"] = torch.tensor([[1080, 1920]], dtype=torch.int64)
+
+            #-------------------------------------------------------------------
                 with torch.no_grad():
                     tracker.step(frame_data)
 

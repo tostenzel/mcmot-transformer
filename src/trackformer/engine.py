@@ -364,9 +364,6 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
 
         eval_stats.extend(stats['coco_eval_bbox'][:3])
 
-    #---------------------------------------------------------------------------
-    # TOBIAS: comment out, later task    
-    """
 
     # TRACK EVAL
     if args.tracking and args.tracking_eval:
@@ -375,7 +372,13 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
         ex.logger = logging.getLogger("submitit")
 
         # distribute evaluation of seqs to processes
-        seqs = data_loader.dataset.sequences
+
+        #-----------------------------------------------------------------------
+        # TOBIAS: select all validation sequences
+        
+        #seqs = data_loader.dataset.sequences
+        seqs = data_loader.dataset.datasets[0].sequences
+        #-----------------------------------------------------------------------
         seqs_per_rank = {i: [] for i in range(utils.get_world_size())}
         for i, seq in enumerate(seqs):
             rank = i % utils.get_world_size()
@@ -423,8 +426,7 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
         for metric in ['mota', 'idf1']:
             eval_m = eval_summary[metric]['OVERALL']
             stats['track_bbox'].append(eval_m)
-    """
-    #---------------------------------------------------------------------------
+
 
     # TOBIAS: save detections stats for every sequence
 
