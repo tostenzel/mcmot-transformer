@@ -272,53 +272,62 @@ class ConvertCocoPolysToMask(object):
 
 
 def make_coco_transforms(image_set, img_transform=None, overflow_boxes=False, less_transforms=False):
-    if less_transforms is False:
-        normalize = T.Compose([
-            T.ToTensor(),
-            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
-    else:
-        normalize = T.Compose([
-            T.ToTensor(),
-            T.NormalizeInputAndScaleTargetsOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
-    # default
-    max_size = 1333
-    val_width = 800
-    scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
-    random_resizes = [400, 500, 600]
-    random_size_crop = (384, 600)
+    transforms = []
+    normalize = T.Compose([
+        T.ToTensor(),
+        T.NormalizeInputAndScaleTargetsOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+    #---------------------------------------------------------------------------
+    # make sure the orginal code is not accessed
 
-    if img_transform is not None:
-        scale = img_transform.max_size / max_size
-        max_size = img_transform.max_size
-        val_width = img_transform.val_width
+    # if less_transforms is False:
+    #     normalize = T.Compose([
+    #         T.ToTensor(),
+    #         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    #     ])
+    # else:
+    #     normalize = T.Compose([
+    #         T.ToTensor(),
+    #         T.NormalizeInputAndScaleTargetsOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    #     ])
+    # # default
+    # max_size = 1333
+    # val_width = 800
+    # scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
+    # random_resizes = [400, 500, 600]
+    # random_size_crop = (384, 600)
 
-        # scale all with respect to custom max_size
-        scales = [int(scale * s) for s in scales]
-        random_resizes = [int(scale * s) for s in random_resizes]
-        random_size_crop = [int(scale * s) for s in random_size_crop]
+    # if img_transform is not None:
+    #     scale = img_transform.max_size / max_size
+    #     max_size = img_transform.max_size
+    #     val_width = img_transform.val_width
 
-    if image_set == 'train':
-        transforms = [
-            T.RandomHorizontalFlip(),
-            T.RandomSelect(
-                T.RandomResize(scales, max_size=max_size),
-                T.Compose([
-                    T.RandomResize(random_resizes),
-                    T.RandomSizeCrop(*random_size_crop, overflow_boxes=overflow_boxes),
-                    T.RandomResize(scales, max_size=max_size),
-                ])
-            ),
-        ]
-    elif image_set == 'val' or image_set == 'test':
-        transforms = [
-            T.RandomResize([val_width], max_size=max_size),
-        ]
-    else:
-        ValueError(f'unknown {image_set}')
+    #     # scale all with respect to custom max_size
+    #     scales = [int(scale * s) for s in scales]
+    #     random_resizes = [int(scale * s) for s in random_resizes]
+    #     random_size_crop = [int(scale * s) for s in random_size_crop]
 
-    # transforms.append(normalize)
+    # if image_set == 'train':
+    #     transforms = [
+    #         T.RandomHorizontalFlip(),
+    #         T.RandomSelect(
+    #             T.RandomResize(scales, max_size=max_size),
+    #             T.Compose([
+    #                 T.RandomResize(random_resizes),
+    #                 T.RandomSizeCrop(*random_size_crop, overflow_boxes=overflow_boxes),
+    #                 T.RandomResize(scales, max_size=max_size),
+    #             ])
+    #         ),
+    #     ]
+    # elif image_set == 'val' or image_set == 'test':
+    #     transforms = [
+    #         T.RandomResize([val_width], max_size=max_size),
+    #     ]
+    # else:
+    #     ValueError(f'unknown {image_set}')
+
+    # # transforms.append(normalize)
+    #---------------------------------------------------------------------------
     return T.Compose(transforms), normalize
 
 
