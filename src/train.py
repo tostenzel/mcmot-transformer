@@ -37,6 +37,8 @@ ex.add_named_config('wildtrack_only', 'cfgs/train_wildtrack_only.yaml')
 ex.add_named_config('wildtrack_crowdhuman', 'cfgs/train_wildtrack_crowdhuman.yaml')
 ex.add_named_config('wildtrack_mot_crowdhuman', 'cfgs/train_wildtrack_mot_crowdhuman.yaml')
 
+torch.set_printoptions(sci_mode=False)
+
 
 def train(args: Namespace) -> None:
     print(args)
