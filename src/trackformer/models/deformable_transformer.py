@@ -17,6 +17,8 @@ from ..util.misc import inverse_sigmoid
 from .ops.modules import MSDeformAttn
 from .transformer import _get_clones, _get_activation_fn
 
+from target_transforms import bbox_xywh_to_xyxy, bbox_xyxy_to_cxcywh
+
 
 class DeformableTransformer(nn.Module):
     def __init__(self, d_model=256, nhead=8,
@@ -209,7 +211,11 @@ class DeformableTransformer(nn.Module):
                 # print(query_mask)
 
                 prev_hs_embed = torch.stack([t['track_query_hs_embeds'] for t in targets])
+                #---------------------------------------------------------------
+                # TOBIAS: reference point (prev_boxes) must be in cxcywh format
                 prev_boxes = torch.stack([t['track_query_boxes'] for t in targets])
+                prev_boxes = bbox_xyxy_to_cxcywh(bbox_xywh_to_xyxy(prev_boxes))
+                #---------------------------------------------------------------
 
                 prev_query_embed = torch.zeros_like(prev_hs_embed)
                 # prev_query_embed = self.track_query_embed.weight.expand_as(prev_hs_embed)
