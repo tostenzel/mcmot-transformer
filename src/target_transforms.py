@@ -100,7 +100,7 @@ def bbox_xywh_to_xyxy(x):
 #-------------------------------------------------------------------------------
 # Unused copies from trackformer/util/box_ops.py
 
-def bbox_xyxy_to_wywh(boxes: torch.Tensor):
+def bbox_xyxy_to_xywh(boxes: torch.Tensor):
     boxes[:, 2:] -= boxes[:, :2]
     return boxes
 
