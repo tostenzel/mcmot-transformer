@@ -11,7 +11,7 @@ from scipy.optimize import linear_sum_assignment
 from torchvision.ops.boxes import clip_boxes_to_image, nms, box_iou
 
 from ..util.box_ops import box_xyxy_to_cxcywh
-
+from target_transforms import bbox_xyxy_to_xywh
 
 class Tracker:
     """The main tracking file, here is where magic happens."""
@@ -288,12 +288,17 @@ class Tracker:
         if num_prev_track:
             track_query_boxes = torch.stack([
                 t.pos for t in self.tracks + self.inactive_tracks], dim=0).cpu()
+            #-------------------------------------------------------------------
+            # TOBIAS: I probably have to convert this from DeformablePostProcess
+            # format (xmin, ymin, xmax, ymax) back to transformer input shape
+            # (xmin/W, ymin/H, w/W, h/H)
 
-            track_query_boxes = box_xyxy_to_cxcywh(track_query_boxes)
+            #track_query_boxes = box_xyxy_to_cxcywh(track_query_boxes)
+            track_query_boxes = bbox_xyxy_to_xywh(track_query_boxes)
             track_query_boxes = track_query_boxes / torch.tensor([
                 orig_size[0, 1], orig_size[0, 0],
                 orig_size[0, 1], orig_size[0, 0]], dtype=torch.float32)
-
+            #-------------------------------------------------------------------
             target = {'track_query_boxes': track_query_boxes}
 
             target['image_id'] = torch.tensor([1]).to(self.device)
