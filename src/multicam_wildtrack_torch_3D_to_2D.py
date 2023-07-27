@@ -31,7 +31,7 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
 ) -> torch.Tensor:
     """Transforms N 3D cylinders to 2D bbox in COCO given camera calibration.
 
-    If a cylinder can not be seen in the image, return (-1, -1, -1, -1).
+    Outdated: If a cylinder can not be seen in the image, return (-1, -1, -1, -1).
 
     Args:
         cylinder: Cylinder data with x_center, y_center, height, and radius.
@@ -39,7 +39,7 @@ def transform_3D_cylinder_to_2D_COCO_bbox_params(
         ...
 
     Returns:
-        Bbox parameters.
+        Bbox data.
         Shape: (N, 4)
 
     """
