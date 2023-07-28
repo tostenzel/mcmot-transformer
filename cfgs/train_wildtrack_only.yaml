@@ -15,12 +15,12 @@ mot_path_train: data/WILDTRACK
 mot_path_val: data/WILDTRACK
 
 # pre-trained detector/tracker
-resume: models/right_ref_point/checkpoint_epoch_1000.pth
+#resume: models/right_ref_point/checkpoint_epoch_1000.pth
 
 epochs: 3000
 lr_drop: 2
 
-no_vis: false
+#no_vis: false
 batch_size: 1
 
 img_transform:
@@ -31,3 +31,20 @@ img_transform:
 val_interval: 33
 vis_and_log_interval: 99
 
+deformable: false
+
+
+lr: 0.002 # multiplied by 10
+lr_backbone_names: ['backbone.0']
+lr_backbone: 0.0002 # multiplied by 10
+lr_linear_proj_names: ['reference_points', 'sampling_offsets']
+lr_linear_proj_mult: 0.1
+lr_track: 0.001 # divided by 10
+overwrite_lrs: false
+overwrite_lr_scheduler: false
+weight_decay: 0.001 # multiplied by 10
+lr_drop: 2 # from 10
+
+
+multi_frame_attention: false #false
+multi_frame_encoding: false #true

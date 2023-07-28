@@ -13,6 +13,8 @@ from ..util.misc import (NestedTensor, accuracy, dice_loss, get_world_size,
                          interpolate, is_dist_avail_and_initialized,
                          nested_tensor_from_tensor_list, sigmoid_focal_loss)
 
+from target_bbox_transforms import bbox_xywh_to_xyxy
+
 
 class DETR(nn.Module):
     """ This is the DETR module that performs object detection. """
@@ -457,9 +459,8 @@ class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
 
     def process_boxes(self, boxes, target_sizes):
-        raise ValueError("fn should not be accessed")
         # convert to [x0, y0, x1, y1] format
-        boxes = box_ops.box_cxcywh_to_xyxy(boxes)
+        boxes = bbox_xywh_to_xyxy(boxes)
         # and from relative [0, 1] to absolute [0, height] coordinates
         img_h, img_w = target_sizes.unbind(1)
         scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
