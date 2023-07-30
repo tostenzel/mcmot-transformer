@@ -105,7 +105,6 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
     vis_iter_metrics = None
     if visualizers:
         vis_iter_metrics = visualizers['iter_metrics']
-
     model.train()
     criterion.train()
     metric_logger = utils.MetricLogger(
@@ -168,7 +167,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
                 targets[0],
                 args.tracking)
             
-    print(f"Iter: {i}")
+        print(f"Iter: {i}")
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
@@ -180,7 +179,13 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
 @torch.no_grad()
 def evaluate(model, criterion, postprocessors, data_loader, device,
              output_dir: str, visualizers: dict, args, epoch: int = None):
-    model.eval()
+    #---------------------------------------------------------------------------
+    # TOBIAS: Try to overfit model in training mode during eval b/c in eval
+    # some layers change
+
+    #model.eval()
+    model.train()
+    #---------------------------------------------------------------------------
     criterion.eval()
 
     metric_logger = utils.MetricLogger(
