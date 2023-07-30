@@ -33,7 +33,7 @@ ex.add_named_config('reid', 'cfgs/track_reid.yaml')
 def main(seed, dataset_name, obj_detect_checkpoint_file, tracker_cfg,
          write_images, output_dir, interpolate, verbose, load_results_dir,
          data_root_dir, generate_attention_maps, frame_range,
-         _config, _log, _run, obj_detector_model=None):
+         _config, _log, _run, all_eval_seqs, obj_detector_model=None):
     if write_images:
         assert output_dir is not None
 
@@ -147,11 +147,17 @@ def main(seed, dataset_name, obj_detect_checkpoint_file, tracker_cfg,
 
         #seq_loader = DataLoader(
         #    torch.utils.data.Subset(seq, range(start_frame, end_frame)))
+
+        # TOBIAS: tracking eval that works in distributed mode
+        # by evaluating passed seq (target) with image data from all sequences
+        # (used by other workers as targets)
+        temp_dataset = TrackDatasetFactory(
+        all_eval_seqs, root_dir=data_root_dir, img_transform=img_transform)
         seq_loader_list = []
-        for seq in dataset:
+        for _, temp_seq in enumerate(temp_dataset):
             seq_loader = DataLoader(
-                torch.utils.data.Subset(seq, range(start_frame, end_frame)))
-            seq_loader_list.append(seq)
+                torch.utils.data.Subset(temp_seq, range(start_frame, end_frame)))
+            seq_loader_list.append(temp_seq)
         
         #-----------------------------------------------------------------------
 
@@ -171,7 +177,7 @@ def main(seed, dataset_name, obj_detect_checkpoint_file, tracker_cfg,
             for frame_id, frame_data in enumerate(tqdm.tqdm(seq_loader_list[seq_index], file=sys.stdout)):
 
                 img_list = []
-                for s in range(0, len(dataset_name)):
+                for s in range(0, len(all_eval_seqs)):
                     img_temp = seq_loader_list[s].__getitem__(frame_id)["img"]
                     img_list.append(img_temp)
 
