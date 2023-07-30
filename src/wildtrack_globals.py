@@ -32,8 +32,8 @@ N_ANNOTATIONS = len(ANNOTATION_FILES)
 
 #-------------------------------------------------------------------------------
 # my settings
-TRAIN_SPLIT = 40 / 400
-TEST_SPLIT =  40 / 400
+TRAIN_SPLIT = 5 / 400
+TEST_SPLIT =  5 / 400
 SEQUENCE_IDS = ["c0", "c1"]#, "c2", "c3", "c4", "c5", "c6"]
 N_CAMS = len(SEQUENCE_IDS)
 
