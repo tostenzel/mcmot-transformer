@@ -3,6 +3,9 @@
 ##############################################################################
 
 # starting point: `train_mot17_crowdhuman.yaml`
+#-------------------------------------------------------------------------------
+# data
+
 # dataset-type
 dataset: mot_less_transforms # less preprocessing to prepare training on 3D data
 # don't neet b/c dataset not of type mot_crowdhuman
@@ -13,38 +16,61 @@ val_split: train
 mot_path_train: data/WILDTRACK
 #only one sequence at a time to make comparable to distribtion metrics?
 mot_path_val: data/WILDTRACK
-
+#-------------------------------------------------------------------------------
 # pre-trained detector/tracker
-#resume: models/right_ref_point/checkpoint_epoch_1000.pth
+# No pre-trained tracker available for DETR (switched from DeformableDETR)
+resume: models/detr-r50-e632da11.pth
 
-epochs: 3000
-lr_drop: 2
+#-------------------------------------------------------------------------------
+# Take sth. very large
+epochs: 50000
 
-#no_vis: false
+#-------------------------------------------------------------------------------
+# required by multicam implementation
 batch_size: 1
+
+#-------------------------------------------------------------------------------
+# Should not be necessay but make sure that images are not cropped
 
 img_transform:
   max_size: 1920
   val_width: 1080
-
+#-------------------------------------------------------------------------------
 #eval_only: true
-val_interval: 33
-vis_and_log_interval: 99
+
+val_interval: 20 # unit number of epochs
+vis_and_log_interval: 99 # unit number of training iterations
+#-------------------------------------------------------------------------------
+# We switch from DeformableDETR to DETR b/c we can't generalize
+# reference points to multi-cam settings
 
 deformable: false
-
-
-lr: 0.002 # multiplied by 10
+#-------------------------------------------------------------------------------
+# LR scheduler and AdamW hyperparams
+lr: 0.0002
 lr_backbone_names: ['backbone.0']
-lr_backbone: 0.0002 # multiplied by 10
+lr_backbone: 0.00002
 lr_linear_proj_names: ['reference_points', 'sampling_offsets']
 lr_linear_proj_mult: 0.1
-lr_track: 0.001 # divided by 10
+lr_track: 0.0001
 overwrite_lrs: false
 overwrite_lr_scheduler: false
-weight_decay: 0.001 # multiplied by 10
-lr_drop: 2 # from 10
+batch_size: 2
+weight_decay: 0.0001
+epochs: 50
+lr_drop: 10
 
-
+#-------------------------------------------------------------------------------
+# no multi_frame_encoding implemented for DETR
 multi_frame_attention: false #false
 multi_frame_encoding: false #true
+
+#-------------------------------------------------------------------------------
+# Matcher
+# Class coefficient in the matching cost
+set_cost_class: 5.0 #1.0
+# L1 box coefficient in the matching cost
+set_cost_bbox: 5.0
+# giou box coefficient in the matching cost
+set_cost_giou: 0 # 2.0
+#-------------------------------------------------------------------------------
