@@ -280,7 +280,15 @@ class Tracker:
         for track in self.tracks:
             track.last_pos.append(track.pos.clone())
 
-        img = blob['img'].to(self.device)
+        #-----------------------------------------------------------------------
+        # TOBIAS: bring into model input format
+        
+        #img = blob['img'].to(self.device)
+
+        img = []
+        for tensor in blob['img']:
+            img.append(tensor.to(self.device))
+        #-----------------------------------------------------------------------
         orig_size = blob['orig_size'].to(self.device)
 
         target = None
@@ -435,9 +443,14 @@ class Tracker:
         if self.generate_attention_maps:
             new_det_attention_maps = new_det_attention_maps[new_det_keep]
 
+        #-----------------------------------------------------------------------
+        # TOBIAS adjust format (?)
+        
         # public detection
         public_detections_mask = self.public_detections_mask(
-            new_det_boxes, blob['dets'][0])
+            #new_det_boxes, blob['dets'][0])
+            new_det_boxes, blob['dets'])
+        #-----------------------------------------------------------------------
 
         new_det_boxes = new_det_boxes[public_detections_mask]
         new_det_scores = new_det_scores[public_detections_mask]

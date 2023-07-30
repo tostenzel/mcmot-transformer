@@ -52,7 +52,7 @@ class WILDTRACKSequence(Dataset):
         # Makes no sense, but try to run train.py...
         self._test_folders = os.listdir(os.path.join(self._data_dir, 'mot-eval'))
 
-        self.transforms = Compose(make_coco_transforms('test', img_transform, overflow_boxes=True))
+        self.transforms = Compose(make_coco_transforms('test', img_transform, less_transforms=True, overflow_boxes=True))
 
         self.data = []
         self.no_gt = True
@@ -126,6 +126,8 @@ class WILDTRACKSequence(Dataset):
             eval_offset = TRAIN_SEQ_LENGTH * 5
         elif self._seq_name.split('-')[1] == "val":
             eval_offset = (TRAIN_SEQ_LENGTH + TEST_SEQ_LENGTH) * 5
+        elif self._seq_name.split('-')[1] == "train":
+            eval_offset = 0
         total = [
             {
             'gt': boxes[i],

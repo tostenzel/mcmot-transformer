@@ -278,14 +278,20 @@ class ConvertCocoPolysToMask(object):
         return image, target
 
 
-def make_coco_transforms(image_set, img_transform=None, overflow_boxes=False, less_transforms=False):
+def make_coco_transforms(image_set, train: bool, img_transform=None, overflow_boxes=False, less_transforms=False):
     
     transforms = []
     if less_transforms is True:
-        normalize = T.Compose([
-            T.ToTensor(),
-            T.NormalizeInputAndScaleTargetCylindersOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
+        if train is True:
+            normalize = T.Compose([
+                T.ToTensor(),
+                T.NormalizeInputAndScaleTargetCylindersOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ])
+        else:
+            normalize = T.Compose([
+                T.ToTensor(),
+                T.NormalizeInputAndScaleTargetBboxesOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ])
 
     #---------------------------------------------------------------------------
     # TOBIAS: make sure this code is not accessed

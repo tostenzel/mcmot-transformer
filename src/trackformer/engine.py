@@ -20,8 +20,10 @@ from .util.box_ops import box_iou
 from .util.track_utils import evaluate_mot_accums
 from .vis import vis_results
 
+from typing import Optional
 
-def make_results(outputs, targets, postprocessors, tracking, view: int, cylinder_results: bool, return_only_orig=True):
+
+def make_results(outputs, targets, postprocessors, tracking, view: Optional[int], cylinder_results: bool, return_only_orig=True):
     target_sizes = torch.stack([t["size"] for t in targets], dim=0)
     orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
 
@@ -76,16 +78,16 @@ def make_results(outputs, targets, postprocessors, tracking, view: int, cylinder
             for key in ['boxes', 'track_query_boxes']:
                 if key in target:
                     # I changed the process function completely (also used below)
-                    target[key] = postprocessors['bbox'].process_cylinders(
+                    target[key] = postprocessors['bbox'].process_target_cylinders(
                         target[key], view=view).cpu()
 
             if tracking and 'prev_target' in target:
                 if 'prev_prev_target' in target:
-                    target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_cylinders(
+                    target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_target_cylinders(
                         target['prev_prev_target']['boxes'],
                         view=view).cpu()
 
-                target['prev_target']['boxes'] = postprocessors['bbox'].process_cylinders(
+                target['prev_target']['boxes'] = postprocessors['bbox'].process_target_cylinders(
                     target['prev_target']['boxes'],
                     view=view).cpu()
 
@@ -106,18 +108,18 @@ def make_results(outputs, targets, postprocessors, tracking, view: int, cylinder
         
             for key in ['boxes', 'track_query_boxes']:
                 if key in target:
-                    target[key] = postprocessors['bbox'].process_boxes(
-                        target[key], target_size)[0].cpu()
+                    target[key] = postprocessors['bbox'].process_target_bboxes(
+                        target[key]).cpu()
 
             if tracking and 'prev_target' in target:
                 if 'prev_prev_target' in target:
-                    target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
+                    target['prev_prev_target']['boxes'] = postprocessors['bbox'].process_target_bboxes(
                         target['prev_prev_target']['boxes'],
-                        target['prev_prev_target']['size'].unsqueeze(dim=0))[0].cpu()
+                        ).cpu()
 
-                target['prev_target']['boxes'] = postprocessors['bbox'].process_boxes(
+                target['prev_target']['boxes'] = postprocessors['bbox'].process_target_bboxes(
                     target['prev_target']['boxes'],
-                    target['prev_target']['size'].unsqueeze(dim=0))[0].cpu()
+                    ).cpu()
 
                 if 'track_query_match_ids' in target and len(target['track_query_match_ids']):
                     track_queries_iou, _ = box_iou(
@@ -215,7 +217,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
                 args.tracking)
         #-----------------------------------------------------------------------
             
-        #print(f"Train Iter: {i} \n")
+        print(f"Train Iter: {i} \n")
         #print(f"Loss value: {loss_value} \n")
 
     # gather the stats from all processes
@@ -237,98 +239,131 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
         debug=args.debug)
     metric_logger.add_meter('class_error', utils.SmoothedValue(window_size=1, fmt='{value:.2f}'))
 
-    base_ds = get_coco_api_from_dataset(data_loader.dataset)
-    iou_types = tuple(k for k in ('bbox', 'segm') if k in postprocessors.keys())
-    coco_evaluator = CocoEvaluator(base_ds, iou_types)
-    # coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0, 0.1, 0.5, 0.75]
+    # Tobias: Init list of detection stats for all cameras (plotted after eval)
+    eval_stats = []
+    #---------------------------------------------------------------------------
+    # TODO: generalize the Detection eval stats to a mean over all sequences
+    #initial_postprocess = postprocessors["bbox"]
+    for seq_index in range(len(data_loader.dataset.datasets)):
 
-    panoptic_evaluator = None
-    if 'panoptic' in postprocessors.keys():
-        panoptic_evaluator = PanopticEvaluator(
-            data_loader.dataset.ann_file,
-            data_loader.dataset.ann_folder,
-            output_dir=os.path.join(output_dir, "panoptic_eval"),
-        )
+        #-------------------------------------------------------------------
+        #from functools import partial
+        #postprocessors["bbox"] = partial(postprocessors["bbox"], view=seq_index)
+        #-------------------------------------------------------------------
 
-    for i, (samples, targets) in enumerate(metric_logger.log_every(data_loader, 'Test:')):
-        samples = samples.to(device)
-        targets = [utils.nested_dict_to_device(t, device) for t in targets]
+        base_ds = get_coco_api_from_dataset(data_loader.dataset.datasets[seq_index])
 
-        outputs, targets, *_ = model(samples, targets)
+        iou_types = tuple(k for k in ('bbox', 'segm') if k in postprocessors.keys())
+        coco_evaluator = CocoEvaluator(base_ds, iou_types)
+        # coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0, 0.1, 0.5, 0.75]
 
-        loss_dict = criterion(outputs, targets)
-        weight_dict = criterion.weight_dict
+        panoptic_evaluator = None
+        if 'panoptic' in postprocessors.keys():
+            panoptic_evaluator = PanopticEvaluator(
+                data_loader.dataset.ann_file,
+                data_loader.dataset.ann_folder,
+                output_dir=os.path.join(output_dir, "panoptic_eval"),
+            )
 
-        # reduce losses over all GPUs for logging purposes
-        loss_dict_reduced = utils.reduce_dict(loss_dict)
-        loss_dict_reduced_scaled = {k: v * weight_dict[k]
-                                    for k, v in loss_dict_reduced.items() if k in weight_dict}
-        loss_dict_reduced_unscaled = {f'{k}_unscaled': v
-                                      for k, v in loss_dict_reduced.items()}
-        metric_logger.update(loss=sum(loss_dict_reduced_scaled.values()),
-                             **loss_dict_reduced_scaled,
-                             **loss_dict_reduced_unscaled)
-        metric_logger.update(class_error=loss_dict_reduced['class_error'])
+        for i, (samples, targets) in enumerate(data_loader):
+            samples = samples.to(device)
+            targets = [utils.nested_dict_to_device(t, device) for t in targets]
 
-        if visualizers and (i == 0 or not i % args.vis_and_log_interval):
-            results_orig, results = make_results(
-                outputs, targets, postprocessors, args.tracking, return_only_orig=False)
+            outputs, targets, *_ = model(samples, targets)
 
-            vis_results(
-                visualizers['example_results'],
-                samples.unmasked_tensor(0),
-                results[0],
-                targets[0],
-                args.tracking)
-        else:
-            results_orig, _ = make_results(outputs, targets, postprocessors, args.tracking)
+            targets = [targets[0]]
 
-        # TODO. remove cocoDts from coco eval and change example results output
+            #-------------------------------------------------------------------
+            # TOBIAS: disable loss computation because we predict cylinders but
+            # eval with bbox targets
+
+            """
+            loss_dict = criterion(outputs, targets)
+            weight_dict = criterion.weight_dict
+
+            # reduce losses over all GPUs for logging purposes
+            loss_dict_reduced = utils.reduce_dict(loss_dict)
+            loss_dict_reduced_scaled = {k: v * weight_dict[k]
+                                        for k, v in loss_dict_reduced.items() if k in weight_dict}
+            loss_dict_reduced_unscaled = {f'{k}_unscaled': v
+                                        for k, v in loss_dict_reduced.items()}
+            metric_logger.update(loss=0)
+            metric_logger.update(class_error=loss_dict_reduced['class_error'])
+            """
+
+            if visualizers and (i == 0 or not (i + 1) % args.vis_and_log_interval):
+                results_orig, results = make_results(
+                    outputs, targets, postprocessors, args.tracking, view=seq_index, cylinder_results=False, return_only_orig=False)
+
+                vis_results(
+                    visualizers['example_results'],
+                    samples.unmasked_tensor(0),
+                    results[0],
+                    targets[0],
+                    args.tracking)
+            else:
+                results_orig, _ = make_results(outputs, targets, postprocessors, args.tracking, view=seq_index, cylinder_results=False)
+
+            # TODO. remove cocoDts from coco eval and change example results output
+            if coco_evaluator is not None:
+                results_orig = {
+                    target['image_id'].item(): output
+                    for target, output in zip(targets, results_orig)}
+
+                coco_evaluator.update(results_orig)
+
+            if panoptic_evaluator is not None:
+                target_sizes = torch.stack([t["size"] for t in targets], dim=0)
+                orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
+
+                res_pano = postprocessors["panoptic"](outputs, target_sizes, orig_target_sizes)
+                for j, target in enumerate(targets):
+                    image_id = target["image_id"].item()
+                    file_name = f"{image_id:012d}.png"
+                    res_pano[j]["image_id"] = image_id
+                    res_pano[j]["file_name"] = file_name
+
+                panoptic_evaluator.update(res_pano)
+
+            print(f"Eval Iter: {i}")
+
+        #-----------------------------------------------------------------------
+        # TOBIAS: leaving out losses
+
+        # gather the stats from all processes
+        #metric_logger.synchronize_between_processes()
+        #print("Averaged stats:", metric_logger)
+        #-----------------------------------------------------------------------
         if coco_evaluator is not None:
-            results_orig = {
-                target['image_id'].item(): output
-                for target, output in zip(targets, results_orig)}
-
-            coco_evaluator.update(results_orig)
-
+            coco_evaluator.synchronize_between_processes()
         if panoptic_evaluator is not None:
-            target_sizes = torch.stack([t["size"] for t in targets], dim=0)
-            orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
+            panoptic_evaluator.synchronize_between_processes()
 
-            res_pano = postprocessors["panoptic"](outputs, target_sizes, orig_target_sizes)
-            for j, target in enumerate(targets):
-                image_id = target["image_id"].item()
-                file_name = f"{image_id:012d}.png"
-                res_pano[j]["image_id"] = image_id
-                res_pano[j]["file_name"] = file_name
+        # accumulate predictions from all images
+        if coco_evaluator is not None:
+            coco_evaluator.accumulate()
+            coco_evaluator.summarize()
+        panoptic_res = None
+        if panoptic_evaluator is not None:
+            panoptic_res = panoptic_evaluator.summarize()
+        #-----------------------------------------------------------------------
+        # TOBIAS: leaving out losses
+        
+        #stats = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+        stats = {}
+        #-----------------------------------------------------------------------
+        if coco_evaluator is not None:
+            if 'bbox' in coco_evaluator.coco_eval:
+                stats['coco_eval_bbox'] = coco_evaluator.coco_eval['bbox'].stats.tolist()
+            if 'segm' in coco_evaluator.coco_eval:
+                stats['coco_eval_masks'] = coco_evaluator.coco_eval['segm'].stats.tolist()
+        if panoptic_res is not None:
+            stats['PQ_all'] = panoptic_res["All"]
+            stats['PQ_th'] = panoptic_res["Things"]
+            stats['PQ_st'] = panoptic_res["Stuff"]
 
-            panoptic_evaluator.update(res_pano)
+        eval_stats.extend(stats['coco_eval_bbox'][:3])
 
-    # gather the stats from all processes
-    metric_logger.synchronize_between_processes()
-    print("Averaged stats:", metric_logger)
-    if coco_evaluator is not None:
-        coco_evaluator.synchronize_between_processes()
-    if panoptic_evaluator is not None:
-        panoptic_evaluator.synchronize_between_processes()
-
-    # accumulate predictions from all images
-    if coco_evaluator is not None:
-        coco_evaluator.accumulate()
-        coco_evaluator.summarize()
-    panoptic_res = None
-    if panoptic_evaluator is not None:
-        panoptic_res = panoptic_evaluator.summarize()
-    stats = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
-    if coco_evaluator is not None:
-        if 'bbox' in coco_evaluator.coco_eval:
-            stats['coco_eval_bbox'] = coco_evaluator.coco_eval['bbox'].stats.tolist()
-        if 'segm' in coco_evaluator.coco_eval:
-            stats['coco_eval_masks'] = coco_evaluator.coco_eval['segm'].stats.tolist()
-    if panoptic_res is not None:
-        stats['PQ_all'] = panoptic_res["All"]
-        stats['PQ_th'] = panoptic_res["Things"]
-        stats['PQ_st'] = panoptic_res["Stuff"]
 
     # TRACK EVAL
     if args.tracking and args.tracking_eval:
@@ -337,7 +372,13 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
         ex.logger = logging.getLogger("submitit")
 
         # distribute evaluation of seqs to processes
-        seqs = data_loader.dataset.sequences
+
+        #-----------------------------------------------------------------------
+        # TOBIAS: select all validation sequences
+        
+        #seqs = data_loader.dataset.sequences
+        seqs = data_loader.dataset.datasets[0].sequences
+        #-----------------------------------------------------------------------
         seqs_per_rank = {i: [] for i in range(utils.get_world_size())}
         for i, seq in enumerate(seqs):
             rank = i % utils.get_world_size()
@@ -386,18 +427,25 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
             eval_m = eval_summary[metric]['OVERALL']
             stats['track_bbox'].append(eval_m)
 
-    eval_stats = stats['coco_eval_bbox'][:3]
+
+    # TOBIAS: save detections stats for every sequence
+
+    #eval_stats = stats['coco_eval_bbox'][:3]
     if 'coco_eval_masks' in stats:
         eval_stats.extend(stats['coco_eval_masks'][:3])
     if 'track_bbox' in stats:
         eval_stats.extend(stats['track_bbox'])
+    #---------------------------------------------------------------------------
 
     # VIS
     if visualizers:
-        vis_epoch = visualizers['epoch_metrics']
-        y_data = [stats[legend_name] for legend_name in vis_epoch.viz_opts['legend']]
+        #-----------------------------------------------------------------------
+        # TOBIAS: leaving out losses
 
-        vis_epoch.plot(y_data, epoch)
+        #vis_epoch = visualizers['epoch_metrics']
+        #y_data = [stats[legend_name] for legend_name in vis_epoch.viz_opts['legend']]
+        #vis_epoch.plot(y_data, epoch)
+        #-----------------------------------------------------------------------
 
         visualizers['epoch_eval'].plot(eval_stats, epoch)
 

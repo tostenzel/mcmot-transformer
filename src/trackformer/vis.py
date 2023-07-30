@@ -14,6 +14,9 @@ from .util.plot_utils import fig_to_numpy
 
 from target_bbox_transforms import bbox_xywh_to_xyxy
 
+from wildtrack_globals import N_CAMS
+
+
 logging.getLogger('visdom').setLevel(logging.CRITICAL)
 
 
@@ -140,6 +143,7 @@ def vis_results(visualizer, img, result, target, tracking):
         track_ids = target['track_ids'][target['track_query_match_ids']]
 
     keep = result['scores'].cpu() > result['scores_no_object'].cpu()
+    print(f"Number of matched bbox predictions: {sum(keep)}")
 
     cmap = plt.cm.get_cmap('hsv', len(keep))
 
@@ -329,12 +333,23 @@ def build_visualizers(args: dict, train_loss_names: list):
     #
     # EVAL COCO
     #
+    #---------------------------------------------------------------------------
+    # TOBIAS: Plot detection metrics for every sequence
 
-    legend = [
-        'BBOX AP IoU=0.50:0.95',
-        'BBOX AP IoU=0.50',
-        'BBOX AP IoU=0.75',
-    ]
+    #legend = [
+    #    'BBOX AP IoU=0.50:0.95',
+    #    'BBOX AP IoU=0.50',
+    #    'BBOX AP IoU=0.75',
+    #]
+    legend = []
+    for i in range(N_CAMS):
+        legend.extend([
+            f'BBOX AP IoU=0.50:0.95, Cam {i}',
+            f'BBOX AP IoU=0.50, Cam {i}',
+            f'BBOX AP IoU=0.75, Cam {i}'
+            ]
+        )
+    #---------------------------------------------------------------------------
 
     if args.masks:
         legend.extend([
