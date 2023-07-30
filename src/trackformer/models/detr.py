@@ -40,8 +40,13 @@ class DETR(nn.Module):
         self.bbox_embed = MLP(self.hidden_dim, self.hidden_dim, 4, 3)
         self.query_embed = nn.Embedding(num_queries, self.hidden_dim)
 
+        #-----------------------------------------------------------------------
+        # TOBIAS: Switch back to original DETR backbone interface
+
         # match interface with deformable DETR
-        self.input_proj = nn.Conv2d(backbone.num_channels[-1], self.hidden_dim, kernel_size=1)
+        #self.input_proj = nn.Conv2d(backbone.num_channels[-1], self.hidden_dim, kernel_size=1)
+        self.input_proj = nn.Conv2d(backbone.num_channels, self.hidden_dim, kernel_size=1)
+        #-----------------------------------------------------------------------
         # self.input_proj = nn.ModuleList([
         #     nn.Sequential(
         #         nn.Conv2d(backbone.num_channels[-1], self.hidden_dim, kernel_size=1)
