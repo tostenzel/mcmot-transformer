@@ -32,7 +32,7 @@ import skimage.io as io
 import wildtrack_globals as glob
 
 SRC_COCO_ANNOTATIONS = glob.ROOT + "/annotations"
-SPLITS_SEQ_LENGTH = {"test": glob.TEST_SEQ_LENGTH, "val": glob.VAL_SEQ_LENGTH}
+SPLITS_SEQ_LENGTH = {"train": glob.TRAIN_SEQ_LENGTH, "test": glob.TEST_SEQ_LENGTH, "val": glob.VAL_SEQ_LENGTH}
 INI_DICT = {
     "name": "",
     "imDir":"img1",
@@ -50,7 +50,7 @@ configparser.optionxform = str
 def generate_mot_from_coco() -> None:
     # We only need the validation data in MOT format for the evaluation code,
     # i.e. test and validation splits
-    for split in ["test", "val"]:
+    for split in ["train", "test", "val"]:
 
         _create_mot_dirs(split)
 
