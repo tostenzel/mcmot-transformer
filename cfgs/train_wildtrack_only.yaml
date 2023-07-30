@@ -1,8 +1,11 @@
-#-------------------------------------------------------------------------------
+##############################################################################
 # Register this file in train.py as `wildtrack_only`.
-#-------------------------------------------------------------------------------
+##############################################################################
 
 # starting point: `train_mot17_crowdhuman.yaml`
+#-------------------------------------------------------------------------------
+# data
+
 # dataset-type
 dataset: mcmot_less_transforms # less preprocessing to prepare training on 3D data
 # don't neet b/c dataset not of type mot_crowdhuman
@@ -13,26 +16,61 @@ val_split: test
 mot_path_train: data/multicam_WILDTRACK
 #only one sequence at a time to make comparable to distribtion metrics?
 mot_path_val: data/multicam_WILDTRACK
-
+#-------------------------------------------------------------------------------
 # pre-trained detector/tracker
-resume: models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth
-
-epochs: 200
-lr_drop: 10
+# No pre-trained tracker available for DETR (switched from DeformableDETR)
+resume: models/detr-r50-e632da11.pth
 
 #-------------------------------------------------------------------------------
-# must be 1 because I abuse the batch_size dimension for storing data from other
-# cams
-#-------------------------------------------------------------------------------
+# Take sth. very large
+epochs: 50000
 
+#-------------------------------------------------------------------------------
+# required by multicam implementation
 batch_size: 1
 
+#-------------------------------------------------------------------------------
+# Should not be necessay but make sure that images are not cropped
+
+img_transform:
+  max_size: 1920
+  val_width: 1080
+#-------------------------------------------------------------------------------
+#eval_only: true
+
+val_interval: 20 # unit number of epochs
+vis_and_log_interval: 99 # unit number of training iterations
+#-------------------------------------------------------------------------------
+# We switch from DeformableDETR to DETR b/c we can't generalize
+# reference points to multi-cam settings
+
+deformable: false
+#-------------------------------------------------------------------------------
+# LR scheduler and AdamW hyperparams
+lr: 0.0002 # perhaps increase this
+lr_backbone_names: ['backbone.0']
+lr_backbone: 0.00002
+lr_linear_proj_names: ['reference_points', 'sampling_offsets']
+lr_linear_proj_mult: 0.1
+lr_track: 0.0001 # perhaps increase this
+overwrite_lrs: false
+overwrite_lr_scheduler: false
+weight_decay: 0.0001 # perhaps decrease or remove this penalty on large weights
+lr_drop: 10 # perhaps decrease this
+
+#-------------------------------------------------------------------------------
+# no multi_frame_encoding implemented for DETR
+multi_frame_attention: false #false
+multi_frame_encoding: false #true
+
+#-------------------------------------------------------------------------------
+# Matcher
+# Class coefficient in the matching cost
+set_cost_class: 5.0 #1.0
+# L1 box coefficient in the matching cost
+set_cost_bbox: 5.0
+# giou box coefficient in the matching cost
+set_cost_giou: 0 # 2.0
+#-------------------------------------------------------------------------------
+
 no_vis: false
-vis_and_log_interval: 40 # instead 50
-
-track_query_false_positive_prob: 0.0 # from 0.1
-track_query_false_negative_prob: 0.0  # from 0.4
-
-#-------------------------------------------------------------------------------
-# change `num_queries` from 500 in `train_multi_frame.yaml`
-#-------------------------------------------------------------------------------

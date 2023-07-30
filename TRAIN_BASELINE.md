@@ -144,5 +144,32 @@ Again, open another new terminal with activated environment. Type
 
 - Stard tmux with `tmux` and open visdom or start training to prevent process from detaching during system suspension or connection timeout (especially during VPN session).
 
-- Use `kill -9 <PID>` to kill own detached processes 
+- Use `kill -9 <PID>` to kill own detached processes
+
+
+# MCMOT
+
+ w/o deformable aus arg
+
+### Training on single GPU
+
+Follow up by opening another new terminal with activated environment and start the training process on a single GPU e.g. via
+
+    CUDA_VISIBLE_DEVICES=6 python src/train.py with \
+        wildtrack_only \
+        multi_frame \
+        tracking \
+        output_dir=models/detr_mcmot_3 &> log_detr_mcmot_3.txt
+
+Switch to the browser window and change environment to the name of the output directory from the previous command e.g. `models/mot17_deformable_multi_frame`
+
+### Training on multiple GPUs
+
+Again, open another new terminal with activated environment. Type
+
+    CUDA_VISIBLE_DEVICES=6,7 MASTER_PORT=12340 python -m torch.distributed.launch --nproc_per_node=2 --use_env src/train.py with \
+        wildtrack_only \
+        multi_frame \
+        tracking \
+        output_dir=models/detr_mcmot_3 &> log_detr_mcmot_3.txt
 

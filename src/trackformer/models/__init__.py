@@ -29,9 +29,15 @@ def build_model(args):
         'mcmot_less_transforms'
         #-----------------------------------------------------------------------
     ]:
+        #-----------------------------------------------------------------------
+        # TOBIAS: DETR instead DeformableDETR
         # num_classes = 91
         num_classes = 20
+        #num_classes = 20
         # num_classes = 1
+
+        num_classes = 19
+        #-----------------------------------------------------------------------
     else:
         raise NotImplementedError
 
