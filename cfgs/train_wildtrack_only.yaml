@@ -47,18 +47,16 @@ vis_and_log_interval: 99 # unit number of training iterations
 deformable: false
 #-------------------------------------------------------------------------------
 # LR scheduler and AdamW hyperparams
-lr: 0.0002
+lr: 0.0002 # perhaps increase this
 lr_backbone_names: ['backbone.0']
 lr_backbone: 0.00002
 lr_linear_proj_names: ['reference_points', 'sampling_offsets']
 lr_linear_proj_mult: 0.1
-lr_track: 0.0001
+lr_track: 0.0001 # perhaps increase this
 overwrite_lrs: false
 overwrite_lr_scheduler: false
-batch_size: 2
-weight_decay: 0.0001
-epochs: 50
-lr_drop: 10
+weight_decay: 0.0001 # perhaps decrease or remove this penalty on large weights
+lr_drop: 10 # perhaps decrease this
 
 #-------------------------------------------------------------------------------
 # no multi_frame_encoding implemented for DETR
