@@ -60,6 +60,8 @@ def generate_3D_coco_from_wildtrack() -> None:
     # each annotation file contains info for all cameras
     train_dataset = copy.deepcopy(COCO_BASE_DICT)
     train_dataset["sequences"] = [id + "-train" for id in glob.SEQUENCE_IDS]
+    eval_train_dataset = copy.deepcopy(COCO_BASE_DICT)
+    eval_train_dataset["sequences"] = [id + "-eval_train" for id in glob.SEQUENCE_IDS]
     test_dataset = copy.deepcopy(COCO_BASE_DICT)
     test_dataset["sequences"] = [id + "-test" for id in glob.SEQUENCE_IDS]
     val_dataset = copy.deepcopy(COCO_BASE_DICT)
@@ -69,6 +71,9 @@ def generate_3D_coco_from_wildtrack() -> None:
     number_test_files = int(glob.TEST_SPLIT*len(glob.ANNOTATION_FILES))
 
     train_annotation_files = glob.ANNOTATION_FILES[
+        :number_train_files
+    ]
+    eval_train_annotation_files = glob.ANNOTATION_FILES[
         :number_train_files
     ]
     test_annotation_files = glob.ANNOTATION_FILES[
@@ -84,6 +89,7 @@ def generate_3D_coco_from_wildtrack() -> None:
     val_ann_id = glob.TRAIN_SEQ_LENGTH + glob.TRAIN_SEQ_LENGTH
 
     output_train_annotation = "train.json"
+    output_eval_train_annotation = "eval_train.json"
     output_test_annotation = "test.json"
     output_val_annotation = "val.json"
     # analysis lists used to analyze how to best scale the cylinders to [0,1]^4
@@ -91,6 +97,9 @@ def generate_3D_coco_from_wildtrack() -> None:
 
         train_images, train_annotations, train_ann_id, train_analysis_list = _create_3D_annotations(
             train_annotation_files, c, "train", train_ann_id
+            )
+        eval_train_images, eval_train_annotations, eval_train_ann_id, eval_train_analysis_list = _create_3D_annotations(
+            eval_train_annotation_files, c, "eval_train", train_ann_id
             )
         test_images, test_annotations, test_ann_id, test_analysis_list = _create_3D_annotations(
             test_annotation_files, c, "test", test_ann_id
@@ -109,10 +118,11 @@ def generate_3D_coco_from_wildtrack() -> None:
             )
 
         DEST_COCO_TRAIN = f"{glob.MULTICAM_ROOT}/{glob.SEQUENCE_IDS[c]}/train"
+        DEST_COCO_EVAL_TRAIN = f"{glob.MULTICAM_ROOT}/{glob.SEQUENCE_IDS[c]}/eval_train"
         DEST_COCO_TEST = f"{glob.MULTICAM_ROOT}/{glob.SEQUENCE_IDS[c]}/test"
         DEST_COCO_VAL = f"{glob.MULTICAM_ROOT}/{glob.SEQUENCE_IDS[c]}/val"
 
-        for d in [DEST_COCO_TRAIN, DEST_COCO_TEST, DEST_COCO_VAL]:
+        for d in [DEST_COCO_TRAIN, DEST_COCO_EVAL_TRAIN, DEST_COCO_TEST, DEST_COCO_VAL]:
             if os.path.isdir(d) is False:
                 os.mkdir(d)
 
@@ -124,6 +134,14 @@ def generate_3D_coco_from_wildtrack() -> None:
             # _dest_coco_annotations
             f"{glob.MULTICAM_ROOT}/{glob.SEQUENCE_IDS[c]}/annotations/{output_train_annotation}",
             DEST_COCO_TRAIN
+        )
+        _create_coco_files(
+            eval_train_dataset,
+            eval_train_images,
+            eval_train_annotations,
+            # _dest_coco_annotations
+            f"{glob.MULTICAM_ROOT}/{glob.SEQUENCE_IDS[c]}/annotations/{output_eval_train_annotation}",
+            DEST_COCO_EVAL_TRAIN
         )
         _create_coco_files(
             test_dataset,
@@ -161,6 +179,9 @@ def _create_3D_annotations(
     """
     if split == "train":
         seq_name_appendix = "-train"
+        seq_length = glob.TRAIN_SEQ_LENGTH
+    if split == "eval_train":
+        seq_name_appendix = "-eval_train"
         seq_length = glob.TRAIN_SEQ_LENGTH
     elif split =="test":
         seq_name_appendix = "-test"
@@ -309,7 +330,7 @@ def _create_3D_annotations(
 
 
 if __name__ == "__main__":
-    generate_3D_coco_from_wildtrack()
+    #generate_3D_coco_from_wildtrack()
 
     # annotation path must be fixed to c0 and converted to sequence in check
     # to load the right image?
@@ -324,6 +345,17 @@ if __name__ == "__main__":
         )
 
         check_coco_from_wildtrack(
+            split="eval_train",
+            three_dim_multicam=False,
+            img_dir_path = f"{glob.MULTICAM_ROOT}/{id_}/eval_train",
+            write_path = f"{glob.MULTICAM_ROOT}/debug_coco_images",
+            coco_annotations_path = f"{glob.MULTICAM_ROOT}/{id_}/annotations/eval_train.json",
+            num_img=5,
+            no_img_id_offset=True
+        )
+
+        check_coco_from_wildtrack(
+            split="val",
             three_dim_multicam=False,
             img_dir_path = f"{glob.MULTICAM_ROOT}/{id_}/val",
             write_path = f"{glob.MULTICAM_ROOT}/debug_coco_images",
@@ -333,6 +365,7 @@ if __name__ == "__main__":
         )
 
         check_coco_from_wildtrack(
+            split="test",
             three_dim_multicam=False,
             img_dir_path = f"{glob.MULTICAM_ROOT}/{id_}/test",
             write_path = f"{glob.MULTICAM_ROOT}/debug_coco_images",

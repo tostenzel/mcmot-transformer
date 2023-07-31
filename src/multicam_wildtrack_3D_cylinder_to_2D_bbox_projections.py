@@ -85,8 +85,8 @@ def transform_3D_cylinder_to_2D_bbox_params(
     }
 
     # Check whether we can see the whole bbox in this camera
-    if (W < bbox["xmax"] < 0) or (W < bbox["xmin"] < 0) \
-    or (H < bbox["ymax"] < 0) or (H < bbox["ymin"] < 0):
+    if (W < bbox["xmax"] or  bbox["xmax"] < 0) or (W < bbox["xmin"] or bbox["xmin"]< 0) \
+    or (H < bbox["ymax"] or bbox["ymax"] < 0) or (H < bbox["ymin"] or bbox["ymin"]< 0):
         return None
     else:
         return bbox
