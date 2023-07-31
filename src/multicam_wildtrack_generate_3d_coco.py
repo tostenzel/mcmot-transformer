@@ -330,7 +330,7 @@ def _create_3D_annotations(
 
 
 if __name__ == "__main__":
-    #generate_3D_coco_from_wildtrack()
+    generate_3D_coco_from_wildtrack()
 
     # annotation path must be fixed to c0 and converted to sequence in check
     # to load the right image?
