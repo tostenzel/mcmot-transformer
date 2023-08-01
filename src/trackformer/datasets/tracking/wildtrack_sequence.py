@@ -126,7 +126,7 @@ class WILDTRACKSequence(Dataset):
             eval_offset = TRAIN_SEQ_LENGTH * 5
         elif self._seq_name.split('-')[1] == "val":
             eval_offset = (TRAIN_SEQ_LENGTH + TEST_SEQ_LENGTH) * 5
-        elif self._seq_name.split('-')[1] == "train":
+        elif self._seq_name.split('-')[1] == "train" or "eval_train":
             eval_offset = 0
         total = [
             {
