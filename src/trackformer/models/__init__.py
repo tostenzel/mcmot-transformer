@@ -32,7 +32,7 @@ def build_model(args):
         #num_classes = 20
         # num_classes = 1
 
-        num_classes = 19
+        num_classes = 91
         #-------------------------------------------------------------------------------
     else:
         raise NotImplementedError

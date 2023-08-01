@@ -1,6 +1,7 @@
-num_queries: 500
 #-------------------------------------------------------------------------------
 # TOBIAS: DETR instead DeformableDETR
+#num_queries: 500
+num_queries: 100
 
 #hidden_dim: 288
 hidden_dim: 256
