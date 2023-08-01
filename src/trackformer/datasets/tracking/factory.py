@@ -13,9 +13,9 @@ from .wildtrack_wrapper import WILDTRACKWrapper
 DATASETS = {}
 
 # WILDTRACK
-name_mapping = {"train": "TRAIN", "test": "TEST", "val": "TEST"}
+# = {"train": "TRAIN", "test": "TEST", "val": "TEST"}
 for cam in ["c0", "c1", "c2", "c3", "c4", "c5", "c6"]:
-    for split in ['train', 'test', 'val']:
+    for split in ['train', 'test', 'val', 'eval_train']:
         name = f"{cam}-{split}"
         DATASETS[name] = (
         lambda kwargs, split=split, cam=cam: WILDTRACKWrapper(split, cam, **kwargs))
