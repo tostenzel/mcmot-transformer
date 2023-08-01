@@ -38,8 +38,8 @@ img_transform:
 #-------------------------------------------------------------------------------
 #eval_only: true
 
-val_interval: 20 # unit number of epochs
-vis_and_log_interval: 99 # unit number of training iterations
+val_interval: 9 # unit number of epochs
+vis_and_log_interval: 5 # unit number of training iterations
 #-------------------------------------------------------------------------------
 # We switch from DeformableDETR to DETR b/c we can't generalize
 # reference points to multi-cam settings
@@ -72,3 +72,5 @@ set_cost_bbox: 5.0
 # giou box coefficient in the matching cost
 set_cost_giou: 0 # 2.0
 #-------------------------------------------------------------------------------
+
+no_vis: false
