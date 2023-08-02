@@ -269,7 +269,15 @@ def build_visualizers(args: dict, train_loss_names: list):
     #
     # METRICS
     #
-
+    lr = [
+    "encoder_lr",
+    "decoder_lr",
+    "class_lr",
+    "bbox_lr",
+    "query_lr",
+    "input_proj_lr",
+    "backbone_lr"
+    ]
     legend = ['loss']
     legend.extend(train_loss_names)
     # for i in range(len(train_loss_names)):
@@ -289,10 +297,18 @@ def build_visualizers(args: dict, train_loss_names: list):
         # 'loss_giou_unscaled',
         # 'loss_mask_unscaled',
         # 'loss_dice_unscaled',
-        'lr',
-        'lr_backbone',
+        "encoder_lr",
+        "decoder_lr",
+        "class_lr",
+        "bbox_lr",
+        "query_lr",
+        "input_proj_lr",
+        "backbone_lr",
+        #'lr',
+        #'lr_backbone',
         'iter_time'
     ])
+    #legend.extend(lr)
 
     # if not args.masks:
     #     legend.remove('loss_mask')
@@ -314,8 +330,10 @@ def build_visualizers(args: dict, train_loss_names: list):
     opts = copy.deepcopy(opts)
     opts['title'] = "TRAIN METRICS EPOCHS"
     opts['xlabel'] = "EPOCHS"
-    opts['legend'].remove('lr')
-    opts['legend'].remove('lr_backbone')
+    for lr_ in lr:
+        opts['legend'].remove(lr_)
+    #opts['legend'].remove('lr')
+    #opts['legend'].remove('lr_backbone')
     opts['legend'].remove('iter_time')
     visualizers['train']['epoch_metrics'] = LineVis(opts, **vis_kwargs)
 

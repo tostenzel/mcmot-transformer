@@ -103,26 +103,41 @@ def train(args: Namespace) -> None:
                 break
         return out
 
-    param_dicts = [
-        {"params": [p for n, p in model_without_ddp.named_parameters()
-                    if not match_name_keywords(n, args.lr_backbone_names + args.lr_linear_proj_names + ['layers_track_attention']) and p.requires_grad],
-         "lr": args.lr,},
-        {"params": [p for n, p in model_without_ddp.named_parameters()
-                    if match_name_keywords(n, args.lr_backbone_names) and p.requires_grad],
-         "lr": args.lr_backbone},
-        {"params": [p for n, p in model_without_ddp.named_parameters()
-                    if match_name_keywords(n, args.lr_linear_proj_names) and p.requires_grad],
-         "lr":  args.lr * args.lr_linear_proj_mult}]
-    if args.track_attention:
-        param_dicts.append({
-            "params": [p for n, p in model_without_ddp.named_parameters()
-                       if match_name_keywords(n, ['layers_track_attention']) and p.requires_grad],
-            "lr": args.lr_track})
+    #---------------------------------------------------------------------------
+    # TOBIAS: Use own param_dicts
+
+    # param_dicts = [
+    #     {"params": [p for n, p in model_without_ddp.named_parameters()
+    #                 if not match_name_keywords(n, args.lr_backbone_names + args.lr_linear_proj_names + ['layers_track_attention']) and p.requires_grad],
+    #      "lr": args.lr,},
+    #     {"params": [p for n, p in model_without_ddp.named_parameters()
+    #                 if match_name_keywords(n, args.lr_backbone_names) and p.requires_grad],
+    #      "lr": args.lr_backbone},
+    #     {"params": [p for n, p in model_without_ddp.named_parameters()
+    #                 if match_name_keywords(n, args.lr_linear_proj_names) and p.requires_grad],
+    #      "lr":  args.lr * args.lr_linear_proj_mult}]
+    # if args.track_attention:
+    #     param_dicts.append({
+    #         "params": [p for n, p in model_without_ddp.named_parameters()
+    #                    if match_name_keywords(n, ['layers_track_attention']) and p.requires_grad],
+    #         "lr": args.lr_track})
+
+    #---------------------------------------------------------------------------
+
+    param_dicts= [
+        {'params': model_without_ddp.transformer.encoder.parameters(), 'lr': args.encoder_lr},
+        {'params': model_without_ddp.transformer.decoder.parameters(), 'lr': args.decoder_lr},
+        {'params': model_without_ddp.class_embed.parameters(), 'lr': args.class_lr},
+        {'params': model_without_ddp.bbox_embed.parameters(), 'lr': args.bbox_lr},
+        {'params': model_without_ddp.query_embed.parameters(), 'lr': args.query_lr},
+        {'params': model_without_ddp.input_proj.parameters(), 'lr': args.input_proj_lr},
+        {'params': model_without_ddp.backbone.parameters(), 'lr': args.backbone_lr}
+    ]
 
     optimizer = torch.optim.AdamW(param_dicts, lr=args.lr,
                                   weight_decay=args.weight_decay)
 
-    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [args.lr_drop])
+    #lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [args.lr_drop])
 
     dataset_train = build_dataset(split='train', args=args)
     dataset_val = build_dataset(split='val', args=args)
@@ -167,6 +182,22 @@ def train(args: Namespace) -> None:
         checkpoint_state_dict = checkpoint['model']
         checkpoint_state_dict = {
             k.replace('detr.', ''): v for k, v in checkpoint['model'].items()}
+
+        #-----------------------------------------------------------------------
+        # TOBIAS random select and put in shape
+        tensor_shape = checkpoint_state_dict["query_embed.weight"].shape
+        your_tensor = torch.randn(tensor_shape)
+
+        # Number of rows to select
+        num_rows_to_select = args.num_queries
+
+        # Generate random indices to select rows
+        random_indices = torch.randperm(tensor_shape[0])[:num_rows_to_select]
+
+        # Select the rows using the random indices
+        selected_rows = your_tensor[random_indices]
+        checkpoint_state_dict["query_embed.weight"] = selected_rows
+        #-----------------------------------------------------------------------
 
         for k, v in checkpoint_state_dict.items():
             if k not in model_state_dict:
@@ -244,7 +275,6 @@ def train(args: Namespace) -> None:
                     and v.shape == checkpoint_mask_head['model'][k].shape):
                     print(f'Load {k} {tuple(v.shape)} from mask head model.')
                     resume_state_dict[k] = checkpoint_mask_head['model'][k]
-
         model_without_ddp.load_state_dict(resume_state_dict)
 
         # RESUME OPTIM
@@ -255,12 +285,12 @@ def train(args: Namespace) -> None:
                         c_p['lr'] = p['lr']
 
                 optimizer.load_state_dict(checkpoint['optimizer'])
-            if 'lr_scheduler' in checkpoint:
-                if args.overwrite_lr_scheduler:
-                    checkpoint['lr_scheduler'].pop('milestones')
-                lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
-                if args.overwrite_lr_scheduler:
-                    lr_scheduler.step(checkpoint['lr_scheduler']['last_epoch'])
+            # if 'lr_scheduler' in checkpoint:
+            #     if args.overwrite_lr_scheduler:
+            #         checkpoint['lr_scheduler'].pop('milestones')
+            #     lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
+            #     if args.overwrite_lr_scheduler:
+            #         lr_scheduler.step(checkpoint['lr_scheduler']['last_epoch'])
             if 'epoch' in checkpoint:
                 args.start_epoch = checkpoint['epoch'] + 1
                 print(f"RESUME EPOCH: {args.start_epoch}")
@@ -300,7 +330,7 @@ def train(args: Namespace) -> None:
                 output_dir, visualizers['train'], args, epoch)
             data_loader_train.dataset._transforms = random_transforms
 
-        lr_scheduler.step()
+        #lr_scheduler.step()
 
         checkpoint_paths = [output_dir / 'checkpoint.pth']
 
@@ -340,7 +370,7 @@ def train(args: Namespace) -> None:
                 utils.save_on_master({
                     'model': model_without_ddp.state_dict(),
                     'optimizer': optimizer.state_dict(),
-                    'lr_scheduler': lr_scheduler.state_dict(),
+                    #'lr_scheduler': lr_scheduler.state_dict(),
                     'epoch': epoch,
                     'args': args,
                     'vis_win_names': get_vis_win_names(visualizers),

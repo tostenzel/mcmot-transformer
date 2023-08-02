@@ -121,7 +121,6 @@ Follow up by opening another new terminal with activated environment and start t
 
     CUDA_VISIBLE_DEVICES=0 python src/train.py with \
         wildtrack_only \
-        deformable \
         multi_frame \
         tracking \
         output_dir=models/test_wildtrack_only %> log_wildtrack_only.txt
@@ -132,12 +131,11 @@ Switch to the browser window and change environment to the name of the output di
 
 Again, open another new terminal with activated environment. Type
 
-    CUDA_VISIBLE_DEVICES=0,1 MASTER_PORT=12340 python -m torch.distributed.launch --nproc_per_node=2 --use_env src/train.py with \
-        wildtrack_mot_crowdhuman \
-        deformable \
+    CUDA_VISIBLE_DEVICES=2,3,4,6 MASTER_PORT=12340 python -m torch.distributed.launch --nproc_per_node=4 --use_env src/train.py with \
+        wildtrack_only \
         multi_frame \
         tracking \
-        output_dir=models/baseline_wildtrack_mot_crowdhuman &> log_wildtrack_mot_crowdhuman.txt
+        output_dir=models/detr_with_backbone_4gpus_newlr &> log_detr_with_backbone_4gpus_newlr.txt
 
 
 ## Process management

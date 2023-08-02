@@ -105,7 +105,6 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
     vis_iter_metrics = None
     if visualizers:
         vis_iter_metrics = visualizers['iter_metrics']
-
     model.train()
     criterion.train()
     metric_logger = utils.MetricLogger(
@@ -113,7 +112,18 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
         delimiter="  ",
         vis=vis_iter_metrics,
         debug=args.debug)
-    metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
+    lr = [
+        "encoder_lr",
+        "decoder_lr",
+        "class_lr",
+        "bbox_lr",
+        "query_lr",
+        "input_proj_lr",
+        "backbone_lr"
+    ]
+    for lr_ in lr:
+
+        metric_logger.add_meter(lr_, utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
     metric_logger.add_meter('class_error', utils.SmoothedValue(window_size=1, fmt='{value:.2f}'))
 
     for i, (samples, targets) in enumerate(metric_logger.log_every(data_loader, epoch)):
@@ -154,8 +164,28 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
                              **loss_dict_reduced_scaled,
                              **loss_dict_reduced_unscaled)
         metric_logger.update(class_error=loss_dict_reduced['class_error'])
-        metric_logger.update(lr=optimizer.param_groups[0]["lr"],
-                             lr_backbone=optimizer.param_groups[1]["lr"])
+        # lr = [
+        #     "encoder_lr",
+        #     "decoder_lr",
+        #     "class_lr",
+        #     "bbox_lr",
+        #     "query_lr",
+        #     "input_proj_lr",
+        #     "backbone_lr"
+        # ]
+        #lr_vals = [param_group['lr'] for param_group in optimizer.param_groups]
+        metric_logger.update(
+            encoder_lr=optimizer.param_groups[0]["lr"],
+            decoder_lr=optimizer.param_groups[1]["lr"],
+            class_lr=optimizer.param_groups[2]["lr"],
+            bbox_lr=optimizer.param_groups[3]["lr"],
+            query_lr=optimizer.param_groups[4]["lr"],
+            input_proj_lr=optimizer.param_groups[5]["lr"],
+            backbone_lr=optimizer.param_groups[6]["lr"]
+        )
+
+            #lr=optimizer.param_groups[0]["lr"],
+            #lr_backbone=optimizer.param_groups[1]["lr"])
 
         if visualizers and (i == 0 or not i % args.vis_and_log_interval):
             _, results = make_results(
@@ -168,7 +198,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
                 targets[0],
                 args.tracking)
             
-    print(f"Iter: {i}")
+        print(f"Iter: {i}")
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
@@ -180,7 +210,13 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
 @torch.no_grad()
 def evaluate(model, criterion, postprocessors, data_loader, device,
              output_dir: str, visualizers: dict, args, epoch: int = None):
-    model.eval()
+    #---------------------------------------------------------------------------
+    # TOBIAS: Try to overfit model in training mode during eval b/c in eval
+    # some layers change
+
+    #model.eval()
+    model.train()
+    #---------------------------------------------------------------------------
     criterion.eval()
 
     metric_logger = utils.MetricLogger(

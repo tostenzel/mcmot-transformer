@@ -1,4 +1,4 @@
-lr: 0.0002
+lr: 0.0001 # (DETR: 0.0001) (Trackformer: 0.0002)
 lr_backbone_names: ['backbone.0']
 lr_backbone: 0.00002
 lr_linear_proj_names: ['reference_points', 'sampling_offsets']
@@ -7,11 +7,11 @@ lr_track: 0.0001
 overwrite_lrs: false
 overwrite_lr_scheduler: false
 batch_size: 2
-weight_decay: 0.0001
+weight_decay: 0.0001 # (DETR: 0.0001)
 epochs: 50
 lr_drop: 40
 # gradient clipping max norm
-clip_max_norm: 0.1
+clip_max_norm: 0.1 #(DETR: appears to have 0.01, Trackformer 0.1)
 # Deformable DETR
 deformable: false
 with_box_refine: false
@@ -71,9 +71,9 @@ masks: false
 # Class coefficient in the matching cost
 set_cost_class: 1.0
 # L1 box coefficient in the matching cost
-set_cost_bbox: 5.0
+set_cost_bbox: 5.0 # (DETR: 5)
 # giou box coefficient in the matching cost
-set_cost_giou: 2.0
+set_cost_giou: 0 # (DETR: 2)
 # Loss
 # Disables auxiliary decoding losses (loss at each layer)
 aux_loss: true
@@ -135,3 +135,15 @@ vis_server: http://localhost
 vis_port: 8090
 vis_and_log_interval: 50
 no_vis: true
+
+
+# TOBIAS' lr implementation
+
+encoder_lr: 0.0001
+decoder_lr: 0.0001
+class_lr: 0.0001
+bbox_lr: 0.0001
+query_lr: 0.0001
+input_proj_lr: 0.0001
+backbone_lr: 0.00002
+

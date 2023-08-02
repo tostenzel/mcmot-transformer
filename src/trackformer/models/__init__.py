@@ -26,9 +26,14 @@ def build_model(args):
         'mot_coco_person',
         'mot_less_transforms'
     ]:
+        #-------------------------------------------------------------------------------
+        # TOBIAS: DETR instead DeformableDETR
         # num_classes = 91
-        num_classes = 20
+        #num_classes = 20
         # num_classes = 1
+
+        num_classes = 91 #(DETR: 91 or 20, trackfomer 19)
+        #-------------------------------------------------------------------------------
     else:
         raise NotImplementedError
 
@@ -133,5 +138,42 @@ def build_model(args):
         if args.dataset == "coco_panoptic":
             is_thing_map = {i: i <= 90 for i in range(201)}
             postprocessors["panoptic"] = PostProcessPanoptic(is_thing_map, threshold=0.85)
+
+    """
+    for name, param in model.named_parameters():
+        print(name, param.shape)
+
+    # Rest is transformer or backbone
+
+    # class_embed.weight torch.Size([92, 256])
+    # class_embed.bias torch.Size([92])
+    # bbox_embed.layers.0.weight torch.Size([256, 256])
+    # bbox_embed.layers.0.bias torch.Size([256])
+    # bbox_embed.layers.1.weight torch.Size([256, 256])
+    # bbox_embed.layers.1.bias torch.Size([256])
+    # bbox_embed.layers.2.weight torch.Size([4, 256])
+    # bbox_embed.layers.2.bias torch.Size([4])
+    # query_embed.weight torch.Size([100, 256])
+    # input_proj.weight torch.Size([256, 2048, 1, 1])
+    # input_proj.bias torch.Size([256])
+
+    # Specify the layers not to freeze
+    layers_to_unfreeze = ['bbox_embed', 'class_embed', 'query_embed']
+
+    # Freeze the parameters in all layers first
+    for param in model.parameters():
+        param.requires_grad = False
+
+    # Unfreeze the specified layers
+    for name, param in model.named_parameters():
+        for layer_name in layers_to_unfreeze:
+            if layer_name in name:
+                param.requires_grad = True
+                break
+
+    # Verify that the specified layers are not frozen (requires_grad=True)
+    for name, param in model.named_parameters():
+        print(name, param.requires_grad)
+    """
 
     return model, criterion, postprocessors

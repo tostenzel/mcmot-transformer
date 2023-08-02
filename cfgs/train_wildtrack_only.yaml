@@ -3,6 +3,9 @@
 ##############################################################################
 
 # starting point: `train_mot17_crowdhuman.yaml`
+#-------------------------------------------------------------------------------
+# data
+
 # dataset-type
 dataset: mot_less_transforms # less preprocessing to prepare training on 3D data
 # don't neet b/c dataset not of type mot_crowdhuman
@@ -13,18 +16,74 @@ val_split: train
 mot_path_train: data/WILDTRACK
 #only one sequence at a time to make comparable to distribtion metrics?
 mot_path_val: data/WILDTRACK
-
+#-------------------------------------------------------------------------------
 # pre-trained detector/tracker
-resume: models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth
+# No pre-trained tracker available for DETR (switched from DeformableDETR)
+resume: models/detr-r50-e632da11.pth
 
-epochs: 500
-lr_drop: 10
+#-------------------------------------------------------------------------------
+# Take sth. very large
+epochs: 50000
 
-no_vis: false
+#-------------------------------------------------------------------------------
+# required by multicam implementation
 batch_size: 1
+
+#-------------------------------------------------------------------------------
+# Should not be necessay but make sure that images are not cropped
 
 img_transform:
   max_size: 1920
   val_width: 1080
+#-------------------------------------------------------------------------------
 
+# We switch from DeformableDETR to DETR b/c we can't generalize
+# reference points to multi-cam settings
+
+deformable: false
+#-------------------------------------------------------------------------------
+# LR scheduler and AdamW hyperparams
+#lr: 0.0002 # perhaps increase this
+#lr_backbone_names: ['backbone.0']
+#lr_backbone: 0.00002
+#lr_linear_proj_names: ['reference_points', 'sampling_offsets']
+#lr_linear_proj_mult: 0.1
+#lr_track: 0.0001 # perhaps increase this
+overwrite_lrs: false
+overwrite_lr_scheduler: false
+weight_decay: 0.0001 # perhaps decrease or remove this penalty on large weights
+
+#-------------------------------------------------------------------------------
+# no multi_frame_encoding implemented for DETR
+multi_frame_attention: false #false
+multi_frame_encoding: false #true
+
+#-------------------------------------------------------------------------------
+# Matcher
+# Class coefficient in the matching cost
+set_cost_class: 2.0 #(DETR: Default 1, Trackformer: 2.0?)
+# L1 box coefficient in the matching cost
+set_cost_bbox: 5.0
+# giou box coefficient in the matching cost
+
+set_cost_giou: 0 # 
+#-------------------------------------------------------------------------------
 #eval_only: true
+
+val_interval: 5 # unit number of epochs
+vis_and_log_interval: 6 # unit number of training iteration
+no_vis: false
+#-------------------------------------------------------------------------------
+
+lr: 0.0000
+
+lr_drop: 0.0 #10 # perhaps decrease this
+
+encoder_lr: 0.00002 #0.000004
+decoder_lr: 0.00002 # 0.000004
+class_lr: 0.003
+bbox_lr: 0.0002 # 0.00003
+query_lr: 0.003 #0.0002 #0.00002 # 0.00003
+input_proj_lr: 0.003 #0.0002 #0.00002 # 0.00003
+backbone_lr: 0.00002 # 0 #0.000005
+
