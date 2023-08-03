@@ -11,6 +11,8 @@ from .deformable_detr import DeformableDETR
 from .detr import DETR
 from .matcher import HungarianMatcher
 
+from target_transforms import bbox_xywh_to_xyxy, bbox_xyxy_to_cxcywh
+
 
 class DETRTrackingBase(nn.Module):
 
@@ -109,7 +111,12 @@ class DETRTrackingBase(nn.Module):
 
                 for j in prev_target_ind_for_fps:
                     # if random.uniform(0, 1) < self._track_query_false_positive_prob:
-                    prev_boxes_unmatched = prev_out['pred_boxes'][i, not_prev_out_ind]
+                    #-----------------------------------------------------------
+                    # TOBIAS: Box weights for false pos init should be computed
+                    # on center distance, not min distance
+
+                    #prev_boxes_unmatched = prev_out['pred_boxes'][i, not_prev_out_ind]
+                    prev_boxes_unmatched =  bbox_xyxy_to_cxcywh(bbox_xywh_to_xyxy(prev_out['pred_boxes'][i, not_prev_out_ind]))
 
                     # only cxcy
                     # box_dists = prev_box_matched[:2].sub(prev_boxes_unmatched[:, :2]).abs()
@@ -124,11 +131,17 @@ class DETRTrackingBase(nn.Module):
                     # dist = sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
 
                     if len(prev_boxes_matched) > j:
-                        prev_box_matched = prev_boxes_matched[j]
+                        prev_box_matched = bbox_xyxy_to_cxcywh(bbox_xywh_to_xyxy(prev_boxes_matched[j]))
+                    #-----------------------------------------------------------
                         box_weights = \
                             prev_box_matched.unsqueeze(dim=0)[:, :2] - \
                             prev_boxes_unmatched[:, :2]
-                        box_weights = box_weights[:, 0] ** 2 + box_weights[:, 0] ** 2
+                        #-------------------------------------------------------
+                        # TOBIAS: is there a bug? rather 
+                        # box_weights = box_weights[:, 0] ** 2 + box_weights[:, 0] ** 2
+                        # ???
+                        box_weights = box_weights[:, 0] ** 2 + box_weights[:, 1] ** 2
+                        #-------------------------------------------------------
                         box_weights = torch.sqrt(box_weights)
 
                         # if box_weights.gt(0.0).any():

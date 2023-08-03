@@ -21,6 +21,8 @@ from ..util import box_ops
 from ..util.misc import NestedTensor, inverse_sigmoid, nested_tensor_from_tensor_list
 from .detr import DETR, PostProcess, SetCriterion
 
+from target_bbox_transforms import bbox_xywh_to_xyxy
+
 
 def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
@@ -315,12 +317,17 @@ class DeformablePostProcess(PostProcess):
 
         scores, labels = prob.max(-1)
         # scores, labels = prob[..., 0:1].max(-1)
-        boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
+        #-----------------------------------------------------------------------
+        # TOBIAS: I train on xywh (not cxcy) but need xyxy for eval 
+        boxes = out_bbox
+        #boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
+        boxes = bbox_xywh_to_xyxy(out_bbox)
 
         # and from relative [0, 1] to absolute [0, height] coordinates
         img_h, img_w = target_sizes.unbind(1)
         scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
         boxes = boxes * scale_fct[:, None, :]
+        #-----------------------------------------------------------------------
 
         results = [
             {'scores': s, 'scores_no_object': 1 - s, 'labels': l, 'boxes': b}
@@ -332,3 +339,13 @@ class DeformablePostProcess(PostProcess):
                     results[i][k] = v[mask]
 
         return results
+    
+    def process_boxes(self, boxes, target_sizes):
+        # convert to [x0, y0, x1, y1] format
+        boxes = bbox_xywh_to_xyxy(boxes)
+        # and from relative [0, 1] to absolute [0, height] coordinates
+        img_h, img_w = target_sizes.unbind(1)
+        scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
+        boxes = boxes * scale_fct[:, None, :]
+
+        return boxes

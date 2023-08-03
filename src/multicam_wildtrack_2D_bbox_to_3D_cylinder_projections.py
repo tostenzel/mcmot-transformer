@@ -14,6 +14,7 @@ from numpy.linalg import inv#, pinv
 from scipy.stats import norm
 
 from wildtrack_globals import CM_TO_3D_WORLD
+from target_bbox_transforms import clamp_x, clamp_y
 
 
 # Parameters used for generating points used to fit the cylinder height
@@ -45,6 +46,12 @@ def transform_2D_bbox_to_3D_cylinder_params(
         cylinder params.
 
     """
+    # prevent negative area
+    bbox["xmax"] = clamp_x(bbox["xmax"])
+    bbox["xmin"] = clamp_x(bbox["xmin"])
+    bbox["ymax"] = clamp_y(bbox["ymax"])
+    bbox["ymin"] = clamp_y(bbox["ymin"])   
+
     x_foot = (bbox["xmax"] + bbox["xmin"]) / 2
     y_foot = bbox["ymax"]
     X_foot, _ = _project_2D_to_3D(x_foot, y_foot, rvec, tvec, camera_matrix)

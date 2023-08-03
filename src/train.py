@@ -37,6 +37,8 @@ ex.add_named_config('wildtrack_only', 'cfgs/train_wildtrack_only.yaml')
 ex.add_named_config('wildtrack_crowdhuman', 'cfgs/train_wildtrack_crowdhuman.yaml')
 ex.add_named_config('wildtrack_mot_crowdhuman', 'cfgs/train_wildtrack_mot_crowdhuman.yaml')
 
+torch.set_printoptions(sci_mode=False)
+
 
 def train(args: Namespace) -> None:
     print(args)
@@ -130,7 +132,12 @@ def train(args: Namespace) -> None:
         # sampler_train = DistributedSampler(dataset_train)
         sampler_val = DistributedSampler(dataset_val, shuffle=False)
     else:
-        sampler_train = torch.utils.data.RandomSampler(dataset_train)
+        #-----------------------------------------------------------------------
+        # TOBIAS: Start training from the first image frame of the sequence, too
+
+        #sampler_train = torch.utils.data.RandomSampler(dataset_train)
+        sampler_train = torch.utils.data.SequentialSampler(dataset_train)
+        #-----------------------------------------------------------------------
         sampler_val = torch.utils.data.SequentialSampler(dataset_val)
 
     batch_sampler_train = torch.utils.data.BatchSampler(

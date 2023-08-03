@@ -12,6 +12,8 @@ from visdom import Visdom
 
 from .util.plot_utils import fig_to_numpy
 
+from target_bbox_transforms import bbox_xywh_to_xyxy
+
 logging.getLogger('visdom').setLevel(logging.CRITICAL)
 
 
@@ -219,13 +221,17 @@ def vis_results(visualizer, img, result, target, tracking):
         cmap = plt.cm.get_cmap('hsv', len(frame_target['track_ids']))
 
         for j, track_id in enumerate(frame_target['track_ids']):
-            x1, y1, x2, y2 = frame_target['boxes'][j]
+        #-----------------------------------------------------------------------
+        # TOBIAS: we train now on data with targets in (xmin, ymin, w, h) format
+
+            xmin, ymin, xmax, ymax = frame_target['boxes'][j]
             axarr[i].text(
-                x1, y1, f"track_id={track_id}",
+                xmin, ymin, f"track_id={track_id}",
                 fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
             axarr[i].add_patch(plt.Rectangle(
-                (x1, y1), x2 - x1, y2 - y1,
+                (xmin, ymin), xmax - xmin, ymax - ymin,
                 fill=False, color='green', linewidth=2))
+        #-----------------------------------------------------------------------
 
             if 'masks' in frame_target:
                 mask = frame_target['masks'][j].cpu().numpy()

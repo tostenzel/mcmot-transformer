@@ -206,11 +206,13 @@ class ConvertCocoPolysToMask(object):
         boxes = [obj["bbox"] for obj in anno]
         # guard against no boxes via resizing
         boxes = torch.as_tensor(boxes, dtype=torch.float32).reshape(-1, 4)
+        #-----------------------------------------------------------------------
         # x,y,w,h --> x,y,x,y
-        boxes[:, 2:] += boxes[:, :2]
-        if not self.overflow_boxes:
-            boxes[:, 0::2].clamp_(min=0, max=w)
-            boxes[:, 1::2].clamp_(min=0, max=h)
+        #boxes[:, 2:] += boxes[:, :2]
+        #if not self.overflow_boxes:
+        #    boxes[:, 0::2].clamp_(min=0, max=w)
+        #    boxes[:, 1::2].clamp_(min=0, max=h)
+        #-----------------------------------------------------------------------
 
         classes = [obj["category_id"] for obj in anno]
         classes = torch.tensor(classes, dtype=torch.int64)
@@ -227,14 +229,16 @@ class ConvertCocoPolysToMask(object):
             if num_keypoints:
                 keypoints = keypoints.view(num_keypoints, -1, 3)
 
-        keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
+        #-----------------------------------------------------------------------
+        # Tobias: Do not change boxes...
+        #keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
 
-        boxes = boxes[keep]
-        classes = classes[keep]
+        boxes = boxes#[keep]
+        classes = classes#[keep]
         if self.return_masks:
-            masks = masks[keep]
+            masks = masks#[keep]
         if keypoints is not None:
-            keypoints = keypoints[keep]
+            keypoints = keypoints#[keep]
 
         target = {}
         target["boxes"] = boxes
@@ -248,7 +252,7 @@ class ConvertCocoPolysToMask(object):
 
         if anno and "track_id" in anno[0]:
             track_ids = torch.tensor([obj["track_id"] for obj in anno])
-            target["track_ids"] = track_ids[keep]
+            target["track_ids"] = track_ids#[keep]
         elif not len(boxes):
             target["track_ids"] = torch.empty(0)
 
@@ -257,9 +261,9 @@ class ConvertCocoPolysToMask(object):
         iscrowd = torch.tensor([obj["iscrowd"] if "iscrowd" in obj else 0 for obj in anno])
         ignore = torch.tensor([obj["ignore"] if "ignore" in obj else 0 for obj in anno])
 
-        target["area"] = area[keep]
-        target["iscrowd"] = iscrowd[keep]
-        target["ignore"] = ignore[keep]
+        target["area"] = area#[keep]
+        target["iscrowd"] = iscrowd#[keep]
+        target["ignore"] = ignore#[keep]
 
         target["orig_size"] = torch.as_tensor([int(h), int(w)])
         target["size"] = torch.as_tensor([int(h), int(w)])
@@ -267,48 +271,63 @@ class ConvertCocoPolysToMask(object):
         return image, target
 
 
-def make_coco_transforms(image_set, img_transform=None, overflow_boxes=False):
+def make_coco_transforms(image_set, img_transform=None, overflow_boxes=False, less_transforms=False):
+    transforms = []
     normalize = T.Compose([
         T.ToTensor(),
-        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        T.NormalizeInputAndScaleTargetsOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
-    # default
-    max_size = 1333
-    val_width = 800
-    scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
-    random_resizes = [400, 500, 600]
-    random_size_crop = (384, 600)
+    #---------------------------------------------------------------------------
+    # make sure the orginal code is not accessed
 
-    if img_transform is not None:
-        scale = img_transform.max_size / max_size
-        max_size = img_transform.max_size
-        val_width = img_transform.val_width
+    # if less_transforms is False:
+    #     normalize = T.Compose([
+    #         T.ToTensor(),
+    #         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    #     ])
+    # else:
+    #     normalize = T.Compose([
+    #         T.ToTensor(),
+    #         T.NormalizeInputAndScaleTargetsOnly([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    #     ])
+    # # default
+    # max_size = 1333
+    # val_width = 800
+    # scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
+    # random_resizes = [400, 500, 600]
+    # random_size_crop = (384, 600)
 
-        # scale all with respect to custom max_size
-        scales = [int(scale * s) for s in scales]
-        random_resizes = [int(scale * s) for s in random_resizes]
-        random_size_crop = [int(scale * s) for s in random_size_crop]
+    # if img_transform is not None:
+    #     scale = img_transform.max_size / max_size
+    #     max_size = img_transform.max_size
+    #     val_width = img_transform.val_width
 
-    if image_set == 'train':
-        transforms = [
-            T.RandomHorizontalFlip(),
-            T.RandomSelect(
-                T.RandomResize(scales, max_size=max_size),
-                T.Compose([
-                    T.RandomResize(random_resizes),
-                    T.RandomSizeCrop(*random_size_crop, overflow_boxes=overflow_boxes),
-                    T.RandomResize(scales, max_size=max_size),
-                ])
-            ),
-        ]
-    elif image_set == 'val' or image_set == 'test':
-        transforms = [
-            T.RandomResize([val_width], max_size=max_size),
-        ]
-    else:
-        ValueError(f'unknown {image_set}')
+    #     # scale all with respect to custom max_size
+    #     scales = [int(scale * s) for s in scales]
+    #     random_resizes = [int(scale * s) for s in random_resizes]
+    #     random_size_crop = [int(scale * s) for s in random_size_crop]
 
-    # transforms.append(normalize)
+    # if image_set == 'train':
+    #     transforms = [
+    #         T.RandomHorizontalFlip(),
+    #         T.RandomSelect(
+    #             T.RandomResize(scales, max_size=max_size),
+    #             T.Compose([
+    #                 T.RandomResize(random_resizes),
+    #                 T.RandomSizeCrop(*random_size_crop, overflow_boxes=overflow_boxes),
+    #                 T.RandomResize(scales, max_size=max_size),
+    #             ])
+    #         ),
+    #     ]
+    # elif image_set == 'val' or image_set == 'test':
+    #     transforms = [
+    #         T.RandomResize([val_width], max_size=max_size),
+    #     ]
+    # else:
+    #     ValueError(f'unknown {image_set}')
+
+    # # transforms.append(normalize)
+    #---------------------------------------------------------------------------
     return T.Compose(transforms), normalize
 
 

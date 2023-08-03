@@ -167,6 +167,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module, postproc
                 results[0],
                 targets[0],
                 args.tracking)
+            
+    print(f"Iter: {i}")
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()

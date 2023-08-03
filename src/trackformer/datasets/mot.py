@@ -162,6 +162,51 @@ def build_mot(image_set, args):
     return dataset
 
 
+def build_mot_less_transforms(image_set, args):
+    """Create DataLoader that only normalizes the image and scales the targets.
+    
+    Important part in the call of `make_coco_transforms`.
+    """
+    if image_set == 'train':
+        root = Path(args.mot_path_train)
+        prev_frame_rnd_augs = args.track_prev_frame_rnd_augs
+        prev_frame_range=args.track_prev_frame_range
+    elif image_set == 'val':
+        root = Path(args.mot_path_val)
+        prev_frame_rnd_augs = 0.0
+        prev_frame_range = 1
+    else:
+        ValueError(f'unknown {image_set}')
+
+    assert root.exists(), f'provided MOT17Det path {root} does not exist'
+
+    split = getattr(args, f"{image_set}_split")
+
+    img_folder = root / split
+    ann_file = root / f"annotations/{split}.json"
+
+    # important part: `less_transforms=True`
+    _, norm_transforms = make_coco_transforms(
+        image_set=image_set,
+        img_transform=None,
+        overflow_boxes=False,
+        less_transforms=True
+    )
+
+    dataset = MOT(
+        img_folder, ann_file, None, norm_transforms,
+        prev_frame_range=prev_frame_range,
+        return_masks=args.masks,
+        overflow_boxes=args.overflow_boxes,
+        remove_no_obj_imgs=False,
+        prev_frame=args.tracking,
+        prev_frame_rnd_augs=prev_frame_rnd_augs,
+        prev_prev_frame=args.track_prev_prev_frame,
+        )
+
+    return dataset
+
+
 def build_mot_crowdhuman(image_set, args):
     if image_set == 'train':
         args_crowdhuman = copy.deepcopy(args)

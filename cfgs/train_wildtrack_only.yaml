@@ -4,12 +4,11 @@
 
 # starting point: `train_mot17_crowdhuman.yaml`
 # dataset-type
-dataset: mot # "mot" has to be in there for trackig ... see train.py
-
+dataset: mot_less_transforms # less preprocessing to prepare training on 3D data
 # don't neet b/c dataset not of type mot_crowdhuman
 #crowdhuman_train_split: train_val
 train_split: train
-val_split: test
+val_split: train
 
 mot_path_train: data/WILDTRACK
 #only one sequence at a time to make comparable to distribtion metrics?
@@ -18,7 +17,14 @@ mot_path_val: data/WILDTRACK
 # pre-trained detector/tracker
 resume: models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth
 
-epochs: 200
+epochs: 500
 lr_drop: 10
 
 no_vis: false
+batch_size: 1
+
+img_transform:
+  max_size: 1920
+  val_width: 1080
+
+#eval_only: true
