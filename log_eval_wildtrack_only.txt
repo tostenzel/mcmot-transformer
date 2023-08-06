@@ -1,0 +1,198 @@
+WARNING - train - No observers have been added to this run
+INFO - train - Running command 'load_config'
+INFO - train - Started
+INFO - train - Completed after 0:00:00
+Configuration ([34mmodified[0m, [32madded[0m, [31mtypechanged[0m, [2mdoc[0m):
+  aux_loss = True
+  backbone = 'resnet50'
+  batch_size = 2
+  bbox_loss_coef = 5.0
+  clip_max_norm = 0.1
+[34m  cls_loss_coef = 2.0[0m
+  coco_and_crowdhuman_prev_frame_rnd_augs = 0.2
+  coco_min_num_objects = 0
+  coco_panoptic_path = None
+  coco_path = 'data/coco_2017'
+  coco_person_train_split = None
+  crowdhuman_path = 'data/CrowdHuman'
+  crowdhuman_train_split = None
+[34m  dataset = 'mot'[0m
+  debug = False
+  dec_layers = 6
+  dec_n_points = 4
+[34m  deformable = True[0m
+  device = 'cuda'
+  dice_loss_coef = 1.0
+  dilation = False
+[34m  dim_feedforward = 1024[0m
+  dist_url = 'env://'
+  dropout = 0.1
+  enc_layers = 6
+  enc_n_points = 4
+  eos_coef = 0.1
+[34m  epochs = 200[0m
+[34m  eval_only = True[0m
+  eval_train = False
+  focal_alpha = 0.25
+  focal_gamma = 2
+[34m  focal_loss = True[0m
+  freeze_detr = False
+  giou_loss_coef = 2
+[34m  hidden_dim = 288[0m
+  load_mask_head_from_model = None
+  lr = 0.0002
+  lr_backbone = 2e-05
+  lr_backbone_names = ['backbone.0']
+[34m  lr_drop = 10[0m
+  lr_linear_proj_mult = 0.1
+  lr_linear_proj_names = ['reference_points', 'sampling_offsets']
+  lr_track = 0.0001
+  mask_loss_coef = 1.0
+  masks = False
+  merge_frame_features = False
+[34m  mot_path_train = 'data/WILDTRACK'[0m
+[34m  mot_path_val = 'data/WILDTRACK'[0m
+[34m  multi_frame_attention = True[0m
+  multi_frame_attention_separate_encoder = True
+  multi_frame_encoding = True
+  nheads = 8
+  no_vis = True
+[34m  num_feature_levels = 4[0m
+[34m  num_queries = 500[0m
+  num_workers = 2
+[34m  output_dir = 'models/eval_wildtrack_only'[0m
+[34m  overflow_boxes = True[0m
+  overwrite_lr_scheduler = False
+  overwrite_lrs = False
+  position_embedding = 'sine'
+  pre_norm = False
+[34m  resume = 'models/baseline_wildtrack_only_corrected/checkpoint_best_MOTA.pth'[0m
+  resume_optim = False
+  resume_shift_neuron = False
+  resume_vis = False
+  save_model_interval = 5
+  seed = 42
+  set_cost_bbox = 5.0
+[34m  set_cost_class = 2.0[0m
+  set_cost_giou = 2.0
+  start_epoch = 1
+  track_attention = False
+  track_backprop_prev_frame = False
+[34m  track_prev_frame_range = 5[0m
+  track_prev_frame_rnd_augs = 0.01
+  track_prev_prev_frame = False
+  track_query_false_negative_prob = 0.4
+  track_query_false_positive_eos_weight = True
+  track_query_false_positive_prob = 0.1
+[34m  tracking = True[0m
+  tracking_eval = True
+  train_split = 'train'
+  two_stage = False
+  val_interval = 5
+  val_split = 'val'
+  vis_and_log_interval = 50
+  vis_port = 8090
+  vis_server = 'http://localhost'
+  weight_decay = 0.0001
+[34m  with_box_refine = True[0m
+  world_size = 1
+  img_transform:
+    max_size = 1333
+    val_width = 800
+Namespace(aux_loss=True, backbone='resnet50', batch_size=2, bbox_loss_coef=5.0, clip_max_norm=0.1, cls_loss_coef=2.0, coco_and_crowdhuman_prev_frame_rnd_augs=0.2, coco_min_num_objects=0, coco_panoptic_path=None, coco_path='data/coco_2017', coco_person_train_split=None, crowdhuman_path='data/CrowdHuman', crowdhuman_train_split=None, dataset='mot', debug=False, dec_layers=6, dec_n_points=4, deformable=True, device='cuda', dice_loss_coef=1.0, dilation=False, dim_feedforward=1024, dist_url='env://', dropout=0.1, enc_layers=6, enc_n_points=4, eos_coef=0.1, epochs=200, eval_only=True, eval_train=False, focal_alpha=0.25, focal_gamma=2, focal_loss=True, freeze_detr=False, giou_loss_coef=2, hidden_dim=288, img_transform=Namespace(max_size=1333, val_width=800), load_mask_head_from_model=None, lr=0.0002, lr_backbone=2e-05, lr_backbone_names=['backbone.0'], lr_drop=10, lr_linear_proj_mult=0.1, lr_linear_proj_names=['reference_points', 'sampling_offsets'], lr_track=0.0001, mask_loss_coef=1.0, masks=False, merge_frame_features=False, mot_path_train='data/WILDTRACK', mot_path_val='data/WILDTRACK', multi_frame_attention=True, multi_frame_attention_separate_encoder=True, multi_frame_encoding=True, nheads=8, no_vis=True, num_feature_levels=4, num_queries=500, num_workers=2, output_dir='models/eval_wildtrack_only', overflow_boxes=True, overwrite_lr_scheduler=False, overwrite_lrs=False, position_embedding='sine', pre_norm=False, resume='models/baseline_wildtrack_only_corrected/checkpoint_best_MOTA.pth', resume_optim=False, resume_shift_neuron=False, resume_vis=False, save_model_interval=5, seed=42, set_cost_bbox=5.0, set_cost_class=2.0, set_cost_giou=2.0, start_epoch=1, track_attention=False, track_backprop_prev_frame=False, track_prev_frame_range=5, track_prev_frame_rnd_augs=0.01, track_prev_prev_frame=False, track_query_false_negative_prob=0.4, track_query_false_positive_eos_weight=True, track_query_false_positive_prob=0.1, tracking=True, tracking_eval=True, train_split='train', two_stage=False, val_interval=5, val_split='val', vis_and_log_interval=50, vis_port=8090, vis_server='http://localhost', weight_decay=0.0001, with_box_refine=True, world_size=1)
+Not using distributed mode
+git:
+  sha: 9341ff69d8a26b128f240db7004f2d0fabf4e9c5, status: has uncommited changes, branch: 1-train-trackformer-on-wildtrack
+
+NUM TRAINABLE MODEL PARAMS: 44011474
+loading annotations into memory...
+Done (t=0.14s)
+creating index...
+index created!
+loading annotations into memory...
+Done (t=0.10s)
+creating index...
+index created!
+WARNING - submitit - Added new config entry: "obj_detector_model.img_transform"
+WARNING - submitit - Added new config entry: "obj_detector_model.model"
+WARNING - submitit - Added new config entry: "obj_detector_model.post.bbox"
+WARNING - submitit - Changed type of config entry "seed" from int to NoneType
+WARNING - submitit - Changed type of config entry "dataset_name" from str to DogmaticList
+WARNING - submitit.track - No observers have been added to this run
+INFO - submitit.track - Running command 'main'
+INFO - submitit.track - Started
+INFO - submitit.main - ------------------
+INFO - submitit.main - TRACK SEQ: c0-val
+Epoch: [Test:]  [  0/140]  eta: 0:03:07  class_error: 0.00  loss: 5.3207 (5.3207)  loss_ce: 0.5294 (0.5294)  loss_bbox: 0.0665 (0.0665)  loss_giou: 0.4355 (0.4355)  loss_ce_0: 0.1964 (0.1964)  loss_bbox_0: 0.0679 (0.0679)  loss_giou_0: 0.4130 (0.4130)  loss_ce_1: 0.2967 (0.2967)  loss_bbox_1: 0.0599 (0.0599)  loss_giou_1: 0.3892 (0.3892)  loss_ce_2: 0.4624 (0.4624)  loss_bbox_2: 0.0614 (0.0614)  loss_giou_2: 0.3877 (0.3877)  loss_ce_3: 0.4976 (0.4976)  loss_bbox_3: 0.0631 (0.0631)  loss_giou_3: 0.3911 (0.3911)  loss_ce_4: 0.5472 (0.5472)  loss_bbox_4: 0.0634 (0.0634)  loss_giou_4: 0.3923 (0.3923)  loss_ce_unscaled: 0.2647 (0.2647)  class_error_unscaled: 0.0000 (0.0000)  loss_bbox_unscaled: 0.0133 (0.0133)  loss_giou_unscaled: 0.2177 (0.2177)  cardinality_error_unscaled: 483.5000 (483.5000)  loss_ce_0_unscaled: 0.0982 (0.0982)  loss_bbox_0_unscaled: 0.0136 (0.0136)  loss_giou_0_unscaled: 0.2065 (0.2065)  cardinality_error_0_unscaled: 483.5000 (483.5000)  loss_ce_1_unscaled: 0.1484 (0.1484)  loss_bbox_1_unscaled: 0.0120 (0.0120)  loss_giou_1_unscaled: 0.1946 (0.1946)  cardinality_error_1_unscaled: 483.5000 (483.5000)  loss_ce_2_unscaled: 0.2312 (0.2312)  loss_bbox_2_unscaled: 0.0123 (0.0123)  loss_giou_2_unscaled: 0.1939 (0.1939)  cardinality_error_2_unscaled: 483.5000 (483.5000)  loss_ce_3_unscaled: 0.2488 (0.2488)  loss_bbox_3_unscaled: 0.0126 (0.0126)  loss_giou_3_unscaled: 0.1956 (0.1956)  cardinality_error_3_unscaled: 483.5000 (483.5000)  loss_ce_4_unscaled: 0.2736 (0.2736)  loss_bbox_4_unscaled: 0.0127 (0.0127)  loss_giou_4_unscaled: 0.1961 (0.1961)  cardinality_error_4_unscaled: 483.5000 (483.5000)  time: 1.3418  data: 0.3461  max mem: 2209
+Epoch: [Test:]  [ 50/140]  eta: 0:00:37  class_error: 0.00  loss: 3.7500 (3.8384)  loss_ce: 0.1032 (0.1540)  loss_bbox: 0.0735 (0.0673)  loss_giou: 0.4179 (0.4090)  loss_ce_0: 0.1633 (0.1879)  loss_bbox_0: 0.0853 (0.0810)  loss_giou_0: 0.4495 (0.4328)  loss_ce_1: 0.1334 (0.1474)  loss_bbox_1: 0.0750 (0.0685)  loss_giou_1: 0.4109 (0.4114)  loss_ce_2: 0.0950 (0.1427)  loss_bbox_2: 0.0717 (0.0682)  loss_giou_2: 0.4099 (0.4102)  loss_ce_3: 0.0961 (0.1473)  loss_bbox_3: 0.0749 (0.0683)  loss_giou_3: 0.4165 (0.4111)  loss_ce_4: 0.1017 (0.1525)  loss_bbox_4: 0.0754 (0.0675)  loss_giou_4: 0.4175 (0.4113)  loss_ce_unscaled: 0.0516 (0.0770)  class_error_unscaled: 0.0000 (-0.0000)  loss_bbox_unscaled: 0.0147 (0.0135)  loss_giou_unscaled: 0.2090 (0.2045)  cardinality_error_unscaled: 480.0000 (479.3725)  loss_ce_0_unscaled: 0.0816 (0.0940)  loss_bbox_0_unscaled: 0.0171 (0.0162)  loss_giou_0_unscaled: 0.2248 (0.2164)  cardinality_error_0_unscaled: 480.0000 (479.3725)  loss_ce_1_unscaled: 0.0667 (0.0737)  loss_bbox_1_unscaled: 0.0150 (0.0137)  loss_giou_1_unscaled: 0.2055 (0.2057)  cardinality_error_1_unscaled: 480.0000 (479.3725)  loss_ce_2_unscaled: 0.0475 (0.0714)  loss_bbox_2_unscaled: 0.0143 (0.0136)  loss_giou_2_unscaled: 0.2050 (0.2051)  cardinality_error_2_unscaled: 480.0000 (479.3725)  loss_ce_3_unscaled: 0.0480 (0.0736)  loss_bbox_3_unscaled: 0.0150 (0.0137)  loss_giou_3_unscaled: 0.2083 (0.2055)  cardinality_error_3_unscaled: 480.0000 (479.3725)  loss_ce_4_unscaled: 0.0508 (0.0763)  loss_bbox_4_unscaled: 0.0151 (0.0135)  loss_giou_4_unscaled: 0.2087 (0.2057)  cardinality_error_4_unscaled: 480.0000 (479.3725)  time: 0.3969  data: 0.0061  max mem: 2217
+Epoch: [Test:]  [100/140]  eta: 0:00:16  class_error: 0.00  loss: 3.5161 (4.1546)  loss_ce: 0.0806 (0.1607)  loss_bbox: 0.0719 (0.0940)  loss_giou: 0.3611 (0.4277)  loss_ce_0: 0.1559 (0.2025)  loss_bbox_0: 0.0992 (0.1094)  loss_giou_0: 0.4109 (0.4491)  loss_ce_1: 0.1070 (0.1603)  loss_bbox_1: 0.0795 (0.0943)  loss_giou_1: 0.3845 (0.4276)  loss_ce_2: 0.1168 (0.1546)  loss_bbox_2: 0.0745 (0.0933)  loss_giou_2: 0.3924 (0.4256)  loss_ce_3: 0.0827 (0.1536)  loss_bbox_3: 0.0727 (0.0938)  loss_giou_3: 0.3604 (0.4280)  loss_ce_4: 0.0840 (0.1590)  loss_bbox_4: 0.0728 (0.0934)  loss_giou_4: 0.3662 (0.4278)  loss_ce_unscaled: 0.0403 (0.0804)  class_error_unscaled: 0.0000 (-0.0000)  loss_bbox_unscaled: 0.0144 (0.0188)  loss_giou_unscaled: 0.1806 (0.2139)  cardinality_error_unscaled: 483.5000 (482.0842)  loss_ce_0_unscaled: 0.0779 (0.1012)  loss_bbox_0_unscaled: 0.0198 (0.0219)  loss_giou_0_unscaled: 0.2055 (0.2245)  cardinality_error_0_unscaled: 483.5000 (482.0891)  loss_ce_1_unscaled: 0.0535 (0.0801)  loss_bbox_1_unscaled: 0.0159 (0.0189)  loss_giou_1_unscaled: 0.1923 (0.2138)  cardinality_error_1_unscaled: 483.5000 (482.0891)  loss_ce_2_unscaled: 0.0584 (0.0773)  loss_bbox_2_unscaled: 0.0149 (0.0187)  loss_giou_2_unscaled: 0.1962 (0.2128)  cardinality_error_2_unscaled: 483.5000 (482.0891)  loss_ce_3_unscaled: 0.0413 (0.0768)  loss_bbox_3_unscaled: 0.0145 (0.0188)  loss_giou_3_unscaled: 0.1802 (0.2140)  cardinality_error_3_unscaled: 483.5000 (482.0891)  loss_ce_4_unscaled: 0.0420 (0.0795)  loss_bbox_4_unscaled: 0.0146 (0.0187)  loss_giou_4_unscaled: 0.1831 (0.2139)  cardinality_error_4_unscaled: 483.5000 (482.0891)  time: 0.3927  data: 0.0059  max mem: 2217
+Epoch: [Test:]  [139/140]  eta: 0:00:00  class_error: 0.00  loss: 4.2473 (4.2888)  loss_ce: 0.1555 (0.1730)  loss_bbox: 0.1355 (0.0988)  loss_giou: 0.3629 (0.4356)  loss_ce_0: 0.1922 (0.2040)  loss_bbox_0: 0.1508 (0.1126)  loss_giou_0: 0.3923 (0.4531)  loss_ce_1: 0.1639 (0.1732)  loss_bbox_1: 0.1437 (0.0996)  loss_giou_1: 0.3780 (0.4349)  loss_ce_2: 0.1440 (0.1686)  loss_bbox_2: 0.1392 (0.0985)  loss_giou_2: 0.3871 (0.4327)  loss_ce_3: 0.1518 (0.1679)  loss_bbox_3: 0.1383 (0.0978)  loss_giou_3: 0.3659 (0.4335)  loss_ce_4: 0.1491 (0.1715)  loss_bbox_4: 0.1361 (0.0981)  loss_giou_4: 0.3650 (0.4354)  loss_ce_unscaled: 0.0777 (0.0865)  class_error_unscaled: 0.0000 (-0.0000)  loss_bbox_unscaled: 0.0271 (0.0198)  loss_giou_unscaled: 0.1815 (0.2178)  cardinality_error_unscaled: 484.5000 (481.6714)  loss_ce_0_unscaled: 0.0961 (0.1020)  loss_bbox_0_unscaled: 0.0302 (0.0225)  loss_giou_0_unscaled: 0.1961 (0.2266)  cardinality_error_0_unscaled: 484.5000 (481.6857)  loss_ce_1_unscaled: 0.0820 (0.0866)  loss_bbox_1_unscaled: 0.0287 (0.0199)  loss_giou_1_unscaled: 0.1890 (0.2175)  cardinality_error_1_unscaled: 484.5000 (481.6857)  loss_ce_2_unscaled: 0.0720 (0.0843)  loss_bbox_2_unscaled: 0.0278 (0.0197)  loss_giou_2_unscaled: 0.1935 (0.2163)  cardinality_error_2_unscaled: 484.5000 (481.6857)  loss_ce_3_unscaled: 0.0759 (0.0839)  loss_bbox_3_unscaled: 0.0277 (0.0196)  loss_giou_3_unscaled: 0.1829 (0.2167)  cardinality_error_3_unscaled: 484.5000 (481.6857)  loss_ce_4_unscaled: 0.0745 (0.0858)  loss_bbox_4_unscaled: 0.0272 (0.0196)  loss_giou_4_unscaled: 0.1825 (0.2177)  cardinality_error_4_unscaled: 484.5000 (481.6857)  time: 0.3826  data: 0.0059  max mem: 2217
+Epoch: [Test:] Total time: 0:00:56 (0.4018 s / it)
+Averaged stats: class_error: 0.00  loss: 4.2473 (4.2888)  loss_ce: 0.1555 (0.1730)  loss_bbox: 0.1355 (0.0988)  loss_giou: 0.3629 (0.4356)  loss_ce_0: 0.1922 (0.2040)  loss_bbox_0: 0.1508 (0.1126)  loss_giou_0: 0.3923 (0.4531)  loss_ce_1: 0.1639 (0.1732)  loss_bbox_1: 0.1437 (0.0996)  loss_giou_1: 0.3780 (0.4349)  loss_ce_2: 0.1440 (0.1686)  loss_bbox_2: 0.1392 (0.0985)  loss_giou_2: 0.3871 (0.4327)  loss_ce_3: 0.1518 (0.1679)  loss_bbox_3: 0.1383 (0.0978)  loss_giou_3: 0.3659 (0.4335)  loss_ce_4: 0.1491 (0.1715)  loss_bbox_4: 0.1361 (0.0981)  loss_giou_4: 0.3650 (0.4354)  loss_ce_unscaled: 0.0777 (0.0865)  class_error_unscaled: 0.0000 (-0.0000)  loss_bbox_unscaled: 0.0271 (0.0198)  loss_giou_unscaled: 0.1815 (0.2178)  cardinality_error_unscaled: 484.5000 (481.6714)  loss_ce_0_unscaled: 0.0961 (0.1020)  loss_bbox_0_unscaled: 0.0302 (0.0225)  loss_giou_0_unscaled: 0.1961 (0.2266)  cardinality_error_0_unscaled: 484.5000 (481.6857)  loss_ce_1_unscaled: 0.0820 (0.0866)  loss_bbox_1_unscaled: 0.0287 (0.0199)  loss_giou_1_unscaled: 0.1890 (0.2175)  cardinality_error_1_unscaled: 484.5000 (481.6857)  loss_ce_2_unscaled: 0.0720 (0.0843)  loss_bbox_2_unscaled: 0.0278 (0.0197)  loss_giou_2_unscaled: 0.1935 (0.2163)  cardinality_error_2_unscaled: 484.5000 (481.6857)  loss_ce_3_unscaled: 0.0759 (0.0839)  loss_bbox_3_unscaled: 0.0277 (0.0196)  loss_giou_3_unscaled: 0.1829 (0.2167)  cardinality_error_3_unscaled: 484.5000 (481.6857)  loss_ce_4_unscaled: 0.0745 (0.0858)  loss_bbox_4_unscaled: 0.0272 (0.0196)  loss_giou_4_unscaled: 0.1825 (0.2177)  cardinality_error_4_unscaled: 484.5000 (481.6857)
+Accumulating evaluation results...
+DONE (t=0.12s).
+IoU metric: bbox
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.530
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.918
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.539
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.438
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.040
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.343
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.688
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.655
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.701
+  0%|          | 0/40 [00:00<?, ?it/s]  2%|▎         | 1/40 [00:00<00:08,  4.69it/s]  5%|▌         | 2/40 [00:00<00:07,  5.04it/s]  8%|▊         | 3/40 [00:00<00:06,  5.37it/s] 10%|█         | 4/40 [00:00<00:06,  5.61it/s] 12%|█▎        | 5/40 [00:00<00:06,  5.80it/s] 15%|█▌        | 6/40 [00:01<00:05,  5.95it/s] 18%|█▊        | 7/40 [00:01<00:05,  6.08it/s] 20%|██        | 8/40 [00:01<00:05,  6.19it/s] 22%|██▎       | 9/40 [00:01<00:04,  6.26it/s] 25%|██▌       | 10/40 [00:01<00:04,  6.32it/s] 28%|██▊       | 11/40 [00:01<00:04,  6.36it/s] 30%|███       | 12/40 [00:01<00:04,  6.41it/s] 32%|███▎      | 13/40 [00:02<00:04,  6.43it/s] 35%|███▌      | 14/40 [00:02<00:04,  6.45it/s] 38%|███▊      | 15/40 [00:02<00:03,  6.46it/s] 40%|████      | 16/40 [00:02<00:03,  6.47it/s] 42%|████▎     | 17/40 [00:02<00:03,  6.46it/s] 45%|████▌     | 18/40 [00:02<00:03,  5.89it/s] 48%|████▊     | 19/40 [00:03<00:03,  5.92it/s] 50%|█████     | 20/40 [00:03<00:03,  6.05it/s] 52%|█████▎    | 21/40 [00:03<00:03,  6.15it/s] 55%|█████▌    | 22/40 [00:03<00:02,  6.13it/s] 57%|█████▊    | 23/40 [00:03<00:02,  6.20it/s] 60%|██████    | 24/40 [00:03<00:02,  6.19it/s] 62%|██████▎   | 25/40 [00:04<00:02,  6.23it/s] 65%|██████▌   | 26/40 [00:04<00:02,  6.28it/s] 68%|██████▊   | 27/40 [00:04<00:02,  6.33it/s] 70%|███████   | 28/40 [00:04<00:01,  6.33it/s] 72%|███████▎  | 29/40 [00:04<00:01,  6.35it/s] 75%|███████▌  | 30/40 [00:04<00:01,  6.35it/s] 78%|███████▊  | 31/40 [00:04<00:01,  6.36it/s] 80%|████████  | 32/40 [00:05<00:01,  6.35it/s] 82%|████████▎ | 33/40 [00:05<00:01,  6.35it/s] 85%|████████▌ | 34/40 [00:05<00:00,  6.35it/s] 88%|████████▊ | 35/40 [00:05<00:00,  6.36it/s] 90%|█████████ | 36/40 [00:05<00:00,  6.32it/s] 92%|█████████▎| 37/40 [00:05<00:00,  6.30it/s] 95%|█████████▌| 38/40 [00:06<00:00,  6.27it/s] 98%|█████████▊| 39/40 [00:06<00:00,  6.26it/s]100%|██████████| 40/40 [00:06<00:00,  6.30it/s]100%|██████████| 40/40 [00:06<00:00,  6.24it/s]/work/tobstenz/mcmot-transformer/src/trackformer/models/tracker.py:431: UserWarning: This overload of nonzero is deprecated:
+	nonzero()
+Consider using one of the following signatures instead:
+	nonzero(*, bool as_tuple) (Triggered internally at  /opt/conda/conda-bld/pytorch_1607370156314/work/torch/csrc/utils/python_arg_parser.cpp:882.)
+  new_det_indices = new_det_keep.float().nonzero()
+INFO - submitit.main - NUM TRACKS: 59 ReIDs: 0
+INFO - submitit.main - RUNTIME: 6.41 s
+INFO - submitit.main - ------------------
+INFO - submitit.main - TRACK SEQ: c1-val
+
+  0%|          | 0/40 [00:00<?, ?it/s]  2%|▎         | 1/40 [00:00<00:05,  6.51it/s]  5%|▌         | 2/40 [00:00<00:05,  6.50it/s]  8%|▊         | 3/40 [00:00<00:05,  6.50it/s] 10%|█         | 4/40 [00:00<00:05,  6.49it/s] 12%|█▎        | 5/40 [00:00<00:05,  6.44it/s] 15%|█▌        | 6/40 [00:00<00:05,  6.42it/s] 18%|█▊        | 7/40 [00:01<00:05,  6.41it/s] 20%|██        | 8/40 [00:01<00:05,  6.33it/s] 22%|██▎       | 9/40 [00:01<00:04,  6.35it/s] 25%|██▌       | 10/40 [00:01<00:04,  6.41it/s] 28%|██▊       | 11/40 [00:01<00:04,  6.44it/s] 30%|███       | 12/40 [00:01<00:04,  6.43it/s] 32%|███▎      | 13/40 [00:02<00:04,  6.43it/s] 35%|███▌      | 14/40 [00:02<00:04,  6.42it/s] 38%|███▊      | 15/40 [00:02<00:03,  6.41it/s] 40%|████      | 16/40 [00:02<00:03,  6.44it/s] 42%|████▎     | 17/40 [00:02<00:03,  6.47it/s] 45%|████▌     | 18/40 [00:02<00:03,  6.46it/s] 48%|████▊     | 19/40 [00:02<00:03,  6.47it/s] 50%|█████     | 20/40 [00:03<00:03,  6.44it/s] 52%|█████▎    | 21/40 [00:03<00:02,  6.47it/s] 55%|█████▌    | 22/40 [00:03<00:02,  6.45it/s] 57%|█████▊    | 23/40 [00:03<00:02,  6.44it/s] 60%|██████    | 24/40 [00:03<00:02,  6.41it/s] 62%|██████▎   | 25/40 [00:03<00:02,  6.43it/s] 65%|██████▌   | 26/40 [00:04<00:02,  6.34it/s] 68%|██████▊   | 27/40 [00:04<00:02,  6.27it/s] 70%|███████   | 28/40 [00:04<00:01,  6.32it/s] 72%|███████▎  | 29/40 [00:04<00:01,  6.37it/s] 75%|███████▌  | 30/40 [00:04<00:01,  6.39it/s] 78%|███████▊  | 31/40 [00:04<00:01,  6.41it/s] 80%|████████  | 32/40 [00:04<00:01,  6.43it/s] 82%|████████▎ | 33/40 [00:05<00:01,  6.44it/s] 85%|████████▌ | 34/40 [00:05<00:00,  6.47it/s] 88%|████████▊ | 35/40 [00:05<00:00,  6.47it/s] 90%|█████████ | 36/40 [00:05<00:00,  6.48it/s] 92%|█████████▎| 37/40 [00:05<00:00,  6.49it/s] 95%|█████████▌| 38/40 [00:05<00:00,  6.49it/s] 98%|█████████▊| 39/40 [00:06<00:00,  6.49it/s]100%|██████████| 40/40 [00:06<00:00,  6.50it/s]100%|██████████| 40/40 [00:06<00:00,  6.43it/s]INFO - submitit.main - NUM TRACKS: 55 ReIDs: 0
+INFO - submitit.main - RUNTIME: 6.22 s
+INFO - submitit.main - ------------------
+INFO - submitit.main - TRACK SEQ: c2-val
+
+  0%|          | 0/40 [00:00<?, ?it/s]  2%|▎         | 1/40 [00:00<00:06,  6.38it/s]  5%|▌         | 2/40 [00:00<00:05,  6.42it/s]  8%|▊         | 3/40 [00:00<00:05,  6.44it/s] 10%|█         | 4/40 [00:00<00:05,  6.42it/s] 12%|█▎        | 5/40 [00:00<00:05,  6.45it/s] 15%|█▌        | 6/40 [00:00<00:05,  6.43it/s] 18%|█▊        | 7/40 [00:01<00:05,  6.45it/s] 20%|██        | 8/40 [00:01<00:05,  6.02it/s] 22%|██▎       | 9/40 [00:01<00:05,  6.01it/s] 25%|██▌       | 10/40 [00:01<00:04,  6.12it/s] 28%|██▊       | 11/40 [00:01<00:04,  6.20it/s] 30%|███       | 12/40 [00:01<00:04,  6.27it/s] 32%|███▎      | 13/40 [00:02<00:04,  6.30it/s] 35%|███▌      | 14/40 [00:02<00:04,  6.33it/s] 38%|███▊      | 15/40 [00:02<00:03,  6.36it/s] 40%|████      | 16/40 [00:02<00:03,  6.38it/s] 42%|████▎     | 17/40 [00:02<00:03,  6.40it/s] 45%|████▌     | 18/40 [00:02<00:03,  6.39it/s] 48%|████▊     | 19/40 [00:03<00:03,  6.40it/s] 50%|█████     | 20/40 [00:03<00:03,  6.40it/s] 52%|█████▎    | 21/40 [00:03<00:02,  6.41it/s] 55%|█████▌    | 22/40 [00:03<00:02,  6.38it/s] 57%|█████▊    | 23/40 [00:03<00:02,  6.37it/s] 60%|██████    | 24/40 [00:03<00:02,  6.36it/s] 62%|██████▎   | 25/40 [00:03<00:02,  6.37it/s] 65%|██████▌   | 26/40 [00:04<00:02,  6.36it/s] 68%|██████▊   | 27/40 [00:04<00:02,  6.37it/s] 70%|███████   | 28/40 [00:04<00:01,  6.28it/s] 72%|███████▎  | 29/40 [00:04<00:01,  6.30it/s] 75%|███████▌  | 30/40 [00:04<00:01,  6.20it/s] 78%|███████▊  | 31/40 [00:04<00:01,  6.24it/s] 80%|████████  | 32/40 [00:05<00:01,  6.24it/s] 82%|████████▎ | 33/40 [00:05<00:01,  6.27it/s] 85%|████████▌ | 34/40 [00:05<00:00,  6.30it/s] 88%|████████▊ | 35/40 [00:05<00:00,  6.32it/s] 90%|█████████ | 36/40 [00:05<00:00,  6.32it/s] 92%|█████████▎| 37/40 [00:05<00:00,  6.33it/s] 95%|█████████▌| 38/40 [00:06<00:00,  6.34it/s] 98%|█████████▊| 39/40 [00:06<00:00,  6.35it/s]100%|██████████| 40/40 [00:06<00:00,  6.36it/s]100%|██████████| 40/40 [00:06<00:00,  6.32it/s]INFO - submitit.main - NUM TRACKS: 55 ReIDs: 0
+INFO - submitit.main - RUNTIME: 6.33 s
+INFO - submitit.main - ------------------
+INFO - submitit.main - TRACK SEQ: c3-val
+
+  0%|          | 0/40 [00:00<?, ?it/s]  2%|▎         | 1/40 [00:00<00:05,  6.74it/s]  5%|▌         | 2/40 [00:00<00:05,  6.67it/s]  8%|▊         | 3/40 [00:00<00:05,  6.64it/s] 10%|█         | 4/40 [00:00<00:05,  6.61it/s] 12%|█▎        | 5/40 [00:00<00:05,  6.58it/s] 15%|█▌        | 6/40 [00:00<00:05,  6.57it/s] 18%|█▊        | 7/40 [00:01<00:05,  6.55it/s] 20%|██        | 8/40 [00:01<00:04,  6.54it/s] 22%|██▎       | 9/40 [00:01<00:04,  6.54it/s] 25%|██▌       | 10/40 [00:01<00:04,  6.54it/s] 28%|██▊       | 11/40 [00:01<00:04,  6.51it/s] 30%|███       | 12/40 [00:01<00:04,  6.52it/s] 32%|███▎      | 13/40 [00:01<00:04,  6.51it/s] 35%|███▌      | 14/40 [00:02<00:03,  6.51it/s] 38%|███▊      | 15/40 [00:02<00:03,  6.51it/s] 40%|████      | 16/40 [00:02<00:03,  6.51it/s] 42%|████▎     | 17/40 [00:02<00:03,  6.46it/s] 45%|████▌     | 18/40 [00:02<00:03,  6.46it/s] 48%|████▊     | 19/40 [00:02<00:03,  6.46it/s] 50%|█████     | 20/40 [00:03<00:03,  6.48it/s] 52%|█████▎    | 21/40 [00:03<00:02,  6.49it/s] 55%|█████▌    | 22/40 [00:03<00:02,  6.47it/s] 57%|█████▊    | 23/40 [00:03<00:02,  6.47it/s] 60%|██████    | 24/40 [00:03<00:02,  6.48it/s] 62%|██████▎   | 25/40 [00:03<00:02,  6.46it/s] 65%|██████▌   | 26/40 [00:03<00:02,  6.44it/s] 68%|██████▊   | 27/40 [00:04<00:02,  6.45it/s] 70%|███████   | 28/40 [00:04<00:01,  6.45it/s] 72%|███████▎  | 29/40 [00:04<00:01,  6.42it/s] 75%|███████▌  | 30/40 [00:04<00:01,  6.43it/s] 78%|███████▊  | 31/40 [00:04<00:01,  6.45it/s] 80%|████████  | 32/40 [00:04<00:01,  6.45it/s] 82%|████████▎ | 33/40 [00:05<00:01,  6.45it/s] 85%|████████▌ | 34/40 [00:05<00:00,  6.44it/s] 88%|████████▊ | 35/40 [00:05<00:00,  6.45it/s] 90%|█████████ | 36/40 [00:05<00:00,  6.46it/s] 92%|█████████▎| 37/40 [00:05<00:00,  6.48it/s] 95%|█████████▌| 38/40 [00:05<00:00,  6.47it/s] 98%|█████████▊| 39/40 [00:06<00:00,  6.47it/s]100%|██████████| 40/40 [00:06<00:00,  6.47it/s]100%|██████████| 40/40 [00:06<00:00,  6.49it/s]INFO - submitit.main - NUM TRACKS: 23 ReIDs: 0
+INFO - submitit.main - RUNTIME: 6.17 s
+INFO - submitit.main - ------------------
+INFO - submitit.main - TRACK SEQ: c4-val
+
+  0%|          | 0/40 [00:00<?, ?it/s]  2%|▎         | 1/40 [00:00<00:06,  6.48it/s]  5%|▌         | 2/40 [00:00<00:05,  6.48it/s]  8%|▊         | 3/40 [00:00<00:05,  6.46it/s] 10%|█         | 4/40 [00:00<00:05,  6.44it/s] 12%|█▎        | 5/40 [00:00<00:05,  6.45it/s] 15%|█▌        | 6/40 [00:00<00:05,  6.44it/s] 18%|█▊        | 7/40 [00:01<00:05,  6.46it/s] 20%|██        | 8/40 [00:01<00:04,  6.47it/s] 22%|██▎       | 9/40 [00:01<00:04,  6.47it/s] 25%|██▌       | 10/40 [00:01<00:04,  6.48it/s] 28%|██▊       | 11/40 [00:01<00:04,  6.49it/s] 30%|███       | 12/40 [00:01<00:04,  6.49it/s] 32%|███▎      | 13/40 [00:02<00:04,  6.50it/s] 35%|███▌      | 14/40 [00:02<00:04,  6.50it/s] 38%|███▊      | 15/40 [00:02<00:03,  6.49it/s] 40%|████      | 16/40 [00:02<00:03,  6.49it/s] 42%|████▎     | 17/40 [00:02<00:03,  6.49it/s] 45%|████▌     | 18/40 [00:02<00:03,  6.48it/s] 48%|████▊     | 19/40 [00:02<00:03,  6.47it/s] 50%|█████     | 20/40 [00:03<00:03,  6.47it/s] 52%|█████▎    | 21/40 [00:03<00:02,  6.46it/s] 55%|█████▌    | 22/40 [00:03<00:02,  6.45it/s] 57%|█████▊    | 23/40 [00:03<00:02,  6.44it/s] 60%|██████    | 24/40 [00:03<00:02,  6.44it/s] 62%|██████▎   | 25/40 [00:03<00:02,  6.43it/s] 65%|██████▌   | 26/40 [00:04<00:02,  6.43it/s] 68%|██████▊   | 27/40 [00:04<00:02,  6.44it/s] 70%|███████   | 28/40 [00:04<00:01,  6.44it/s] 72%|███████▎  | 29/40 [00:04<00:01,  6.44it/s] 75%|███████▌  | 30/40 [00:04<00:01,  6.39it/s] 78%|███████▊  | 31/40 [00:04<00:01,  6.41it/s] 80%|████████  | 32/40 [00:04<00:01,  6.37it/s] 82%|████████▎ | 33/40 [00:05<00:01,  6.39it/s] 85%|████████▌ | 34/40 [00:05<00:00,  6.40it/s] 88%|████████▊ | 35/40 [00:05<00:00,  6.43it/s] 90%|█████████ | 36/40 [00:05<00:00,  6.44it/s] 92%|█████████▎| 37/40 [00:05<00:00,  6.46it/s] 95%|█████████▌| 38/40 [00:05<00:00,  6.46it/s] 98%|█████████▊| 39/40 [00:06<00:00,  6.48it/s]100%|██████████| 40/40 [00:06<00:00,  6.49it/s]100%|██████████| 40/40 [00:06<00:00,  6.45it/s]INFO - submitit.main - NUM TRACKS: 50 ReIDs: 0
+INFO - submitit.main - RUNTIME: 6.20 s
+INFO - submitit.main - ------------------
+INFO - submitit.main - TRACK SEQ: c5-val
+
+  0%|          | 0/40 [00:00<?, ?it/s]  2%|▎         | 1/40 [00:00<00:06,  6.43it/s]  5%|▌         | 2/40 [00:00<00:05,  6.44it/s]  8%|▊         | 3/40 [00:00<00:05,  6.40it/s] 10%|█         | 4/40 [00:00<00:05,  6.40it/s] 12%|█▎        | 5/40 [00:00<00:05,  6.40it/s] 15%|█▌        | 6/40 [00:00<00:05,  6.41it/s] 18%|█▊        | 7/40 [00:01<00:05,  6.43it/s] 20%|██        | 8/40 [00:01<00:04,  6.42it/s] 22%|██▎       | 9/40 [00:01<00:04,  6.40it/s] 25%|██▌       | 10/40 [00:01<00:04,  6.40it/s] 28%|██▊       | 11/40 [00:01<00:04,  6.41it/s] 30%|███       | 12/40 [00:01<00:04,  6.42it/s] 32%|███▎      | 13/40 [00:02<00:04,  6.43it/s] 35%|███▌      | 14/40 [00:02<00:04,  6.44it/s] 38%|███▊      | 15/40 [00:02<00:03,  6.43it/s] 40%|████      | 16/40 [00:02<00:03,  6.44it/s] 42%|████▎     | 17/40 [00:02<00:03,  6.44it/s] 45%|████▌     | 18/40 [00:02<00:03,  6.44it/s] 48%|████▊     | 19/40 [00:02<00:03,  6.43it/s] 50%|█████     | 20/40 [00:03<00:03,  6.42it/s] 52%|█████▎    | 21/40 [00:03<00:02,  6.41it/s] 55%|█████▌    | 22/40 [00:03<00:02,  6.42it/s] 57%|█████▊    | 23/40 [00:03<00:02,  6.41it/s] 60%|██████    | 24/40 [00:03<00:02,  6.42it/s] 62%|██████▎   | 25/40 [00:03<00:02,  6.41it/s] 65%|██████▌   | 26/40 [00:04<00:02,  6.41it/s] 68%|██████▊   | 27/40 [00:04<00:02,  6.42it/s] 70%|███████   | 28/40 [00:04<00:01,  6.41it/s] 72%|███████▎  | 29/40 [00:04<00:01,  6.40it/s] 75%|███████▌  | 30/40 [00:04<00:01,  6.40it/s] 78%|███████▊  | 31/40 [00:04<00:01,  6.40it/s] 80%|████████  | 32/40 [00:04<00:01,  6.40it/s] 82%|████████▎ | 33/40 [00:05<00:01,  6.39it/s] 85%|████████▌ | 34/40 [00:05<00:00,  6.38it/s] 88%|████████▊ | 35/40 [00:05<00:00,  6.37it/s] 90%|█████████ | 36/40 [00:05<00:00,  6.37it/s] 92%|█████████▎| 37/40 [00:05<00:00,  6.36it/s] 95%|█████████▌| 38/40 [00:05<00:00,  6.37it/s] 98%|█████████▊| 39/40 [00:06<00:00,  6.38it/s]100%|██████████| 40/40 [00:06<00:00,  6.38it/s]100%|██████████| 40/40 [00:06<00:00,  6.40it/s]INFO - submitit.main - NUM TRACKS: 68 ReIDs: 0
+INFO - submitit.main - RUNTIME: 6.25 s
+INFO - submitit.main - ------------------
+INFO - submitit.main - TRACK SEQ: c6-val
+
+  0%|          | 0/40 [00:00<?, ?it/s]  2%|▎         | 1/40 [00:00<00:06,  6.45it/s]  5%|▌         | 2/40 [00:00<00:05,  6.44it/s]  8%|▊         | 3/40 [00:00<00:05,  6.44it/s] 10%|█         | 4/40 [00:00<00:05,  6.45it/s] 12%|█▎        | 5/40 [00:00<00:05,  6.47it/s] 15%|█▌        | 6/40 [00:00<00:05,  6.46it/s] 18%|█▊        | 7/40 [00:01<00:05,  6.46it/s] 20%|██        | 8/40 [00:01<00:04,  6.47it/s] 22%|██▎       | 9/40 [00:01<00:04,  6.48it/s] 25%|██▌       | 10/40 [00:01<00:04,  6.48it/s] 28%|██▊       | 11/40 [00:01<00:04,  6.49it/s] 30%|███       | 12/40 [00:01<00:04,  6.49it/s] 32%|███▎      | 13/40 [00:02<00:04,  6.48it/s] 35%|███▌      | 14/40 [00:02<00:04,  6.48it/s] 38%|███▊      | 15/40 [00:02<00:03,  6.48it/s] 40%|████      | 16/40 [00:02<00:03,  6.47it/s] 42%|████▎     | 17/40 [00:02<00:03,  6.47it/s] 45%|████▌     | 18/40 [00:02<00:03,  6.46it/s] 48%|████▊     | 19/40 [00:02<00:03,  6.46it/s] 50%|█████     | 20/40 [00:03<00:03,  6.47it/s] 52%|█████▎    | 21/40 [00:03<00:02,  6.47it/s] 55%|█████▌    | 22/40 [00:03<00:02,  6.47it/s] 57%|█████▊    | 23/40 [00:03<00:02,  6.47it/s] 60%|██████    | 24/40 [00:03<00:02,  6.46it/s] 62%|██████▎   | 25/40 [00:03<00:02,  6.46it/s] 65%|██████▌   | 26/40 [00:04<00:02,  6.47it/s] 68%|██████▊   | 27/40 [00:04<00:02,  6.48it/s] 70%|███████   | 28/40 [00:04<00:01,  6.47it/s] 72%|███████▎  | 29/40 [00:04<00:01,  6.47it/s] 75%|███████▌  | 30/40 [00:04<00:01,  6.47it/s] 78%|███████▊  | 31/40 [00:04<00:01,  6.47it/s] 80%|████████  | 32/40 [00:04<00:01,  6.46it/s] 82%|████████▎ | 33/40 [00:05<00:01,  6.34it/s] 85%|████████▌ | 34/40 [00:05<00:00,  6.38it/s] 88%|████████▊ | 35/40 [00:05<00:00,  6.41it/s] 90%|█████████ | 36/40 [00:05<00:00,  6.41it/s] 92%|█████████▎| 37/40 [00:05<00:00,  6.41it/s] 95%|█████████▌| 38/40 [00:05<00:00,  6.41it/s] 98%|█████████▊| 39/40 [00:06<00:00,  6.41it/s]100%|██████████| 40/40 [00:06<00:00,  6.42it/s]100%|██████████| 40/40 [00:06<00:00,  6.45it/s]INFO - submitit.main - NUM TRACKS: 28 ReIDs: 0
+INFO - submitit.main - RUNTIME: 6.20 s
+INFO - submitit.main - RUNTIME ALL SEQS (w/o EVAL or IMG WRITE): 43.77 s for 280 frames (6.40 Hz)
+INFO - submitit.track - Result: [<motmetrics.mot.MOTAccumulator object at 0x7f0f91a41290>, <motmetrics.mot.MOTAccumulator object at 0x7f0f929fce90>, <motmetrics.mot.MOTAccumulator object at 0x7f0f91cdbfd0>, <motmetrics.mot.MOTAccumulator object at 0x7f0f91a495d0>, <motmetrics.mot.MOTAccumulator object at 0x7f0f94b29ad0>, <motmetrics.mot.MOTAccumulator object at 0x7f0f91a2db90>, <motmetrics.mot.MOTAccumulator object at 0x7f0f929da290>]
+INFO - submitit.track - Completed after 0:00:55
+INFO - root - partials: 0.527 seconds.
+INFO - root - mergeOverall: 0.534 seconds.
+
+         IDF1   IDP   IDR  Rcll  Prcn  GT  MT PT ML  FP  FN IDs   FM  MOTA  MOTP IDt IDa IDm
+c0-val  73.9% 72.1% 75.9% 93.3% 88.6%  38  32  6  0 107  60  34   23 77.5% 0.181  18  17   2
+c1-val  66.2% 66.8% 65.6% 85.1% 86.7%  35  22 13  0 102 117  50   43 65.7% 0.214  32  23   6
+c2-val  76.8% 76.4% 77.1% 92.7% 91.9%  40  36  3  1  75  67  25   26 81.8% 0.200  13  14   2
+c3-val  66.8% 70.3% 63.6% 84.9% 93.9%  20  13  3  4  15  41  13   10 74.6% 0.225   8   8   3
+c4-val  54.2% 59.2% 49.9% 79.8% 94.5%  36  15 15  6  33 145  40   39 69.6% 0.174  21  22   3
+c5-val  54.7% 56.0% 53.5% 77.8% 81.4%  39  25 13  1 167 208  67   66 52.9% 0.214  43  26   4
+c6-val  84.7% 83.9% 85.5% 92.6% 90.9%  25  18  6  1  56  45  14   13 81.0% 0.176  10   6   2
+OVERALL 68.1% 69.0% 67.3% 86.7% 88.9% 233 161 59 13 555 683 243  220 71.1% 0.196 145 116  22

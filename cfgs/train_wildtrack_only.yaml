@@ -1,7 +1,9 @@
 ##############################################################################
 # Register this file in train.py as `wildtrack_only`.
 ##############################################################################
-
+val_split: val
+eval_only: true
+no_vis: true
 # starting point: `train_mot17_crowdhuman.yaml`
 # dataset-type
 dataset: mot # "mot" has to be in there for trackig ... see train.py
@@ -9,16 +11,14 @@ dataset: mot # "mot" has to be in there for trackig ... see train.py
 # don't neet b/c dataset not of type mot_crowdhuman
 #crowdhuman_train_split: train_val
 train_split: train
-val_split: test
 
 mot_path_train: data/WILDTRACK
 #only one sequence at a time to make comparable to distribtion metrics?
 mot_path_val: data/WILDTRACK
 
 # pre-trained detector/tracker
-resume: models/mot17_crowdhuman_deformable_multi_frame/checkpoint_epoch_40.pth
+resume: models/baseline_wildtrack_only_corrected/checkpoint_best_MOTA.pth
 
 epochs: 200
 lr_drop: 10
 
-no_vis: false
