@@ -1,4 +1,10 @@
-output_dir: null
+# set `output_dir`, `obj_detect_checkpoint_file` to model checkpoint for tracking evaluation
+# `dataset_name` to sequence, `write_images` to True, 
+# and generate images with `ffmpeg   -framerate 2    -pattern_type glob    -i '*.jpg'    out.gif`
+
+# Don't set `write_images` to True during training.
+
+output_dir: null #data/WILDTRACK/result_videos
 verbose: false
 seed: 666
 
@@ -9,7 +15,7 @@ interpolate: False
 load_results_dir: null
 
 # dataset (look into src/datasets/tracking/factory.py)
-dataset_name: MOT17-ALL-ALL
+dataset_name: c0-val
 data_root_dir: data
 
 # [False, 'debug', 'pretty']

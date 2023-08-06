@@ -1,4 +1,8 @@
-.nfs*
+# Tobias
+/.env
+
+
+# Trackformer.nfs*
 *.ipynb
 *.pyc
 .dumbo.json

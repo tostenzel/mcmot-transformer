@@ -8,8 +8,17 @@ from torch.utils.data import ConcatDataset
 
 from .demo_sequence import DemoSequence
 from .mot_wrapper import MOT17Wrapper, MOT20Wrapper, MOTS20Wrapper
+from .wildtrack_wrapper import WILDTRACKWrapper
 
 DATASETS = {}
+
+# WILDTRACK
+name_mapping = {"train": "TRAIN", "test": "TEST", "val": "TEST"}
+for cam in ["c0", "c1", "c2", "c3", "c4", "c5", "c6"]:
+    for split in ['train', 'test', 'val']:
+        name = f"{cam}-{split}"
+        DATASETS[name] = (
+        lambda kwargs, split=split, cam=cam: WILDTRACKWrapper(split, cam, **kwargs))
 
 # Fill all available datasets, change here to modify / add new datasets.
 for split in ['TRAIN', 'TEST', 'ALL', '01', '02', '03', '04', '05',
