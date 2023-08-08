@@ -80,6 +80,10 @@ the evaluation code requires validation and test splits in MOT format. This fact
     # test whether COCO and MOT data are equal
     python src/wildtrack_test.py
 
+### Create 3D dataset
+
+    python src/multicam_wildtrack_generate_3d_coco.py
+
 ## Pretrained Models
 
 Download and unpack pretrained TrackFormer model files in the `models` directory:
@@ -117,27 +121,27 @@ The multiple GPU part contains the command for generating the baseline results. 
 
 ### Training on single GPU
 
+Note that we do not use `deformable \` for training the multicamera model because we use DETR as detector instead Deformable DETR.
+
 Follow up by opening another new terminal with activated environment and start the training process on a single GPU e.g. via
 
     CUDA_VISIBLE_DEVICES=0 python src/train.py with \
         wildtrack_only \
-        deformable \
         multi_frame \
         tracking \
-        output_dir=models/test_wildtrack_only %> log_wildtrack_only.txt
+        output_dir=models/test_wildtrack_only &> log_wildtrack_only.txt
 
-Switch to the browser window and change environment to the name of the output directory from the previous command e.g. `models/mot17_deformable_multi_frame`
+Switch to the browser window and change environment to the name of the output directory from the previous command e.g. `models/test_wildtrack_only`
 
 ### Training on multiple GPUs
 
 Again, open another new terminal with activated environment. Type
 
     CUDA_VISIBLE_DEVICES=0,1 MASTER_PORT=12340 python -m torch.distributed.launch --nproc_per_node=2 --use_env src/train.py with \
-        wildtrack_mot_crowdhuman \
-        deformable \
+        wildtrack_only \
         multi_frame \
         tracking \
-        output_dir=models/baseline_wildtrack_mot_crowdhuman &> log_wildtrack_mot_crowdhuman.txt
+        output_dir=models/test_wildtrack_only &> log_only.txt
 
 
 ## Process management
@@ -145,31 +149,3 @@ Again, open another new terminal with activated environment. Type
 - Stard tmux with `tmux` and open visdom or start training to prevent process from detaching during system suspension or connection timeout (especially during VPN session).
 
 - Use `kill -9 <PID>` to kill own detached processes
-
-
-# MCMOT
-
- w/o deformable aus arg
-
-### Training on single GPU
-
-Follow up by opening another new terminal with activated environment and start the training process on a single GPU e.g. via
-
-    CUDA_VISIBLE_DEVICES=6 python src/train.py with \
-        wildtrack_only \
-        multi_frame \
-        tracking \
-        output_dir=models/detr_mcmot_3 &> log_detr_mcmot_3.txt
-
-Switch to the browser window and change environment to the name of the output directory from the previous command e.g. `models/mot17_deformable_multi_frame`
-
-### Training on multiple GPUs
-
-Again, open another new terminal with activated environment. Type
-
-    CUDA_VISIBLE_DEVICES=6,7 MASTER_PORT=12340 python -m torch.distributed.launch --nproc_per_node=2 --use_env src/train.py with \
-        wildtrack_only \
-        multi_frame \
-        tracking \
-        output_dir=models/detr_mcmot_3 &> log_detr_mcmot_3.txt
-
