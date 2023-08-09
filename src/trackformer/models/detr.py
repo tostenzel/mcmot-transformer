@@ -13,6 +13,15 @@ from ..util.misc import (NestedTensor, accuracy, dice_loss, get_world_size,
                          interpolate, is_dist_avail_and_initialized,
                          nested_tensor_from_tensor_list, sigmoid_focal_loss)
 
+from target_bbox_transforms import bbox_xywh_to_xyxy
+
+from target_transforms import inverse_min_max_scaling
+from multicam_wildtrack_torch_3D_to_2D import load_spec_extrinsics
+from multicam_wildtrack_torch_3D_to_2D import load_spec_intrinsics
+from multicam_wildtrack_torch_3D_to_2D import transform_3D_cylinder_to_2D_COCO_bbox_params
+
+from wildtrack_globals import N_CAMS, W, H
+
 
 class DETR(nn.Module):
     """ This is the DETR module that performs object detection. """
@@ -39,7 +48,9 @@ class DETR(nn.Module):
         self.query_embed = nn.Embedding(num_queries, self.hidden_dim)
 
         # match interface with deformable DETR
-        self.input_proj = nn.Conv2d(backbone.num_channels[-1], self.hidden_dim, kernel_size=1)
+        #self.input_proj = nn.Conv2d(backbone.num_channels[-1], self.hidden_dim, kernel_size=1)
+        self.input_proj = nn.Conv2d(backbone.num_channels, self.hidden_dim, kernel_size=1)
+        #-----------------------------------------------------------------------
         # self.input_proj = nn.ModuleList([
         #     nn.Sequential(
         #         nn.Conv2d(backbone.num_channels[-1], self.hidden_dim, kernel_size=1)
@@ -47,6 +58,17 @@ class DETR(nn.Module):
 
         self.backbone = backbone
         self.aux_loss = aux_loss
+
+        #-----------------------------------------------------------------------
+        # TOBIAS: init camera encoder
+
+        # The camera-specific embedding vectors are in (cam, :, 0, 0)
+        # I choose to intialize from N(0,1) distribution, similar to how
+        # input images are normalized
+
+        # TODO: substitute 2048 by self.arg wrt backbone
+        self.cam_embedder = [nn.Parameter(torch.randn(N_CAMS, 2048, 1, 1))]
+        #-----------------------------------------------------------------------
 
     @property
     def hidden_dim(self):
@@ -77,9 +99,46 @@ class DETR(nn.Module):
                                 is a list of dictionnaries containing the two above keys for
                                 each decoder layer.
         """
+        #-----------------------------------------------------------------------
+        # TOBIAS: Select only first target for MCMOT setting
+        if targets is not None:
+            targets = [targets[0]]
+        #-----------------------------------------------------------------------
+
         if not isinstance(samples, NestedTensor):
             samples = nested_tensor_from_tensor_list(samples)
         features, pos = self.backbone(samples)
+
+        #-----------------------------------------------------------------------
+        # TOBIAS: Add camera-specific embeddings to three used feature maps.
+
+        # dimensions are [batchsize, feature channels, h, w]
+        # num channels [256, 512, 1024, 2048]
+
+        # only last three dims are used.
+        for i, feat in enumerate(features):
+            # Expand cam_embedder to match last two dimensions of feat, too.
+            expanded_embedding = self.cam_embedder[i].expand(
+                N_CAMS, feat.tensors.size(1),
+                feat.tensors.size(2),
+                feat.tensors.size(3)
+            ).to(device=features[i].tensors.device)
+
+            # Add the positional encoding (first features element unused)
+            features[i].tensors = features[i].tensors + expanded_embedding
+
+        #-----------------------------------------------------------------------
+        # TOBIAS: move subsequent cam tokens from batch slot to width slot
+
+        for feat_map_idx in range(0, 1):
+            ts = features[feat_map_idx].tensors.shape
+            features[feat_map_idx].tensors = features[feat_map_idx].tensors.reshape(1, ts[1], ts[2], ts[3] * ts[0])
+            ms = features[feat_map_idx].mask.shape
+            features[feat_map_idx].mask = features[feat_map_idx].mask.reshape(1, ms[1], ms[2] * ms[0])
+            ps = pos[feat_map_idx].shape
+            pos[feat_map_idx] = pos[feat_map_idx].reshape(1, ps[1], ps[2], ps[3] * ps[0])
+        #-----------------------------------------------------------------------
+
 
         src, mask = features[-1].decompose()
         # src = self.input_proj[-1](src)
@@ -496,41 +555,90 @@ class SetCriterion(nn.Module):
 class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
 
-    def process_boxes(self, boxes, target_sizes):
-        # convert to [x0, y0, x1, y1] format
-        boxes = box_ops.box_cxcywh_to_xyxy(boxes)
-        # and from relative [0, 1] to absolute [0, height] coordinates
-        img_h, img_w = target_sizes.unbind(1)
-        scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
-        boxes = boxes * scale_fct[:, None, :]
+    def process_target_cylinders(self, boxes, view):
+        """Project cylinders to bbox in XYXY format."""
+
+        boxes = inverse_min_max_scaling(boxes)
+        rvec, tvec = load_spec_extrinsics(view)
+        camera_matrix, _ = load_spec_intrinsics(view)
+        boxes = transform_3D_cylinder_to_2D_COCO_bbox_params(
+            cylinder=boxes,
+            rvec=rvec,
+            tvec=tvec,
+            camera_matrix=camera_matrix,
+            device=boxes.device
+        )
+        boxes = bbox_xywh_to_xyxy(boxes)
 
         return boxes
 
+    def process_target_bboxes(self, boxes):
+        """Project bbox to bbox in XYXY format."""
+
+        boxes = bbox_xywh_to_xyxy(boxes)
+        boxes = boxes * torch.tensor([W, H, W, H], dtype=torch.float32, device=boxes.device)
+        return boxes
+
     @torch.no_grad()
-    def forward(self, outputs, target_sizes, results_mask=None):
+    def forward(self, outputs, target_sizes, view, results_mask=None):
         """ Perform the computation
         Parameters:
             outputs: raw outputs of the model
-            target_sizes: tensor of dimension [batch_size x 2] containing the size of
-                          each images of the batch For evaluation, this must be the
-                          original image size (before any data augmentation) For
-                          visualization, this should be the image size after data
-                          augment, but before padding
+            target_sizes: tensor of dimension [batch_size x 2] containing the size of each images of the batch
+                          For evaluation, this must be the original image size (before any data augmentation)
+                          For visualization, this should be the image size after data augment, but before padding
         """
         out_logits, out_bbox = outputs['pred_logits'], outputs['pred_boxes']
 
         assert len(out_logits) == len(target_sizes)
         assert target_sizes.shape[1] == 2
 
-        prob = F.softmax(out_logits, -1)
-        scores, labels = prob[..., :-1].max(-1)
+        prob = out_logits.sigmoid()
 
-        boxes = self.process_boxes(out_bbox, target_sizes)
+        ###
+        # topk_values, topk_indexes = torch.topk(prob.view(out_logits.shape[0], -1), 100, dim=1)
+        # scores = topk_values
 
+        # topk_boxes = topk_indexes // out_logits.shape[2]
+        # labels = topk_indexes % out_logits.shape[2]
+
+        # boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
+        # boxes = torch.gather(boxes, 1, topk_boxes.unsqueeze(-1).repeat(1,1,4))
+        ###
+
+        scores, labels = prob.max(-1)
+        # scores, labels = prob[..., 0:1].max(-1)
+        #-----------------------------------------------------------------------
+        # TOBIAS: I train on xywh (not cxcy) but need xyxy for eval 
+        boxes = out_bbox
+        #boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
+        #boxes = bbox_xywh_to_xyxy(out_bbox)
+
+        boxes = inverse_min_max_scaling(boxes)
+        rvec, tvec = load_spec_extrinsics(view)
+        camera_matrix, _ = load_spec_intrinsics(view)
+
+        # ignore batch dimension
+        boxes_reshaped = torch.squeeze(boxes, dim=0)
+        boxes_reshaped = transform_3D_cylinder_to_2D_COCO_bbox_params(
+            cylinder=boxes_reshaped,
+            rvec=rvec,
+            tvec=tvec,
+            camera_matrix=camera_matrix,
+            device=boxes.device
+        )
+        boxes = boxes_reshaped.unsqueeze(dim=0)
+
+        boxes = bbox_xywh_to_xyxy(boxes)
+        # and from relative [0, 1] to absolute [0, height] coordinates
+        #img_h, img_w = target_sizes.unbind(1)
+        #scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
+        #boxes = boxes * scale_fct[:, None, :]
+        #-----------------------------------------------------------------------
 
         results = [
-            {'scores': s, 'labels': l, 'boxes': b, 'scores_no_object': s_n_o}
-            for s, l, b, s_n_o in zip(scores, labels, boxes, prob[..., -1])]
+            {'scores': s, 'scores_no_object': 1 - s, 'labels': l, 'boxes': b}
+            for s, l, b in zip(scores, labels, boxes)]
 
         if results_mask is not None:
             for i, mask in enumerate(results_mask):

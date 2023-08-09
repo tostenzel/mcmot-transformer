@@ -289,8 +289,13 @@ class DETRTrackingBase(nn.Module):
                     target['track_query_boxes'] = torch.zeros(0, 4).to(device)
                     target['track_query_match_ids'] = torch.tensor([]).long().to(device)
 
-        out, targets, features, memory, hs  = super().forward(samples, targets, prev_features)
+        #-----------------------------------------------------------------------
+        # TOBIAS: We do not stack prev feats to new feats because this is hard
+        # to implement regarding the left time
 
+        #out, targets, features, memory, hs  = super().forward(samples, targets, prev_features)
+        out, targets, features, memory, hs  = super().forward(samples, targets)
+        #-----------------------------------------------------------------------
         return out, targets, features, memory, hs
 
 

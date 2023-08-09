@@ -411,6 +411,10 @@ def evaluate(model, criterion, postprocessors, data_loader, device,
             'seed': None,
             'dataset_name': dataset_name,
             'frame_range': data_loader.dataset.frame_range,
+            #-------------------------------------------------------------------
+            # TOBIAS: enable distributed MCMOT eval
+            'all_eval_seqs': seqs,
+            #-------------------------------------------------------------------
             'obj_detector_model': obj_detector_model}
         run = ex.run(config_updates=config_updates)
 

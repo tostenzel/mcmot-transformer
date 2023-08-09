@@ -61,6 +61,17 @@ def generate_mot_from_coco() -> None:
         _create_ground_truth(split, dataset_sequence)
         _create_seqinfo_ini_files(split)
 
+    for split in ["eval_train"]:
+
+        _create_mot_dirs(split)
+
+        file = open(f"{SRC_COCO_ANNOTATIONS}/train.json")
+        dataset_sequence = json.load(file)
+
+        _create_img_symlinks("train", dataset_sequence, save_name=split)
+        _create_ground_truth("train", dataset_sequence, save_name=split)
+        _create_seqinfo_ini_files("train", save_name=split)
+
 
 def _create_mot_dirs(split):
     """Create directory structure.
@@ -92,8 +103,10 @@ def _create_mot_dirs(split):
             os.mkdir(f"{dir2}/img1")
 
 
-def _create_img_symlinks(split, dataset_sequence) -> None:
+def _create_img_symlinks(split, dataset_sequence, save_name=None) -> None:
     """Create image files in folder `img1` via symlink to the COCO folder."""
+    if save_name is None:
+        save_name = split
     images = dataset_sequence["images"]
 
     # create symlinks for images
@@ -101,7 +114,7 @@ def _create_img_symlinks(split, dataset_sequence) -> None:
         src = f"{glob.ROOT}/{split}/{img['file_name']}"
         seq = img['file_name'].split('-')[0]
         dotjpg = img['file_name']
-        dst = f"{glob.ROOT}/mot-eval/{seq}-{split}/img1/{dotjpg}"
+        dst = f"{glob.ROOT}/mot-eval/{seq}-{save_name}/img1/{dotjpg}"
         #if os.path.isfile(dst) is True:
         #    continue
         #    #print(f"{dst} already exists. Do not write file.")
@@ -113,12 +126,14 @@ def _create_img_symlinks(split, dataset_sequence) -> None:
             raise LookupError
 
 
-def _create_ground_truth(split, dataset_sequence) -> None:
+def _create_ground_truth(split, dataset_sequence, save_name=None) -> None:
     """Create gt.txt files for each sequence.
     
     These files contain annotations and bounding boxes
 
     """
+    if save_name is None:
+        save_name = split
     annotations = dataset_sequence["annotations"]
 
     gt_file_dict = {}
@@ -155,26 +170,28 @@ def _create_ground_truth(split, dataset_sequence) -> None:
         sorted_arr = copy.deepcopy(gt_file_dict[f"{seq}-{split}"])
         sorted_arr = sorted_arr[np.lexsort((sorted_arr[:,0], sorted_arr[:,1]))]
         gt_file_dict[f"{seq}-{split}"] = sorted_arr
-        dir2 = f"{glob.ROOT}/mot-eval/{seq}-{split}"
+        dir2 = f"{glob.ROOT}/mot-eval/{seq}-{save_name}"
         if os.path.isdir(dir2) is False:
             os.mkdir(dir2)
         # fmt="'%i'" for writing integers (avoiding many decimals for readability)
         np.savetxt(
-            f"{dir2}/gt/{seq}-{split}_gt.txt",
+            f"{dir2}/gt/{seq}-{save_name}_gt.txt",
             gt_file_dict[f"{seq}-{split}"],
             delimiter=",", fmt="%i"
         )
 
 
-def _create_seqinfo_ini_files(split) -> None:
+def _create_seqinfo_ini_files(split, save_name=None) -> None:
     """Create `seqinfo.ini`-files."""
+    if save_name is None:
+        save_name = split
     for seq in glob.SEQUENCE_IDS:
-        dir2 = f"{glob.ROOT}/mot-eval/{seq}-{split}"
+        dir2 = f"{glob.ROOT}/mot-eval/{seq}-{save_name}"
 
         # write .ini
         #https://docs.python.org/3/library/configparser.html
         configparser["Sequence"] = copy.deepcopy(INI_DICT)
-        configparser["Sequence"]["name"] = f"{seq}-{split}"
+        configparser["Sequence"]["name"] = f"{seq}-{save_name}"
         configparser["Sequence"]["seqLength"] = f"{SPLITS_SEQ_LENGTH[split]}"
         # save to a file
         with open(f"{dir2}/seqinfo.ini", "w") as configfile:

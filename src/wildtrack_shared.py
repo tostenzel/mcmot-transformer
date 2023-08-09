@@ -94,10 +94,14 @@ def check_coco_from_wildtrack(
         #val_img_ids_offset = int((1 - TRAIN_SPLIT) * SEQ_LENGTH)
         if split == "train":
             img_id_offset = glob.TRAIN_SEQ_LENGTH
+        elif split == "eval_train":
+            img_id_offset = glob.TRAIN_SEQ_LENGTH
         elif split == "test":
             img_id_offset = glob.TEST_SEQ_LENGTH
         elif split == "val":
             img_id_offset = glob.VAL_SEQ_LENGTH
+        else:
+            raise ValueError
 
     if no_img_id_offset is True:
         img_id_offset = 0
@@ -171,10 +175,9 @@ def check_coco_from_wildtrack(
                         cylinder_anns.append(bbox_annotation)
                 anns = cylinder_anns
             else:
-                pass
-
+                pass # do nothing
             coco.showAnns(anns, draw_bbox=True)
-            plt.savefig(f"{write_path}/debug_{file_name}")
+            plt.savefig(f"{write_path}/debug_{file_name[:-4]}_{split}.jpg")
             # clear figures/bboxes for next picture
             plt.clf()
 

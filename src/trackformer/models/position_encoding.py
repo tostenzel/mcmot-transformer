@@ -152,8 +152,15 @@ def build_position_encoding(args):
     # n_steps = args.hidden_dim // 2
     # n_steps = args.hidden_dim // 4
     if args.multi_frame_attention and args.multi_frame_encoding:
-        n_steps = args.hidden_dim // 3
-        sine_emedding_func = PositionEmbeddingSine3D
+        #-----------------------------------------------------------------------
+        # TOBIAS: somehow args true even if set to false,
+        # I force normal DETR Embedding here b/c the other is for multi-scale
+        # feature maps for DeformableDETR
+        n_steps = args.hidden_dim // 2
+        sine_emedding_func = PositionEmbeddingSine
+        # n_steps = args.hidden_dim // 3
+        # sine_emedding_func = PositionEmbeddingSine3D
+        #-----------------------------------------------------------------------
     else:
         n_steps = args.hidden_dim // 2
         sine_emedding_func = PositionEmbeddingSine
